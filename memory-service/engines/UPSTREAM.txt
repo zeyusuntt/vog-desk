@@ -1,0 +1,2 @@
+1742dec56a66e58eef9dda2d2b865823758ca8cd 2026-10-19 10:55:26 -0700
+github.com/meterless/Meterless engines/{hmem,world-model}: reference implementations, conformance suites and specs, vendored unchanged (Apache-2.0), commit above. Declared as a pre-existing component.
