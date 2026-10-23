@@ -38,6 +38,16 @@ def test_persistence_ignores_hours_after_issue():
     assert p.iloc[0] == 0.0
 
 
+def test_persistence_ignores_the_hour_not_yet_published_at_issue():
+    hours = {f"2025-09-02 {h:02d}:00": 10.0 for h in range(0, 24)}
+    hours["2025-09-02 17:00"] = 500.0  # 17:00 to 18:00 HST is posted about 18:30, after issue
+    p = persistence(_hourly(hours), pd.DatetimeIndex([pd.Timestamp("2025-09-02")]), 75)
+    assert p.iloc[0] == 0.0
+    hours["2025-09-02 16:00"] = 500.0  # posted about 17:30, usable
+    p = persistence(_hourly(hours), pd.DatetimeIndex([pd.Timestamp("2025-09-02")]), 75)
+    assert p.iloc[0] == 1.0
+
+
 def test_episode_rule_waits_for_publication():
     t_issue = issue_time_utc(pd.Timestamp("2025-09-02"))
     nat = pd.Series([pd.NaT], dtype="datetime64[ns, UTC]")

@@ -14,3 +14,7 @@ models/
 .notebook/
 memory-service/node_modules/
 memory-service/vendor/
+
+# Keep the small, auditable model export; the joblib stays local
+!models/
+models/*.joblib

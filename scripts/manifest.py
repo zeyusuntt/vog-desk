@@ -8,7 +8,7 @@ SOURCES = {
     "airnow": "https://files.airnowtech.org/airnow/YYYY/YYYYMMDD/HourlyData_YYYYMMDDHH.dat (Hawaii rows only)",
     "hans": "https://volcanoes.usgs.gov/hans-public/api/search/search (obsAbbr=hvo, volcCd=hi3)",
     "usgs": "https://www.usgs.gov/volcanoes/kilauea/science/eruption-information",
-    "doh": "https://health.hawaii.gov/cab/files/2026/01/exceedances_2025.pdf",
+    "doh": "https://health.hawaii.gov/cab/notification-of-exceedance-of-a-national-ambient-air-quality-standard/ (exceedances_2025.pdf, exceedances_2026_10_15_17.pdf)",
     "raob": "https://mesonet.agron.iastate.edu/cgi-bin/request/raob.py (station PITO)",
     "gfs": "https://noaa-gfs-bdp-pds.s3.amazonaws.com/ (pgrb2.0p25, 18Z runs, f010/f016/f022, point values)",
 }

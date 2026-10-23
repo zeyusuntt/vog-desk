@@ -237,7 +237,8 @@ data/raw/airnow/20261021.dat	86220	3b110892974d7102aac05994b967ef24d9b87314058b9
 data/raw/airnow/20261022.dat	79758	51989c017fea47a431025833b4159e257fda0c2c4118ce57ac8812e1eab42adf	https://files.airnowtech.org/airnow/YYYY/YYYYMMDD/HourlyData_YYYYMMDDHH.dat (Hawaii rows only)
 data/raw/aqs/hourly_42401_2025.zip	19758144	1860fc707729dfb946cc565730521a4b12b08214ea3c25555974f4efb5c3be41	https://aqs.epa.gov/aqsweb/airdata/ (hourly_42401_YYYY.zip)
 data/raw/aqs/hourly_42401_2026.zip	5046627	ae2d192219d6f8bd4e0054cf18d6468eb1ec8548eb876749cf3b54bba0ec6fb1	https://aqs.epa.gov/aqsweb/airdata/ (hourly_42401_YYYY.zip)
-data/raw/doh/exceedances_2025.pdf	155622	fe64d37836b7072c23e485282b43fd7d5bf42060e7c545ed0f87aee017caf7e8	https://health.hawaii.gov/cab/files/2026/01/exceedances_2025.pdf
+data/raw/doh/exceedances_2025.pdf	155622	fe64d37836b7072c23e485282b43fd7d5bf42060e7c545ed0f87aee017caf7e8	https://health.hawaii.gov/cab/notification-of-exceedance-of-a-national-ambient-air-quality-standard/ (exceedances_2025.pdf, exceedances_2026_10_15_17.pdf)
+data/raw/doh/exceedances_2026_10_15.pdf	237090	0f2cfcfd3127b69e86e2b73efb2dec5a565182ea9d8e85cd8d55b18a4850ebe6	https://health.hawaii.gov/cab/notification-of-exceedance-of-a-national-ambient-air-quality-standard/ (exceedances_2025.pdf, exceedances_2026_10_15_17.pdf)
 data/raw/gfs/gfs_points_2024-12-25_2026-10-22.parquet	604647	874e5f759e1050b3a61c0cb4cd8b8bc3ae56629984da35740c4cf67fb47108cd	https://noaa-gfs-bdp-pds.s3.amazonaws.com/ (pgrb2.0p25, 18Z runs, f010/f016/f022, point values)
 data/raw/gfs/gfs_points_2025-09-01_2025-09-02.parquet	8680	eed25c560056ef37ed5041ecbde5bd04d8930d42a0de8329f219b5900e22dc6e	https://noaa-gfs-bdp-pds.s3.amazonaws.com/ (pgrb2.0p25, 18Z runs, f010/f016/f022, point values)
 data/raw/hans/hi3_notices.json	10358642	1ac1b01adb62ff9f019277f0f59941feda4196a76eb86d80e4fac6a023f4dc7a	https://volcanoes.usgs.gov/hans-public/api/search/search (obsAbbr=hvo, volcCd=hi3)

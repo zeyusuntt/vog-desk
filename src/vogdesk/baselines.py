@@ -1,7 +1,9 @@
 """Reference forecasts that use only information available at issue time (18:00 HST, day D).
 
 climatology: constant probability = training base rate (frozen from the training split).
-persistence: 1 if any hourly SO2 >= threshold in the 24 h before issue, else 0.
+persistence: 1 if any hourly SO2 >= threshold in the 24 usable hours before issue, else 0. Usable means
+  published by issue: AirNow posts an hour about 30 min after it ends, so at 18:00 HST the last usable
+  hour begins at 16:00 HST (PREREG: hour-beginning time + 2 h).
 episode_rule: 1 if a fountaining episode is known (published) to have been active within the 24 h
   before issue, using HANS publication times or the conservative fallback in usgs_episodes.py.
 """
@@ -9,6 +11,8 @@ from __future__ import annotations
 
 import numpy as np
 import pandas as pd
+
+from vogdesk.asof import HOURLY_LAG
 
 HST = pd.Timedelta(hours=10)
 
@@ -20,8 +24,8 @@ def issue_time_utc(issue_date_hst: pd.Timestamp) -> pd.Timestamp:
 def persistence(hourly: pd.Series, issue_dates: pd.DatetimeIndex, threshold: float) -> pd.Series:
     vals = []
     for d in issue_dates:
-        t = issue_time_utc(d)
-        w = hourly[(hourly.index >= t - pd.Timedelta(hours=24)) & (hourly.index < t)]
+        last = issue_time_utc(d) - HOURLY_LAG  # hour-beginning of the latest published hour
+        w = hourly[(hourly.index > last - pd.Timedelta(hours=24)) & (hourly.index <= last)]
         vals.append(float((w >= threshold).any()) if len(w) else np.nan)
     return pd.Series(vals, index=issue_dates, name="persistence")
 
