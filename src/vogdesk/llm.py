@@ -98,25 +98,73 @@ class SampleChat:
 
 
 # --- provider contract (Cursor) -----------------------------------------------------------------
-# Owned by Cursor piece B. Contract, fixed on 23 Oct 2026:
+# Piece B: the Nightshift provider block, built in Cursor.
+# "Add Meterless as a provider" recipe. The implementation
+# below is the minimal working version so the desk runs end to end in the meantime. Contract:
 #   base URL METERLESS_BASE_URL (default http://127.0.0.1:8088/v1), bearer METERLESS_RUNTIME_TOKEN,
 #   headers `meterless-app: <METERLESS_APP>` and `meterless-scope: user`;
-#   GET /v1/models at startup decides online(); POST /v1/chat/completions with an explicit model id;
+#   GET /v1/models decides online(); POST /v1/chat/completions with an explicit model id;
 #   max_tokens floor MIN_TOKENS_LIGHTNING for LIGHTNING; strip_think on every reply;
 #   provider_model read from response["meterless"]["provider_model"] (fallback response["model"]);
-#   180 s timeout, 3 retries with backoff on 5xx and connection errors, never on 4xx;
-#   never log the token. Until it lands, open_chat("nightshift") raises NotImplementedError.
+#   180 s timeout, 3 tries with backoff on 5xx and connection errors, never on 4xx; never log the token.
+class ProviderError(RuntimeError):
+    pass
+
+
 class NightshiftChat:
     name = "nightshift"
+    TIMEOUT_S = 180.0
+    TRIES = 3
 
     def __init__(self, base_url: str, token: str, app: str = "vog-desk"):
-        raise NotImplementedError("Nightshift provider adapter is built in Cursor (piece B)")
+        import httpx
+        self.base_url = base_url.rstrip("/")
+        self._client = httpx.Client(
+            base_url=self.base_url, timeout=self.TIMEOUT_S,
+            headers={"Authorization": f"Bearer {token}", "meterless-app": app, "meterless-scope": "user",
+                     "Content-Type": "application/json"})
 
-    def online(self) -> bool:  # pragma: no cover
-        return False
+    def models(self) -> list[str]:
+        r = self._client.get("/models")
+        r.raise_for_status()
+        return [m.get("id", "") for m in r.json().get("data", [])]
 
-    def complete(self, messages, model, max_tokens=1024, temperature=0.2):  # pragma: no cover
-        raise NotImplementedError
+    def online(self) -> bool:
+        try:
+            return len(self.models()) > 0
+        except Exception:
+            return False
+
+    def complete(self, messages: list[Message], model: str, max_tokens: int = 1024,
+                 temperature: float = 0.2) -> ChatResult:
+        import httpx
+        if model == LIGHTNING:
+            max_tokens = max(max_tokens, MIN_TOKENS_LIGHTNING)
+        body = {"model": model, "messages": [m.model_dump() for m in messages],
+                "max_tokens": max_tokens, "temperature": temperature}
+        last: Exception | None = None
+        for attempt in range(self.TRIES):
+            t0 = time.perf_counter()
+            try:
+                r = self._client.post("/chat/completions", json=body)
+            except httpx.TransportError as e:
+                last = e
+                time.sleep(2 ** attempt)
+                continue
+            if r.status_code >= 500:
+                last = ProviderError(f"{r.status_code} from provider: {r.text[:200]}")
+                time.sleep(2 ** attempt)
+                continue
+            if r.status_code >= 400:
+                raise ProviderError(f"{r.status_code} from provider: {r.text[:200]}")
+            data = r.json()
+            raw = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
+            content, reasoning = strip_think(raw)
+            provider_model = (data.get("meterless") or {}).get("provider_model") or data.get("model")
+            return ChatResult(content=content, model_requested=model, provider_model=provider_model,
+                              reasoning=reasoning, usage=data.get("usage") or {},
+                              latency_ms=int((time.perf_counter() - t0) * 1000), provider=self.name)
+        raise ProviderError(f"Nightshift request failed after {self.TRIES} tries: {last}")
 # --- end provider contract (Cursor) -------------------------------------------------------------
 
 
