@@ -1,0 +1,16 @@
+{
+  "name": "vogdesk-memory-service",
+  "version": "0.1.0",
+  "private": true,
+  "description": "HTTP sidecar that runs the Meterless H-MEM and World Model reference engines for the vog desk, adding the as-of rule the forecasts need.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "scripts": {
+    "start": "tsx server.ts",
+    "conformance:hmem": "cd engines/hmem/reference && npx tsx ../conformance/runner.ts",
+    "conformance:world-model": "cd engines/world-model/reference && npx tsx ../conformance/runner.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.0"
+  }
+}
