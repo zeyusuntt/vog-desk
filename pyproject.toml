@@ -1,0 +1,24 @@
+[project]
+name = "vogdesk"
+version = "0.1.0"
+description = "Vog forecast desk for Pahala, Hawaii Island: next-night SO2 exposure forecasts with verification"
+requires-python = ">=3.12"
+dependencies = [
+  "pandas>=2.2",
+  "pyarrow>=17",
+  "requests>=2.32",
+  "numpy>=2.0",
+]
+
+[project.optional-dependencies]
+model = ["scikit-learn>=1.5"]
+agents = ["langgraph>=0.2", "langchain-openai>=0.2", "langchain-core>=0.3", "pydantic>=2.8", "fastapi>=0.115", "uvicorn>=0.30", "httpx>=0.27"]
+gfs = ["herbie-data>=2024.8", "cfgrib>=0.9", "xarray>=2024.7"]
+dev = ["pytest>=8"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/vogdesk"]
