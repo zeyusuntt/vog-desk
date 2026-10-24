@@ -168,3 +168,19 @@ Full desk (v4, frozen at 4b766f1) on the held-out period, started 04:10 PDT at c
 | 7 recent rate | 0.154 | +0.092 | 0.414 | 0.564 | 0.15 | 21 | 12 | 70 | 0.64 | 0.77 | 0.204 |
 
 Paired Brier differences, 7-day block bootstrap 90% intervals: full desk minus model −0.0296 [−0.0521, −0.0099]; full desk minus recent rate −0.0083 [−0.0158, −0.0013]; no-review minus model −0.0294; no-review minus recent rate −0.0083. Handovers: full desk 0, no-review 3 (Ultra chose them; counted separately). Reading, plainly: on dev the desk's value is the memory model; the review loop changed the numbers on almost no nights (the gated adjustments were 6 of 174 for the full desk and 10 of 175 for the no-review variant), so forecasts 5 and 6 are near twins. The review's worth, if any, has to show in the held-out period or in handover accuracy; it is not claimed from dev. The dev period was used for tuning, so these numbers are tuning numbers; the held-out period is the test.
+
+## 2026-10-24 05:40 PDT: held-out period, scored once (docs/RESULTS.md)
+
+Run at frozen commit 4b766f1 (code), scored with `scripts/results.py --split heldout --i-am-sure --t-star 0.18 --tag v4` at 3ff6d78. 102 valid nights, 39 events, base rate 0.382.
+
+| forecast | Brier | BSS vs clim | AUC | at t* | POD | FAR | CSI |
+|---|---|---|---|---|---|---|---|
+| 1 climatology | 0.341 | 0 | | | | | |
+| 2 persistence | 0.455 | −0.32 | | 1 | 0.41 | 0.59 | 0.26 |
+| 3 episode rule | 0.422 | −0.24 | | 1 | 0.03 | 0.83 | 0.02 |
+| 4 model only | 0.332 | +0.03 | 0.614 | 0.18 | 0.08 | 0.40 | 0.07 |
+| 5 desk, no review | 0.224 | +0.34 | 0.657 | 0.18 | 0.95 | 0.58 | 0.41 |
+| 6 full desk | **0.215** | **+0.37** | 0.687 | 0.18 | 0.95 | 0.58 | 0.42 |
+| 7 recent rate | 0.246 | +0.28 | 0.397 | 0.13 | 1.00 | 0.62 | 0.38 |
+
+Paired differences (7-day blocks, 90%): 6 minus 4 −0.117 [−0.157, −0.080]; 6 minus 7 −0.031 [−0.048, −0.014]; 6 minus 5 −0.009 [−0.019, +0.001] (14-day: [−0.016, −0.000]); 4 minus 1 −0.009 [−0.023, +0.004]. Both pre-registered claims hold. Inside the desk: base (memory model) 0.2199, full desk 0.2153, no-review 0.2244; 82 nights flagged; 8 handovers in the no-review variant (5 events), none in the full desk; Ultra fell back to the template on 23 nights. Nothing was changed after seeing these numbers; the live desk runs the same frozen code.

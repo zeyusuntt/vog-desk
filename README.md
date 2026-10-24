@@ -43,7 +43,20 @@ LangGraph `StateGraph`, Pydantic state, JSONL trace per case under `logs/`, Worl
 
 ## Results
 
-Development period, forecasts 1 to 4 and 7, from [docs/DEVLOG.md](docs/DEVLOG.md): 175 nights, 33 events, base rate 0.189. Model Brier 0.175 (BSS −0.03 vs climatology), persistence −0.55, recent-rate baseline 0.154 (BSS +0.09). Forecasts 5 and 6 (the desk) are being backtested; numbers land in DEVLOG as they finish. The held-out period (1 July to 21 October 2026) is scored once, after thresholds are frozen, and reported in RESULTS.md whatever the sign. Live forecasts from 23 October are committed under `live/` before the outcome is known.
+Pre-registered before the first fit ([docs/PREREG.md](docs/PREREG.md), commit `8649b40`); thresholds frozen before the held-out run (`4b766f1`); the held-out period was scored once ([docs/RESULTS.md](docs/RESULTS.md)).
+
+Held-out, 1 July to 21 October 2026, 102 valid nights, 39 events (base rate 0.38):
+
+| forecast | Brier | BSS vs climatology | AUC | CSI at t* |
+|---|---|---|---|---|
+| climatology (2025 rate 0.059) | 0.341 | 0 | | |
+| persistence | 0.455 | −0.32 | | 0.26 |
+| model only (frozen on 2025) | 0.332 | +0.03 | 0.61 | 0.07 |
+| desk without review | 0.224 | +0.34 | 0.66 | 0.41 |
+| **full desk** | **0.215** | **+0.37** | **0.69** | **0.42** |
+| recent-rate baseline (last 30 verified nights) | 0.246 | +0.28 | 0.40 | 0.38 |
+
+Paired Brier difference, 7-day block bootstrap 90% interval: full desk minus model −0.117 [−0.157, −0.080]; full desk minus recent-rate baseline −0.031 [−0.048, −0.014]; full desk minus desk without review −0.009 [−0.019, +0.001]. The gain comes mostly from the memory model, the pre-registered pipeline refit each night on the verified nights the desk remembers; the review loop added a small, borderline improvement; the frozen 2025 model is near climatology because the eruption's regime changed (DEVLOG). Labels match the Department of Health's own exceedance list on 39 of 39 held-out nights. Development-period numbers (used for tuning) are in [docs/DEVLOG.md](docs/DEVLOG.md). Live forecasts since 23 October are committed under `live/` before the outcome is known and verified the next day.
 
 ## Run it
 

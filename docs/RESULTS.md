@@ -73,3 +73,16 @@ A negative difference means the first forecast has the lower (better) Brier scor
 | [0.30, 0.50) |  98 |    0.404 |      0.388 |       38 |
 | [0.50, 0.70) |   1 |    0.500 |      0.000 |        0 |
 | [0.70, 1.00) |   0 |  nan     |    nan     |        0 |
+
+## What happened inside the desk on the held-out nights
+
+- The review raised at least one flag on 82 of 102 nights (model versus memory-model disagreement 58, regime unseen 33, analog split 30, data gap 5). The DutyLead's gated adjustments were applied on 47 nights in the full desk and 41 in the no-review variant.
+- Full desk: base probability (memory model) Brier 0.2199, after adjustments 0.2153. No-review: base 0.2199, after adjustments 0.2244. The same adjustment rule helped after a re-query and hurt without one; that difference is the review loop's measured value on this period, 0.009 Brier, with a 90% interval that touches zero at 7-day blocks and excludes it at 14-day blocks.
+- Handovers: the full desk handed over no night (its re-queries resolved every forced case); the no-review variant handed over 8 nights, 5 of them events (rate 0.62 against the period's 0.38). Handed-over nights are scored at the probability shown and never counted as correct.
+- Model calls: 102 nights, Lightning evidence summaries passed validation on every night (53 after one retry); the Ultra decision passed on 77 nights (53 after a retry) and fell back to the code's template on 23 nights, which issue the base with no adjustment. The traces record every failure reason.
+- Label audit (docs/LABEL_AUDIT_heldout.md): the Department of Health's list has 39 Pāhala exceedance nights in our window, ours has 39, the same 39. Daily maxima agree within 1 ppb on 37; on 14 Aug and 25 Sep 2026 our preliminary AirNow maximum is 16 and 32 ppb above DOH's validated figure (the same hour, revised down in validation). One DOH row (27 Sep, 5 to 6 p.m.) is a daytime exceedance outside the window.
+- Effective sample size: 15 seven-day blocks with at least one event.
+
+## Reading
+
+The primary pre-registered claim holds: the full desk has a lower Brier score than the model it was given (−0.117, 90% CI [−0.157, −0.080]). The secondary claim added before the held-out run also holds: it beats the memory-free adaptive baseline (−0.031, [−0.048, −0.014]). Most of the gain comes from the memory model, the pre-registered pipeline refit on the verified nights the desk remembers; the frozen 2025 model is near climatology in this period (BSS +0.03) because the eruption's regime changed. At the frozen threshold t* = 0.18 the full desk warned on 87 of 102 nights (POD 0.95, FAR 0.58, CSI 0.42); a desk that warns this often is a desk for a high-exposure season, and the probability, not the warning, is what the school's designated person should read. The period has 39 events in 102 nights, far from the 2025 training year's 21 in 356; a quieter season would test calibration at the low end, which this period does not.
