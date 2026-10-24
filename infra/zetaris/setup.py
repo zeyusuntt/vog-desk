@@ -52,7 +52,9 @@ def statements(text: str) -> list[str]:
             continue
         if ln.strip().startswith("--"):
             continue
-        if not buf and ln.strip().upper().startswith("COMPILE USL"):
+        if not ln.strip() and not "".join(buf).strip():
+            continue  # blank line between statements
+        if not "".join(buf).strip() and ln.strip().upper().startswith("COMPILE USL"):
             in_usl = True
         buf.append(ln)
         if not in_usl and ln.rstrip().endswith(";"):
