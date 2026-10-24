@@ -48,9 +48,10 @@ def main() -> None:
     ap.add_argument("--t-star", type=float, default=float(os.environ.get("T_STAR", DEFAULT_T_STAR)))
     ap.add_argument("--memory-path", type=Path, default=None)
     ap.add_argument("--tag", default="", help="suffix for the output and memory files, e.g. v2")
+    ap.add_argument("--i-am-sure", action="store_true", help="required for the held-out split, which is scored once")
     args = ap.parse_args()
     suffix = f"_{args.tag}" if args.tag else ""
-    if args.split == "heldout" and "--i-am-sure" not in sys.argv:
+    if args.split == "heldout" and not args.i_am_sure:
         sys.exit("The held-out split is run once, after freezing. Pass --i-am-sure.")
 
     src = sources.load()

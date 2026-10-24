@@ -88,10 +88,11 @@ def main() -> None:
     ap.add_argument("--model", default=str(model.MODEL_DIR / "lr_2025.joblib"))
     ap.add_argument("--markdown", help="append the report to this file")
     ap.add_argument("--dump", help="write per-night forecasts and labels to this parquet file")
+    ap.add_argument("--i-am-sure", action="store_true", help="required for the held-out split, which is scored once")
     args = ap.parse_args()
     if args.split == "heldout":
         print("The held-out split is scored once, after freezing. Confirm by passing --split heldout --i-am-sure.", file=sys.stderr)
-        if "--i-am-sure" not in sys.argv:
+        if not args.i_am_sure:
             sys.exit(2)
     src = sources.load()
     X, lab = dataset.build(src, args.split)

@@ -54,8 +54,9 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--split", choices=list(dataset.SPLITS), default="dev")
     ap.add_argument("--markdown", action="store_true")
+    ap.add_argument("--i-am-sure", action="store_true", help="required for the held-out split, which is scored once")
     args = ap.parse_args()
-    if args.split == "heldout" and "--i-am-sure" not in sys.argv:
+    if args.split == "heldout" and not args.i_am_sure:
         sys.exit("The held-out labels are audited after the held-out forecasts are scored. Pass --i-am-sure.")
     a, b = dataset.SPLITS[args.split]
     src = sources.load()

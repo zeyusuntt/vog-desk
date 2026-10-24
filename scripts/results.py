@@ -52,8 +52,9 @@ def main() -> None:
     ap.add_argument("--split", choices=list(dataset.SPLITS), default="dev")
     ap.add_argument("--t-star", type=float, default=None, help="frozen action threshold; default: CSI max on this split (dev only)")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--i-am-sure", action="store_true", help="required for the held-out split, which is scored once")
     args = ap.parse_args()
-    if args.split == "heldout" and "--i-am-sure" not in sys.argv:
+    if args.split == "heldout" and not args.i_am_sure:
         sys.exit("The held-out split is reported once. Pass --i-am-sure.")
     src = sources.load()
     X, lab = dataset.build(src, args.split)
