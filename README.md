@@ -1,52 +1,76 @@
 # vog-desk
 
-A vog (volcanic smog) forecast desk for Pāhala, on Hawaiʻi Island. Every evening at 18:00 HST it answers one question: between now and noon tomorrow, will any hour at the Pāhala monitor reach the event threshold for sulfur dioxide (SO2)? It gives a calibrated probability, a recommendation that follows the existing Hawaiʻi schools SO2 action plan, and the evidence behind each number. The next day it checks itself against the measurements.
+A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every evening at 18:00 HST it answers one question: **between now and noon tomorrow, will any hour at the Pāhala monitor reach 75 ppb of sulfur dioxide?** It gives a calibrated probability, a recommendation that follows the 2018 Hawaiʻi Schools SO2 Action Plan, and a discussion in which every number points at the evidence it came from. The next day it checks itself against the monitor, remembers the night, and tells its memory which analogs helped.
 
-Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3: Reasoning Architecture. Work in this repository started inside the build window (22 October 2026, 00:00 UTC).
+Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3, Reasoning Architecture, by a team of one. Work in this repository started inside the build window (22 October 2026, 00:00 UTC). Status and honest numbers: [docs/DEVLOG.md](docs/DEVLOG.md); results on the held-out period: [docs/RESULTS.md](docs/RESULTS.md) (written once, at the end).
 
-Status: day zero. Raw data, labels and reference forecasts exist; the agents do not yet.
+## Why a desk, not a model
 
-## The question, fixed before modelling
+Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Each one sends gas down the southwest flank into Kaʻū. In 2025 the Department of Health logged 25 one-hour SO2 exceedances at Pāhala, most between 02:00 and 09:00 HST, while families sleep with the windows shut and children get ready for school. The schools plan reacts after thirty minutes of elevated readings; nobody gives the evening-before warning.
 
-- Issue time: 18:00 HST on day D.
-- Window: 18:00 HST day D to 12:00 HST day D+1 (18 hourly values).
-- Event: any hourly SO2 at Pāhala (AQS site 15-001-2016) of at least 75 ppb.
-- Threshold rule, decided before looking at any data: use 0.11 ppm (the lower edge of the schools plan's yellow level) if the 2025 training year has at least 20 event nights at that level, otherwise 75 ppb (the 1-hour national standard). 2025 had 13 nights at 0.11 ppm, so the threshold is 75 ppb. An hourly mean of 75 ppb does not guarantee that a 15-minute average reached the yellow level; this is stated wherever results are reported.
-- A night counts as a negative only if at least 14 of its 18 hours are present. Missing windows are excluded, never counted as negatives.
-- Splits: 2025 for training, January to June 2026 for development, July 2026 to 21 October 2026 held out and run once.
-
-## Data, all public
-
-| Source | What | Script |
-|---|---|---|
-| EPA AQS pre-generated files | Validated hourly SO2, 2025 to March 2026 | `src/vogdesk/ingest/aqs.py` |
-| AirNow public hourly files | Preliminary hourly SO2 and station wind, March to October 2026 | `scripts/fetch_airnow.py`, `src/vogdesk/ingest/airnow.py` |
-| USGS HANS notices (HVO) | 977 Kīlauea notices since December 2024, with publication times | `scripts/fetch_hans.py`, `src/vogdesk/ingest/hans.py` |
-| USGS Kīlauea eruption information | Start and pause times of the 55 fountaining episodes (USGS marks these as preliminary) | `src/vogdesk/ingest/usgs_episodes.py` |
-| Hawaiʻi DOH exceedance list | Official 2025 exceedance days, used only to check our labels | `data/raw/doh/` |
-| Iowa Environmental Mesonet | Hilo radiosondes (PITO), 00Z and 12Z | `scripts/fetch_raob.py` |
-| NOAA GFS 0.25° on AWS | 18Z runs, leads 10, 16 and 22 h, point values near the summit, Pāhala, Ocean View, Kona | `scripts/fetch_gfs.py` |
-
-`python scripts/manifest.py` writes `data/MANIFEST.tsv` with the SHA-256 of every raw file. Raw and derived data are not committed.
+The statistical model alone cannot do it. Fit on 2025, it learned that bad nights come with fountaining and light winds. In 2026 the eruption changed: episodes are shorter, pauses longer, and the gas reaches Pāhala between episodes on trade-wind nights, three times as often. On the development period (January to June 2026) the frozen model scores below climatology. A desk that remembers verified nights, retrieves analogs as of the issue time, checks its two guidance streams against each other, re-queries the data layer when they disagree, and hands over to a human when it cannot resolve the conflict is the thing being tested here. So is the honest question of whether it beats a dumb adaptive baseline (the event rate of the last 30 verified nights). See [docs/PREREG.md](docs/PREREG.md) for what was fixed before any model was fit, and the one logged change since.
 
 ## What a forecast may see
 
-Every input carries the time it became public, and features are cut at the issue time:
+Every input carries the time it became public, and the forecast is cut at 18:00 HST:
 
-- AirNow and AQS hours before 18:00 HST.
-- HVO facts only after the first notice that published them; when a USGS episode time has no matching notice, it becomes usable 12 hours after the event.
-- The GFS run from 18Z on day D, about 10 hours old at issue time. The 00Z run of D+1 is never used.
-- Soundings up to the 00Z launch (14:00 HST) on day D.
+| Source | Available at |
+|---|---|
+| Hourly SO2, AQS validated and AirNow preliminary | hour + 2 h (AirNow posts about 30 min after the hour) |
+| HVO episode starts and ends | the first notice that published them |
+| GFS 0.25° | the 18Z run of the issue day only |
+| Hilo soundings | launch + 3 h; latest usable is 00Z |
+| Memory (H-MEM) | a night only after its window closed and was verified |
 
-`tests/test_no_lookahead.py` checks these rules.
+The rules live in `src/vogdesk/asof.py`, in the Zetaris semantic layer as an `available_utc` column on every table, and in the tests, which run against Zetaris itself.
 
-## Run
+## How the desk works
 
-```bash
-uv venv --python 3.12 && uv pip install -e ".[dev,model,gfs]" eccodes lxml
-python -m pytest -q tests
+```
+run.py / POST /run
+  EvidenceAgent   seven fixed as-of queries through Zetaris (run_sql rewrites every table with available_utc <= issue)
+                  Nemotron Lightning writes the regime summary; a validator checks every number against the evidence
+  ForecasterAgent G1 frozen logistic model  G2 ten analog nights from H-MEM (as of issue, Wilson interval)  G3 recent event rate
+  Review          five checks in code: model vs memory gap, analog split, persistence contradiction, regime unseen, data gaps
+                  on a flag: targeted re-query (upwind station, GFS 850 vs 925, episode status), then guidance again (max 2 rounds)
+  DutyLead        Nemotron Ultra states weights over the streams and writes a cited discussion; code applies the PREREG action mapping
+                  or hands the case to a human with a reason
+  Verifier (D+1)  scores the night, writes it to H-MEM with its publication time, gives the analogs helpful/wrong feedback,
+                  records forecast and verification in Postgres (read back through Zetaris)
 ```
 
-## Tools used to build it
+LangGraph `StateGraph`, Pydantic state, JSONL trace per case under `logs/`, World Model case record in the memory sidecar. `--no-review` is the ablation (forecast 5).
 
-Cursor is the development environment, as the hackathon rules require. Claude Code and Codex were used alongside it, which the hackathon's AI usage policy allows.
+## Results
+
+Development period, forecasts 1 to 4 and 7, from [docs/DEVLOG.md](docs/DEVLOG.md): 175 nights, 33 events, base rate 0.189. Model Brier 0.175 (BSS −0.03 vs climatology), persistence −0.55, recent-rate baseline 0.154 (BSS +0.09). Forecasts 5 and 6 (the desk) are being backtested; numbers land in DEVLOG as they finish. The held-out period (1 July to 21 October 2026) is scored once, after thresholds are frozen, and reported in RESULTS.md whatever the sign. Live forecasts from 23 October are committed under `live/` before the outcome is known.
+
+## Run it
+
+```bash
+uv venv --python 3.12 && uv pip install -e ".[dev,model,agents,infra]"
+.venv/bin/python -m pytest -q tests                       # 100+ tests, the Zetaris and sidecar ones skip when those are down
+SAMPLE_MODE=true python run.py --issue 2025-09-02         # no keys: local Parquet, recorded model replies, in-process memory
+python run.py --issue 2025-09-02                          # live: Zetaris, Nightshift, memory-service
+python run.py --issue 2025-09-02 --no-review              # forecast 5
+uvicorn api:app --port 8000                               # POST /run {"issue_date": "2025-09-02"}
+docker build -t vog-desk . && docker run --rm vog-desk --issue 2025-09-02
+```
+
+Local data layer and Zetaris wiring: [infra/README.md](infra/README.md), then `python infra/zetaris/setup.py`. Memory sidecar: [memory-service/README.md](memory-service/README.md). Raw data is rebuilt by `scripts/fetch_*.py` and listed with SHA-256 in `data/MANIFEST.tsv`; derived Parquet is not committed.
+
+## Sponsor technology
+
+- **Zetaris** is the data layer. Eight sources (Parquet on a local S3 store, Postgres over JDBC) behind one Unified Semantic Layer, `pahala_exposure`, eight governed tables each with `available_utc`, eleven data quality rules (one of them flags exactly the two censored Ocean View hours of 3 Sep 2025 that DOH marks with an asterisk). Agents read only through `run_sql`. Scripts: `infra/zetaris/`; reflection for the judges: [docs/ZETARIS_REFLECTION.md](docs/ZETARIS_REFLECTION.md); evidence: `docs/evidence/zetaris-dq.txt`.
+- **Meterless engines.** H-MEM and the World Model reference implementations run unchanged in `memory-service/` (conformance 13 of 13 and 8 of 8, `docs/evidence/conformance-*.txt`). The sidecar adds the as-of rule: a night is retrievable only after its verification time. The desk uses memory in a working feature: analog retrieval with a trace, verification write-back with source and confidence, trust-ledger feedback, night-level conflict detection with the 0.70 gate.
+- **Meterless Nightshift** is the primary model provider (`src/vogdesk/llm.py`), with explicit model ids so every trace line names the model that answered: `nvidia/nemotron-3.5-lightning-30b-a3b` for evidence narration (thinking off) and `nvidia/nemotron-3-ultra-550b-a55b` for the DutyLead. Provider grade: [docs/evidence/provider-grade.md](docs/evidence/provider-grade.md).
+- **NVIDIA Nemotron**: the two models above, through NVIDIA's free endpoint registered in Nightshift. `meterless.provider_model` is logged on every call.
+- **Cursor** built the Nightshift provider block in `llm.py` (commit `f559fa7`, review in [docs/cursor/B-review.md](docs/cursor/B-review.md)). Everything else was built with Claude Code and Codex; all code was read and tested by the author.
+
+## Pre-existing components
+
+Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memory-service/engines/UPSTREAM.txt`) and, for the demo replay, the author's Windward terrain scene (github.com/zeyusuntt/windward). All data is public (EPA, AirNow, USGS, DOH, IEM, NOAA).
+
+## Limits
+
+One station, one threshold, one training year with 21 events. An hourly mean of 75 ppb does not show that a 15-minute average reached the plan's yellow level. AirNow values after March 2026 are preliminary and rounded to whole ppb. The desk recommends; the school's designated person decides. Everything that did not work is in DEVLOG.

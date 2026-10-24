@@ -1,0 +1,158 @@
+{
+ "$schema": "./metadata.schema.json",
+ "schema_version": "0.1-community",
+ "project": {
+  "name": "vog-desk",
+  "summary": "A volcanic-smog forecast desk for Pahala, Hawaii Island: at 18:00 HST a calibrated probability that any hour at the Pahala monitor reaches 75 ppb SO2 by noon, a recommendation under the 2018 schools SO2 action plan, a discussion in which every number cites its evidence, and next-day verification written into memory.",
+  "licence": "Apache-2.0"
+ },
+ "track": "Reasoning Architecture",
+ "team": {
+  "name": "dotisacat",
+  "solo": true,
+  "builders": [
+   {
+    "name": "Zeyu Sun",
+    "role": "owner: decisions, data, model, agents, evaluation, writing"
+   }
+  ]
+ },
+ "repository": "https://github.com/zeyusuntt/vog-desk",
+ "submission": {
+  "demo_video": null,
+  "slide_deck": null
+ },
+ "sponsors": {
+  "zetaris": {
+   "status": "working",
+   "integration_working": true,
+   "in_use_case": true,
+   "use_case_note": "Every evidence item an agent cites is a run_sql query over the pahala_exposure Unified Semantic Layer, rewritten with available_utc <= issue time; the Python fallback exists for judges without Zetaris and a test checks the two agree.",
+   "how": "Eight sources (EPA AQS, AirNow, USGS HVO episodes with notice publication times, Hilo soundings, NOAA GFS points as Parquet on a local S3 store; stations, action-plan levels, forecasts and verifications in Postgres over JDBC) behind one USL with eight governed tables, each carrying available_utc, and eleven data quality rules. The desk's own forecasts and verifications are written to Postgres and read back through Zetaris.",
+   "interface": "rest",
+   "deployment": "local-docker",
+   "data_sources": [
+    "EPA AQS hourly SO2",
+    "AirNow hourly SO2 and wind",
+    "USGS HVO episodes and HANS notices",
+    "IEM Hilo radiosondes",
+    "NOAA GFS 0.25 point values",
+    "Hawaii DOH action plan levels"
+   ],
+   "where": [
+    "infra/zetaris/",
+    "src/vogdesk/zetaris.py",
+    "src/vogdesk/desk/data.py",
+    "src/vogdesk/desk/evidence.py"
+   ],
+   "evidence": [
+    "docs/evidence/zetaris-dq.txt",
+    "docs/ZETARIS_REFLECTION.md",
+    "tests/test_zetaris_asof.py"
+   ],
+   "decisions": [
+    "docs/PREREG.md"
+   ]
+  },
+  "meterless": {
+   "status": "working",
+   "integration_working": true,
+   "in_use_case": true,
+   "use_case_note": "H-MEM holds every verified night with source and confidence; the ForecasterAgent retrieves ten analog nights as of the issue time with the engine's ranking and a trace; the Verifier writes the night back and gives helpful/wrong feedback through the trust ledger; night-level conflicts resolve through the engine's 0.70 gate. The World Model holds each case's events.",
+   "how": "The Meterless reference implementations run unchanged in a Node sidecar (conformance H-MEM 13 of 13, World Model 8 of 8). The sidecar adds the information cutoff: records carry available_utc and a query as of T sees only nights verified by T. All model calls go through Meterless Nightshift with explicit Nemotron ids.",
+   "engines": [
+    "H-MEM",
+    "World Model"
+   ],
+   "provider": "nightshift",
+   "where": [
+    "memory-service/",
+    "src/vogdesk/memory.py",
+    "src/vogdesk/analogs.py",
+    "src/vogdesk/desk/verifier.py",
+    "src/vogdesk/llm.py"
+   ],
+   "evidence": [
+    "docs/evidence/conformance-hmem.txt",
+    "docs/evidence/conformance-world-model.txt",
+    "docs/evidence/provider-grade.md",
+    "tests/test_memory_service.py"
+   ],
+   "decisions": [
+    "the desk design",
+    "docs/DEVLOG.md"
+   ]
+  },
+  "nvidia": {
+   "status": "working",
+   "integration_working": true,
+   "in_use_case": true,
+   "use_case_note": "Lightning writes the evidence summary (thinking off, validated against the evidence); Ultra is the DutyLead that weighs the guidance streams and writes the cited discussion. provider_model is logged on every call.",
+   "how": "nvidia/nemotron-3.5-lightning-30b-a3b and nvidia/nemotron-3-ultra-550b-a55b through NVIDIA's free endpoint registered in Nightshift; the trace names the model that answered each step.",
+   "models": [
+    "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "nvidia/nemotron-3-ultra-550b-a55b"
+   ],
+   "route": "via-meterless",
+   "where": [
+    "src/vogdesk/llm.py",
+    "src/vogdesk/desk/evidence.py",
+    "src/vogdesk/desk/duty_lead.py"
+   ],
+   "evidence": [
+    "docs/evidence/provider-grade.md",
+    "logs/"
+   ],
+   "decisions": [
+    "docs/DEVLOG.md"
+   ]
+  },
+  "cursor": {
+   "status": "working",
+   "integration_working": true,
+   "in_use_case": true,
+   "use_case_note": "Cursor built the Nightshift provider block in src/vogdesk/llm.py from the meterless.ai POWER recipe (commit f559fa7); the main build used Claude Code and Codex. All code was read and tested by the author.",
+   "how": "Cursor free tier, one bounded piece; reviewed before merge.",
+   "where": [
+    "src/vogdesk/llm.py"
+   ],
+   "evidence": [
+    "docs/cursor/B-review.md",
+    "docs/evidence/provider-grade.md"
+   ],
+   "decisions": [
+    "docs/cursor/B-review.md"
+   ]
+  }
+ },
+ "pre_existing": [
+  {
+   "name": "Meterless reference engines",
+   "what": "H-MEM and World Model reference implementations, conformance suites and specs from github.com/meterless/Meterless, Apache-2.0, vendored unchanged.",
+   "where": [
+    "memory-service/engines/"
+   ],
+   "since": "2026-10-19"
+  },
+  {
+   "name": "Windward",
+   "what": "The author's Hawaii terrain and sea-breeze scene, reused for the demo replay only; no forecast code comes from it.",
+   "where": [
+    "not in this repository"
+   ],
+   "since": "2026-06-01"
+  }
+ ],
+ "run": {
+  "setup": "README.md, section Run it",
+  "sample_mode": true,
+  "secrets": [
+   "ZETARIS_API_KEY",
+   "ZETARIS_ORG_ID",
+   "METERLESS_RUNTIME_TOKEN",
+   "AQS_EMAIL",
+   "AQS_KEY"
+  ]
+ },
+ "evidence_logs": "logs/"
+}
