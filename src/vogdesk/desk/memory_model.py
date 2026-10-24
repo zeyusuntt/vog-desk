@@ -25,7 +25,7 @@ C = 0.1
 HALFLIFE_FALLBACK_DAYS = 60
 
 
-def verified_nights(memory: Memory, as_of_utc: datetime, k: int = 2000) -> pd.DataFrame:
+def verified_nights(memory: Memory, as_of_utc: datetime, k: int = 100000) -> pd.DataFrame:
     """Nights in memory visible at as_of with features and a boolean outcome, newest first."""
     rows = []
     for r in memory.query("verified night Pahala", ["station:pahala"], as_of_utc, k=k):

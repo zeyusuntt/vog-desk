@@ -120,3 +120,12 @@ def test_world_model_case_context_is_idempotent(sidecar):
     ctx = sidecar.wm_context("case-test")
     assert ctx["n"] == 2 and [e["predicate"] for e in ctx["events"]] == ["evidence", "decision"]
     assert sidecar.wm_context("case-none")["n"] == 0
+
+
+def test_query_returns_every_visible_night_when_asked(sidecar):
+    # Regression: the sidecar capped k at 100, so the live memory model trained on 100 relevance-ranked nights.
+    for i in range(130):
+        day = (datetime(2025, 1, 1, tzinfo=U) + __import__("datetime").timedelta(days=i))
+        sidecar.add(_night(f"{day:%Y-%m-%d}", i % 5 == 0, day + __import__("datetime").timedelta(days=1, hours=22)))
+    got = sidecar.query("verified night Pahala", ["station:pahala"], datetime(2026, 1, 1, tzinfo=U), k=100000)
+    assert len(got) >= 130

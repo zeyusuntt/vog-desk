@@ -116,7 +116,7 @@ function hmemQuery(body: any) {
   const asOf = parseAware(body.as_of_utc, "as_of_utc");
   const text = String(body.text ?? "");
   const tags: string[] = Array.isArray(body.tags) ? body.tags.map(String) : [];
-  const k = Math.max(1, Math.min(100, Number(body.k ?? 10)));
+  const k = Math.max(1, Math.min(100000, Number(body.k ?? 10)));  // callers ask for every night (memory model, recent rate); a small cap silently truncated them
   const queryText = [text, ...tags].join(" ").trim() || "night";
   const scored: { m: MemoryRecord; score: number; matched: string[] }[] = [];
   for (const m of hmem.store.all()) {
