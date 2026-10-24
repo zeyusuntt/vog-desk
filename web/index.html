@@ -197,7 +197,7 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
     </figure>
     <figure class="figure">
       <h2>Live log</h2>
-      <p class="sub">Forecasts issued since 23 October 2026, committed before the night happened and checked the next afternoon.</p>
+      <p class="sub">Forecasts issued since 23 October 2026, committed before the outcome was known and checked the next afternoon.</p>
       <table class="log" id="log"></table>
     </figure>
   </section>
@@ -288,8 +288,14 @@ function drawScale(svg, p, guidance, animate = true) {
     const x0 = x(a) + (a > 0 ? 1 : 0), x1 = x(b) - (b < 1 ? 1 : 0);
     svg.append(svgEl("rect", { x: x0, y: bandY, width: x1 - x0, height: bandH, rx: 4, fill: `color-mix(in srgb, var(${c}) var(--wash), var(--paper))` }));
     svg.append(svgEl("rect", { x: x0, y: bandY + bandH - 4, width: x1 - x0, height: 4, fill: `var(${c})` }));
-    const room = x1 - x0 - 16, name = long.length * 8.2 <= room ? long : short.length * 8.2 <= room ? short : "";
-    if (name) svg.append(svgEl("text", { x: x0 + 8, y: bandY + 23, "font-size": 15, "font-weight": 700 }, name));
+    // The band's name sits in the widest free stretch of the band, so tonight's marker never cuts through it.
+    const xm = x(p), spans = xm > x0 && xm < x1 ? [[x0, xm - 8], [xm + 8, x1]] : [[x0, x1]];
+    let placed = null;
+    for (const text of [long, short]) {
+      const span = spans.find(([s0, s1]) => text.length * 8.2 <= s1 - s0 - 16);
+      if (span) { placed = [text, span[0] + 8]; break; }
+    }
+    if (placed) svg.append(svgEl("text", { x: placed[1], y: bandY + 23, "font-size": 15, "font-weight": 700 }, placed[0]));
   }
   for (const v of [T_STAR, 2 * T_STAR]) {
     svg.append(svgEl("text", { x: x(v), y: bandY + bandH + 20, "text-anchor": "middle", "font-size": 13, class: "soft" }, pct(v)));

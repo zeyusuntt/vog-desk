@@ -1,11 +1,11 @@
 # Local infrastructure
 
-Zetaris runs in Docker from `the Zetaris platform folder`. It cannot read files on the laptop. So the data layer is two local services:
+Zetaris runs in Docker from its own platform folder, outside this repository. It cannot read files on the laptop, so the data layer is two local services:
 
-- MinIO (S3 API) holds the derived Parquet. Zetaris reads it as S3.
+- An S3 store (RustFS, service `s3`) holds the derived Parquet. Zetaris reads it as S3.
 - Postgres holds the institutional tables. Zetaris reads it over JDBC.
 
-`infra/zetaris/` (sources, semantic layer, data quality rules) is built separately in Cursor.
+`infra/zetaris/` holds the sources, the semantic layer and the data quality rules, applied by `infra/zetaris/setup.py`.
 
 ## Start
 
@@ -13,7 +13,7 @@ Zetaris runs in Docker from `the Zetaris platform folder`. It cannot read files 
 docker compose -f infra/compose.yml up -d
 ```
 
-The `minio-init` container creates the bucket `vogdesk` and exits. That is expected.
+`scripts/load_minio.py` creates the bucket `vogdesk` on first use.
 
 Stop with `docker compose -f infra/compose.yml down`. Add `-v` to also delete the data volumes.
 
@@ -23,9 +23,9 @@ Both services bind to 127.0.0.1 only.
 
 | Service | Host port | Why |
 | --- | --- | --- |
-| Postgres | 5433 | 5432 is used by `another local Postgres`, 55000 by `zetaris-postgres-1`. |
-| MinIO S3 API | 9000 | Free on this machine. |
-| MinIO console | 9001 | Free on this machine. |
+| Postgres | 5433 | 5432 is often taken by another local Postgres. |
+| S3 API | 9000 | |
+| S3 console | 9001 | |
 
 Inside Docker the services keep their normal ports (5432 and 9000).
 
@@ -33,7 +33,7 @@ Inside Docker the services keep their normal ports (5432 and 9000).
 
 Both services also join the external network `zetaris_default`. This lets the Zetaris containers reach them by service name (`vogpg`, `s3`). The network existed when this was written. If `docker network ls` does not show it, the name of the Zetaris network must be checked and the `networks` block in `compose.yml` changed. Compose fails on start if an external network is missing.
 
-## Load MinIO
+## Load the S3 store
 
 ```
 .venv/bin/python scripts/load_minio.py
@@ -41,7 +41,7 @@ Both services also join the external network `zetaris_default`. This lets the Ze
 
 This uploads `data/derived/*.parquet` to `s3://vogdesk/derived/` and `data/raw/gfs/*.parquet` to `s3://vogdesk/raw/gfs/`. Use `--dry-run` to list files without uploading. The script needs `boto3`. It reads `.env` if `python-dotenv` is installed.
 
-The MinIO console is at http://localhost:9001.
+The store's console is at http://localhost:9001.
 
 ## Postgres for Zetaris
 

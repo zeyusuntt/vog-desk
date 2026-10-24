@@ -76,8 +76,6 @@ def main() -> None:
             if not mem.ping():
                 raise MemoryUnavailable("sidecar down")
             ver.memory_record_id = mem.add(rec); memory_note = "sidecar"
-            for rid in desk.get("guidance", [{}])[0].get("analog_ids", []) if False else []:
-                pass
         except MemoryUnavailable:
             mem = FakeMemory(ROOT / "data" / "memory" / "live.json")
             ver.memory_record_id = mem.add(rec); memory_note = "in-process file (sidecar down)"
@@ -91,8 +89,17 @@ def main() -> None:
         pg = record_forecast(state, forecast_kind=fc.get("kind", "model_only")) and record_verification(case_id, ver, "airnow")
     except Exception as e:
         print("postgres:", type(e).__name__, str(e)[:120])
+    # The 18 hourly values of the window, for the night strip on the page (hour-beginning HST).
+    t0 = pd.Timestamp(fc["issue_utc"])
+    series = sources.station_series(src, "pahala")
+    hours = []
+    for k in range(18):
+        t = t0 + pd.Timedelta(hours=k)
+        v = series.get(t)
+        hours.append({"hst": (t.tz_convert(None) - pd.Timedelta(hours=10)).strftime("%H:%M"),
+                      "ppb": None if v is None or pd.isna(v) else float(v)})
     fc["verification"] = ver.model_dump(mode="json") | {"model_only_brier": model_brier, "memory": memory_note, "postgres": bool(pg),
-                                                         "label_source": "airnow preliminary", "t_star_used": args.t_star}
+                                                         "label_source": "airnow preliminary", "t_star_used": args.t_star, "hours": hours}
     path.write_text(json.dumps(fc, indent=1, default=str))
     index = ROOT / "live" / "index.json"
     dates = sorted({p.name for p in (ROOT / "live").iterdir() if p.is_dir() and (p / "forecast.json").exists()}, reverse=True)

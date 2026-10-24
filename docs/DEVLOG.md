@@ -204,3 +204,8 @@ Decision: the held-out results are not re-run (they were scored once, and re-run
 ## 2026-10-24 09:20 PDT: the same truncation on the live path
 
 Following the G3 defect: the Node sidecar clamped `k` to 100 in `/hmem/query`. The live desk on 23 October therefore fit its memory model on 100 relevance-ranked nights (its note says "refit on 100 verified nights ... all history, 60-day half-life", because the last 120 days could not be found among them) rather than on the 120-day window. Dev and held-out ran on the in-process memory, which never capped, so the scored results are unaffected. Cap raised to 100,000; a sidecar integration test adds 130 nights and fails on the old server, passes on the new. With the fix, the live memory model as of 18:00 HST on 24 October trains on the last 120 days of verified nights. PREREG change 4.
+
+## 2026-10-24 10:40 PDT: two corrections found while writing the deck
+
+- Timing of the first live desk decision. The model-only forecast for 23 October was committed at 21:02 PDT (18:02 HST). The full desk's decision for the same night was committed at 00:21 PDT on 24 October, which is 21:21 HST, three hours into the window. Its inputs were cut at 18:00 HST and the outcome was not known until noon on 24 October, so it is still a forecast. The README, the page and the video script said "committed before the night happened"; they now say "before the outcome was known". Later nights run at 20:57 PDT (17:57 HST).
+- The SAMPLE_MODE replay test has failed since the G3 fix (da1b418). The fix changed G3 and the shrunk analog stream on the recorded nights, so the duty lead's prompt changed and its recorded reply no longer matched. The full suite was not run before that commit. The samples are re-recorded with the current code.
