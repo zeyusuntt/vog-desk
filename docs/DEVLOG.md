@@ -148,3 +148,7 @@ Version 4 is one rule on top of v3: the adjustment is applied only when the revi
 CSI over the threshold grid for the full desk v4: 0.10 → 0.236, 0.15 → 0.241, 0.18 → 0.262, 0.20 → 0.254, 0.25 → 0.216. **t* = 0.18** (hits 17, misses 16, false alarms 32; POD 0.52, FAR 0.65). Forecast 4's CSI-maximising t* on dev is 0.02.
 
 Frozen (PREREG "Frozen values", this commit): t* 0.18 for forecasts 5 and 6, 0.02 for forecast 4, and every desk rule listed there. The held-out period is run once after this commit. The no-review variant's v3 run is still finishing its last nights; its v4 derivation and t* check follow the same rule and are recorded below when done.
+
+## 2026-10-24 04:10 PDT: held-out run started
+
+Full desk (v4, frozen at 4b766f1) on the held-out period, started 04:10 PDT at commit 8bc82db (the only change since the freeze is making `--i-am-sure` a real argument; the first attempt was rejected by argparse). 102 valid nights between 1 July and 21 October 2026. Memory for the run is seeded with every verified night through 21 October, each stamped with its publication time, so the as-of query gives each issue exactly the nights a desk running since 2025 would have remembered. The no-review variant follows as soon as its dev v3 run finishes and its v4 derivation is recorded.
