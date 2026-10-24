@@ -31,7 +31,9 @@ def sidecar(tmp_path_factory):
         pytest.skip("memory-service dependencies not installed")
     port = _free_port()
     root = tmp_path_factory.mktemp("memory-root")
+    # start_new_session so the whole process group (npx -> node) can be killed; killing npx alone orphans node.
     proc = subprocess.Popen(["npx", "tsx", "server.ts"], cwd=SERVICE, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
+                            start_new_session=True,
                             env={"PATH": __import__("os").environ["PATH"], "HOME": __import__("os").environ.get("HOME", ""),
                                  "MEMORY_ROOT": str(root), "PORT": str(port)})
     client = HttpMemory(f"http://127.0.0.1:{port}")
@@ -40,10 +42,22 @@ def sidecar(tmp_path_factory):
             break
         time.sleep(0.5)
     else:
-        proc.kill()
+        _stop(proc)
         pytest.fail("memory-service did not start:\n" + proc.stdout.read().decode(errors="replace")[-2000:])
     yield client
-    proc.kill()
+    _stop(proc)
+
+
+def _stop(proc: subprocess.Popen) -> None:
+    import os, signal
+    try:
+        os.killpg(os.getpgid(proc.pid), signal.SIGTERM)
+    except ProcessLookupError:
+        pass
+    try:
+        proc.wait(timeout=10)
+    except subprocess.TimeoutExpired:
+        os.killpg(os.getpgid(proc.pid), signal.SIGKILL)
 
 
 def _night(day: str, event: bool, available: datetime, confidence: float = 0.8, source: str | None = None) -> MemoryRecord:
