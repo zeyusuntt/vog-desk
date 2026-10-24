@@ -28,7 +28,7 @@ from vogdesk.memory import Memory
 from vogdesk.sources import Sources
 from vogdesk.trace import Trace
 
-DEFAULT_T_STAR = 0.19  # provisional until frozen on dev (PREREG "Frozen values"); read from config at run time
+DEFAULT_T_STAR = 0.18  # frozen on dev, 24 Oct 2026 (PREREG "Frozen values")
 
 
 @dataclass

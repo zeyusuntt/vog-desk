@@ -84,11 +84,14 @@ These rules are enforced in code (`src/vogdesk/asof.py`) and tested (`tests/`).
 
 On the held-out period, the full desk has a lower Brier score than the model-only forecast. The paired difference and its block-bootstrap 90% interval are reported whatever the sign.
 
-## Frozen values (filled in before the held-out run)
+## Frozen values (filled in before the held-out run, 24 October 2026 04:10 PDT)
 
-- t* for forecasts 4, 5, 6: not yet chosen.
-- Conflict thresholds for the duty lead: not yet chosen.
-- Freezing commit: not yet made.
+Chosen on the development period by the procedure above; see DEVLOG.md for the numbers behind each.
+
+- t* for forecast 4 (model only): 0.02 (the CSI-maximising value on dev; the frozen model is anchored to 2025's base rate, so its warnings sit at the bottom of the grid).
+- t* for forecasts 5 and 6 (the desk): 0.18 (CSI 0.262 on dev for the full desk; the no-review variant shares the base probability and the same value).
+- Desk rules frozen with t*: base probability from the first available stream in the order memory model, recent rate, frozen model; the memory model is the pre-registered pipeline refit on verified nights in memory within the last 120 days (at least 40 nights and 3 events, else the whole history with a 60-day half-life); the DutyLead may adjust the base by at most 0.15, and only on nights where the review raised a flag; review checks: model versus memory-model gap 0.3, analog split 3 and 3 among the analogs, analogs sparse below 5, persistence contradiction (hours at or above 75 ppb with both guidances below 0.15, or 24 h maximum below 10 ppb with both above 0.5), regime unseen (any model input outside the 2025 training range), data gaps (no GFS run, no sounding in 18 h, fewer than 14 of 24 Pahala hours), stale data (latest Pahala hour before 13:00 HST), data quality failures; at most 2 re-query rounds; handover forced when the model and the memory model still differ by more than 0.3 after 2 rounds with the disagreement flag unresolved, or the GFS run is still missing. Analogs: 20 nights from the last 365 days when at least 5 exist, event rate shrunk toward the recent rate with weight 10. Memory becomes available at 12:00 HST on D+1 plus 2 h.
+- Freezing commit: the commit that adds this section. Nothing in the desk or the model changes after it until the held-out period has been scored.
 
 ## Changes after freezing
 

@@ -23,6 +23,18 @@ MAX_ROUNDS = 2
 HANDOVER_GAP = 0.3
 MAX_ADJUSTMENT = 0.15
 BASE_ORDER = ("memory_model", "recent_rate", "lr")  # first stream with a value sets the base probability
+
+
+def gate_adjustment(adjustment: float, flags: list[Flag]) -> float:
+    """v4 (dev tuning 24 Oct 2026, DEVLOG): an adjustment is honoured only when the review raised a flag.
+
+    On the dev nights, ungated adjustments made the desk worse than its own base (+0.006 Brier, CI
+    excluding zero); gated by flags they helped slightly (-0.0007, CI excluding zero). The duty
+    forecaster intervenes when the review found something, and otherwise lets the base stand.
+    """
+    if not flags:
+        return 0.0
+    return float(np.clip(adjustment, -MAX_ADJUSTMENT, MAX_ADJUSTMENT))
 ORANGE_ANALOG_PPB = 210.0  # 0.21 ppm, the plan's orange threshold, on an analog night's hourly maximum
 
 REQUERY_FOR = {
@@ -178,7 +190,8 @@ def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: lis
             kind = data.get("kind") if data.get("kind") in ("issue", "issue_with_caveat", "handover") else "issue"
             if forced:
                 kind = "handover"
-            adj = float(np.clip(float(data["adjustment"]), -MAX_ADJUSTMENT, MAX_ADJUSTMENT))
+            proposed = float(np.clip(float(data["adjustment"]), -MAX_ADJUSTMENT, MAX_ADJUSTMENT))
+            adj = gate_adjustment(proposed, flags)
             if adj != 0.0 and not str(data.get("adjustment_reason") or "").strip():
                 problems.append("an adjustment needs an adjustment_reason that names a flag or an evidence id")
             p = float(np.clip(base + adj, 0.0, 1.0))
@@ -192,7 +205,8 @@ def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: lis
             dec = Decision(kind=kind, p=round(p, 4), level=level, recommendation=RECOMMENDATION[level], discussion=data["discussion"].strip(),
                            cites=cites, handover_reason=(data.get("handover_reason") or forced) if kind == "handover" else None,
                            weights=base_weights, base_p=round(base, 4), adjustment=round(adj, 4),
-                           adjustment_reason=(str(data.get("adjustment_reason")).strip() or None) if adj != 0.0 else None)
+                           adjustment_reason=(str(data.get("adjustment_reason")).strip() or None) if adj != 0.0 else
+                           (f"proposed {proposed:+.2f} not applied: no review flag" if proposed != 0.0 else None))
             return dec, LLMCall(agent="DutyLead", model_requested=r.model_requested, provider_model=r.provider_model, latency_ms=r.latency_ms,
                                 prompt_tokens=(r.usage or {}).get("prompt_tokens"), completion_tokens=(r.usage or {}).get("completion_tokens"),
                                 cached=r.cached, validation=validation, problems=all_problems, reply_preview=r.content[:600])

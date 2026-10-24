@@ -558,3 +558,13 @@ def test_data_gap_flags_mark_a_hole_right_before_issue_as_stale_data():
     assert [f.code for f in data_gap_flags([fresh])] == []
     codes = [f.code for f in data_gap_flags([stale])]
     assert codes == ["stale_data"]
+
+
+
+def test_gate_adjustment_only_honours_adjustments_when_a_flag_was_raised():
+    from vogdesk.desk.duty_lead import MAX_ADJUSTMENT, gate_adjustment
+    assert gate_adjustment(-0.1, []) == 0.0
+    flag = Flag(code="stale_data", detail="hole before issue")
+    assert gate_adjustment(-0.1, [flag]) == pytest.approx(-0.1)
+    assert gate_adjustment(-0.5, [flag]) == pytest.approx(-MAX_ADJUSTMENT)
+    assert gate_adjustment(0.4, [flag]) == pytest.approx(MAX_ADJUSTMENT)
