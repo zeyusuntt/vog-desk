@@ -32,3 +32,12 @@ plus `docs/evidence/provider-grade.md`.
 
 Merged as is. No session export was produced in Cursor (`docs/cursor/B-provider.md`); this review and the
 grade file are the evidence of the piece.
+
+## Addendum, 23 Oct 2026 20:10 PDT
+
+One change made to the block after merging: `complete()` gained an optional `extra: dict | None` argument
+that is merged into the request body. The EvidenceAgent passes `{"chat_template_kwargs": {"enable_thinking": false}}`
+for Lightning: with thinking on, the model spends its whole budget reasoning over the evidence table and
+Nightshift returns `502 empty_response` even at `max_tokens` 8000; with thinking off it answers in about 2 s.
+`request_key` now includes `extra`, so recorded samples stay distinct. The protocol in `ChatClient` and
+`SampleChat` carry the same argument.

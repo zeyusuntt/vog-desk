@@ -190,6 +190,8 @@ class FakeMemory:
             if rec.available_utc > as_of_utc or rec.superseded_by is not None:
                 continue
             matched = sorted(wanted & set(rec.tags))
+            if wanted and len(matched) < len(wanted):
+                continue  # every query tag must be present, as in the sidecar (memory-service/server.ts)
             overlap = len(words & _tokens(rec.content))
             score = 2 * len(matched) + overlap
             if score <= 0:

@@ -47,7 +47,7 @@ class ChatClient(Protocol):
     def online(self) -> bool: ...
 
     def complete(self, messages: list[Message], model: str, max_tokens: int = 1024,
-                 temperature: float = 0.2) -> ChatResult: ...
+                 temperature: float = 0.2, extra: dict | None = None) -> ChatResult: ...
 
 
 def strip_think(text: str) -> tuple[str, str | None]:
@@ -59,8 +59,8 @@ def strip_think(text: str) -> tuple[str, str | None]:
     return tail.strip(), head.strip() or None
 
 
-def request_key(messages: list[Message], model: str) -> str:
-    blob = json.dumps({"model": model, "messages": [m.model_dump() for m in messages]}, sort_keys=True)
+def request_key(messages: list[Message], model: str, extra: dict | None = None) -> str:
+    blob = json.dumps({"model": model, "messages": [m.model_dump() for m in messages], "extra": extra or {}}, sort_keys=True)
     return hashlib.sha256(blob.encode()).hexdigest()[:16]
 
 
@@ -81,15 +81,15 @@ class SampleChat:
         return True
 
     def complete(self, messages: list[Message], model: str, max_tokens: int = 1024,
-                 temperature: float = 0.2) -> ChatResult:
-        key = request_key(messages, model)
+                 temperature: float = 0.2, extra: dict | None = None) -> ChatResult:
+        key = request_key(messages, model, extra)
         path = self.root / f"{key}.json"
         if path.exists():
             r = ChatResult.model_validate_json(path.read_text())
             r.cached = True
             return r
         if self.live is not None:
-            r = self.live.complete(messages, model, max_tokens, temperature)
+            r = self.live.complete(messages, model, max_tokens, temperature, extra)
             self.root.mkdir(parents=True, exist_ok=True)
             path.write_text(r.model_dump_json(indent=1))
             return r
@@ -249,11 +249,16 @@ class NightshiftChat:
         return len(ids) > 0
 
     def complete(self, messages: list[Message], model: str, max_tokens: int = 1024,
-                 temperature: float = 0.2) -> ChatResult:
+                 temperature: float = 0.2, extra: dict | None = None) -> ChatResult:
         if model == LIGHTNING:
             max_tokens = max(max_tokens, MIN_TOKENS_LIGHTNING)
         body = {"model": model, "messages": [m.model_dump() for m in messages],
                 "max_tokens": max_tokens, "temperature": temperature}
+        # Provider pass-through, e.g. {"chat_template_kwargs": {"enable_thinking": False}}: with thinking on,
+        # Lightning spends the whole budget reasoning over a long evidence table and Nightshift returns
+        # 502 empty_response (seen 23 Oct 2026, even at max_tokens 8000); with it off it answers in 2 s.
+        if extra:
+            body.update(extra)
         last: ProviderError | None = None
         for attempt in range(self.TRIES):
             t0 = time.perf_counter()

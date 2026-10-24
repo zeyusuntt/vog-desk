@@ -59,9 +59,11 @@ def test_query_scoring_and_k():
     mem.add(rec(date="2026-01-03", tags=["other"], content="nothing here"))
     now = datetime(2026, 2, 1, tzinfo=UTC)
     hits = mem.query("alpha beta", ["station:pahala", "regime:trade"], now)
-    assert [h.record.id for h in hits] == [a, b]
+    assert [h.record.id for h in hits] == [a]  # every query tag must be present; b lacks regime:trade
     assert hits[0].score == 2 * 2 + 2
     assert hits[0].trace["token_overlap"] == 2
+    hits = mem.query("alpha beta", ["station:pahala"], now)
+    assert [h.record.id for h in hits] == [a, b]
     assert len(mem.query("alpha beta", ["station:pahala"], now, k=1)) == 1
 
 

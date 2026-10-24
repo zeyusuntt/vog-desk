@@ -114,7 +114,7 @@ FROM VOG_S3.episodes_master WHERE episode IS NOT NULL;
 
 -- The 18Z run of day D becomes usable 6 h after initialisation (00Z D+1), before the 18:00 HST issue.
 ACTIVATE USL TABLE lightning.metastore.vog.pahala_exposure.gfs_points AS
-SELECT issue_date_hst, to_timestamp(run_init_utc, "yyyy-MM-dd'T'HH:mm'Z'") AS run_init_utc, CAST(fxx AS int) AS fxx,
+SELECT DISTINCT issue_date_hst, to_timestamp(run_init_utc, "yyyy-MM-dd'T'HH:mm'Z'") AS run_init_utc, CAST(fxx AS int) AS fxx,
        CAST(valid_utc AS timestamp) AS valid_utc, var, level, point, grid_lat, grid_lon, value,
        to_timestamp(run_init_utc, "yyyy-MM-dd'T'HH:mm'Z'") + INTERVAL 6 HOURS AS available_utc
 FROM VOG_S3.gfs_points WHERE status = 200;

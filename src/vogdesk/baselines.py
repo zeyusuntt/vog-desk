@@ -6,6 +6,8 @@ persistence: 1 if any hourly SO2 >= threshold in the 24 usable hours before issu
   hour begins at 16:00 HST (PREREG: hour-beginning time + 2 h).
 episode_rule: 1 if a fountaining episode is known (published) to have been active within the 24 h
   before issue, using HANS publication times or the conservative fallback in usgs_episodes.py.
+recent_rate: event fraction of the last 30 valid nights verified by issue (forecast 7, PREREG change 1);
+  falls back to climatology when fewer than 10 such nights exist.
 """
 from __future__ import annotations
 
@@ -39,6 +41,24 @@ def episode_rule(episodes: pd.DataFrame, issue_dates: pd.DatetimeIndex) -> pd.Se
         active = known[(end_seen.isna()) | (end_seen >= t - pd.Timedelta(hours=24))]
         vals.append(float(len(active) > 0))
     return pd.Series(vals, index=issue_dates, name="episode_rule")
+
+
+def recent_rate(labels: pd.DataFrame, issue_dates: pd.DatetimeIndex, n_nights: int = 30,
+                min_nights: int = 10, fallback: float = 0.059) -> pd.Series:
+    """Event fraction over the last n valid nights verified before issue on each date.
+
+    The night issued on D-1 closes at 12:00 HST on D, before the 18:00 HST issue, so it counts.
+    The night issued on D does not. Invalid nights are skipped, never counted as negatives.
+    """
+    ok = labels[labels["valid"].astype(bool)].sort_index()
+    nights, events = ok.index.values, ok["event"].astype(float).to_numpy()
+    vals = []
+    for d in issue_dates:
+        last = (pd.Timestamp(d).normalize() - pd.Timedelta(days=1)).to_datetime64()
+        stop = int(np.searchsorted(nights, last, side="right"))
+        recent = events[max(0, stop - n_nights):stop]
+        vals.append(float(recent.mean()) if len(recent) >= min_nights else float(fallback))
+    return pd.Series(vals, index=issue_dates, name="recent_rate", dtype=float)
 
 
 def scores(p: pd.Series, y: pd.Series, clim: float) -> dict:

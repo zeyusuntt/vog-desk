@@ -76,6 +76,8 @@ class LLMCall(BaseModel):
     completion_tokens: int | None = None
     cached: bool = False
     validation: str = "ok"                   # ok | retried | fallback_template
+    problems: list[str] = Field(default_factory=list)   # validation failures per attempt, for the trace
+    reply_preview: str = ""                  # first 600 characters of the last raw reply
 
 
 def _extend(a: list, b: list) -> list:
@@ -94,6 +96,7 @@ class CaseState(TypedDict, total=False):
     regime_summary: str
     features: dict
     model_p: float | None
+    analog_max_ppb: float | None
     review_round: int
     requery_requests: list[str]
     decision: dict | None
