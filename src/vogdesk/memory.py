@@ -11,6 +11,7 @@ and its backtests can be built before the Node sidecar exists. `HttpMemory` talk
 from __future__ import annotations
 
 import json
+import threading
 import re
 import sys
 import tempfile
@@ -130,6 +131,7 @@ class FakeMemory:
     """In-process memory with the semantics of the sidecar, optionally saved to a JSON file."""
 
     def __init__(self, path: Path | None = None) -> None:
+        self._lock = threading.RLock()  # the backtest runs several cases at once against one memory
         self.path = Path(path) if path is not None else None
         self._records: dict[str, MemoryRecord] = {}
         self._ledger: dict[str, list[LedgerEntry]] = {}
@@ -149,6 +151,10 @@ class FakeMemory:
         self._wm = data.get("wm", {})
 
     def _save(self) -> None:
+        with self._lock:
+            self._save_unlocked()
+
+    def _save_unlocked(self) -> None:
         if self.path is None:
             return
         data = {
