@@ -1,14 +1,14 @@
 {
- "content": "The current emission state is a pause; episode 42 ended 14.8 days ago [E5]. At Pahala, the last 24 usable hours show a maximum of 26.3 ppb and a latest reading of 0.2 ppb at 16:00 HST [E1], while the upwind Volcanoes NP station reports a maximum of 0.0 ppb over the last 6 hours [E3]. Forecast transport indicates 1 of 3 leads have the 925 hPa wind blowing toward Pahala with a mean component of 3.3 m/s [E6], and the 850 hPa wind also carries a southerly component toward the area. Stability is characterized by a boundary layer that will collapse to 127 m by 06:00 HST [E6] under an inversion base at 2193 m [E7], which limits vertical mixing.",
+ "content": "The current emission state is a pause that began 14.8 days ago when episode 42 ended on 2026-02-15 [E5]. At Pahala, the maximum 24‑hour SO2 concentration over the last day was 26.3 ppb, the mean was 2.7 ppb, and the latest reading at 16:00 HST was 0.2 ppb [E1]; the upwind Volcanoes NP station shows no data, with a maximum of 0.0 ppb and a mean of -0.1 ppb [E3]. Forecast transport indicates that 1 of 3 925 hPa leads are directed toward Pahala with a mean component of 3.3 m/s toward the station, while 850 hPa winds at the summit are 4.7 m/s from 35 deg and 6.1 m/s from 19 deg at 00:00 HST [E6]. The stability profile shows a boundary layer that collapses from 443 m at 18:00 HST to 127 m by 06:00 HST, capped by an inversion base at 2193 m [E7], which limits vertical mixing during the overnight period.",
  "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
  "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
  "reasoning": null,
  "usage": {
-  "prompt_tokens": 4254,
-  "completion_tokens": 207,
-  "total_tokens": 4461
+  "prompt_tokens": 4305,
+  "completion_tokens": 287,
+  "total_tokens": 4592
  },
- "latency_ms": 3750,
+ "latency_ms": 5381,
  "provider": "nightshift",
  "cached": false
 }

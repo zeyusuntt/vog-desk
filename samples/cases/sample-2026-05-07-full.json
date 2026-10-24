@@ -6,10 +6,9 @@
   "p": 0.1049,
   "level": "normal",
   "recommendation": "Normal operations. The probability is shown for information; no action under the schools plan is triggered by a forecast.",
-  "discussion": "The base probability for tonight is 0.10, taken from the memory model stream [G2]. The frozen 2025 logistic regression [G1] gives 0.08, while the memory model refit on the last 120 days [G2] gives 0.10, showing close agreement. The recent event rate over the last 30 verified nights [G3] is 0.13, and the analog memory [G4] yields a point estimate of 0.06 with a 90% interval of 0.00 to 0.17 and a highest analog maximum of 64 ppb. The review raised no flags. Current conditions show a pause in emissions with episode 46 ending 2.0 days ago [E5], and very low concentrations at Pahala (last 24-hour max 26.0 ppb, latest 0.0 ppb at 16:00 HST) [E1] despite moderate upwind readings at Volcanoes NP (max 2.0 ppb) [E3]. Transport toward Pahala is limited, with only 1 of 3 leads showing a 925 hPa wind component toward Pahala of 0.8 m/s at 18:00 HST [E6], and the boundary layer is forecast to collapse to 45 m by 06:00 HST under an inversion base at 562 m [E7], limiting vertical mixing. Given the low observed concentrations, the pause regime, and the unfavorable transport and stability, the base probability of 0.10 is appropriate and no adjustment is made. The final probability remains 0.10, which is below the action threshold of 0.18, so the recommendation is normal operations. An observation by midnight that would increase concern would be a sustained rise in Pahala concentrations above 75 ppb or a shift in wind direction bringing stronger transport from the summit, which would raise the probability toward the yellow threshold.",
+  "discussion": "The base probability for tonight is 0.10, taken from the memory model stream [G2]. The frozen 2025 logistic regression [G1] gives 0.08, while the memory model refit on the last 120 days [G2] gives 0.10, showing close agreement. The recent event rate over the last 30 verified nights [G3] is 0.17, and the analog memory [G4] yields a point estimate of 0.07 with a 90% interval of 0.00 to 0.17 and a highest analog maximum of 64 ppb. The review raised no flags. Current conditions show a pause in emissions with episode 46 ending 2.0 days ago [E5], and very low concentrations at Pahala (last 24-hour max 26.0 ppb, latest 0.0 ppb at 16:00 HST) [E1] despite moderate upwind winds [E6]. Transport toward Pahala is weak, with only 1 of 3 leads showing a 925 hPa component toward Pahala of 0.8 m/s at 18:00 HST, decreasing to 0.8 m/s by 06:00 HST [E6], and the boundary layer collapses to 45 m by 06:00 HST under an inversion base at 562 m [E7], limiting vertical mixing. Given the low observed concentrations, the pause regime, and the weak transport, the base probability of 0.10 is appropriate and no adjustment is warranted. The recommendation is normal operations because the final probability remains below the action threshold of 0.18. An observation that would change this assessment would be a sustained increase in Pahala concentrations above 75 ppb by midnight, which would raise the probability toward the yellow threshold.",
   "cites": [
    "E1",
-   "E3",
    "E5",
    "E6",
    "E7",
@@ -107,7 +106,7 @@
   {
    "id": "G3",
    "stream": "recent_rate",
-   "p": 0.1333,
+   "p": 0.1667,
    "interval": null,
    "inputs": [],
    "analog_ids": [],
@@ -116,7 +115,7 @@
   {
    "id": "G4",
    "stream": "analog",
-   "p": 0.058,
+   "p": 0.0725,
    "interval": [
     0.0,
     0.1723
@@ -137,7 +136,7 @@
     "193052b646494b6a95a4db383f95cc0d",
     "31e8fae74c1a45b7ba7e3545cb1c2e9f"
    ],
-   "note": "0 of 13 analog nights had an event (raw rate 0.00); tags episode:pause, inversion:low, regime:light, sector:part, station:pahala; shrunk toward the recent rate 0.13 with weight 10; highest analog max 64 ppb"
+   "note": "0 of 13 analog nights had an event (raw rate 0.00); tags episode:pause, inversion:low, regime:light, sector:part, station:pahala; shrunk toward the recent rate 0.17 with weight 10; highest analog max 64 ppb"
   }
  ],
  "flags": [],
@@ -146,25 +145,25 @@
    "agent": "EvidenceAgent",
    "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
    "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
-   "latency_ms": 3829,
-   "prompt_tokens": 4362,
-   "completion_tokens": 248,
+   "latency_ms": 5601,
+   "prompt_tokens": 4356,
+   "completion_tokens": 334,
    "cached": false,
    "validation": "ok",
    "problems": [],
-   "reply_preview": "The current emission state is a pause, with episode 46 ending 2.0 days ago [E5]. At Pahala, the last 24 usable hours show a maximum concentration of 26.0 ppb and a latest reading of 0.0 ppb at 16:00 HST [E1], while the upwind Volcanoes NP station reports a maximum of 2.0 ppb and a latest of 0.5 ppb at 16:00 HST [E3]. Forecast transport indicates that at 18:00 HST, 1 of 3 leads have the 925 hPa wind blowing toward Pahala with a mean component of 0.8 m/s [E6], and at 00:00 HST the 850 hPa wind is from 151 deg with a component of 0.7 m/s [E6]. Stability is characterized by a boundary layer that w"
+   "reply_preview": "The current emission state is a pause; episode 46 ended 2.0 days ago [E5]. At Pahala, the last 24 usable hours show a maximum concentration of 26.0 ppb, a mean of 7.6 ppb, and the latest reading of 0.0 ppb at 16:00 HST [E1]; the upwind Volcanoes NP station reports a maximum of 2.0 ppb and a mean of 1.0 ppb over the last 6 hours [E3]. Forecast transport indicates that at 18:00 HST, 925 hPa winds are 3.4 m/s from 34 deg and 850 hPa winds are 3.7 m/s from 24 deg at the summit, with a 1-of-3 lead having a 925 hPa component toward Pahala of 0.8 m/s [E6]; by 00:00 HST the mean 925 hPa component towa"
   },
   {
    "agent": "DutyLead",
    "model_requested": "nvidia/nemotron-3-ultra-550b-a55b",
    "provider_model": "nvidia/nemotron-3-ultra-550b-a55b",
-   "latency_ms": 15937,
-   "prompt_tokens": 5340,
-   "completion_tokens": 1848,
+   "latency_ms": 18023,
+   "prompt_tokens": 5430,
+   "completion_tokens": 1808,
    "cached": false,
    "validation": "ok",
    "problems": [],
-   "reply_preview": "{\n  \"kind\": \"issue\",\n  \"adjustment\": 0,\n  \"adjustment_reason\": null,\n  \"discussion\": \"The base probability for tonight is 0.10, taken from the memory model stream [G2]. The frozen 2025 logistic regression [G1] gives 0.08, while the memory model refit on the last 120 days [G2] gives 0.10, showing close agreement. The recent event rate over the last 30 verified nights [G3] is 0.13, and the analog memory [G4] yields a point estimate of 0.06 with a 90% interval of 0.00 to 0.17 and a highest analog maximum of 64 ppb. The review raised no flags. Current conditions show a pause in emissions with epis"
+   "reply_preview": "{\n  \"kind\": \"issue\",\n  \"adjustment\": 0,\n  \"adjustment_reason\": null,\n  \"discussion\": \"The base probability for tonight is 0.10, taken from the memory model stream [G2]. The frozen 2025 logistic regression [G1] gives 0.08, while the memory model refit on the last 120 days [G2] gives 0.10, showing close agreement. The recent event rate over the last 30 verified nights [G3] is 0.17, and the analog memory [G4] yields a point estimate of 0.07 with a 90% interval of 0.00 to 0.17 and a highest analog maximum of 64 ppb. The review raised no flags. Current conditions show a pause in emissions with epis"
   }
  ],
  "review_round": 0

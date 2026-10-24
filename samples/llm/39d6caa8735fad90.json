@@ -1,14 +1,14 @@
 {
- "content": "The current emission state is a pause, with episode 46 ending 2.0 days ago [E5]. At Pahala, the last 24 usable hours show a maximum concentration of 26.0 ppb and a latest reading of 0.0 ppb at 16:00 HST [E1], while the upwind Volcanoes NP station reports a maximum of 2.0 ppb and a latest of 0.5 ppb at 16:00 HST [E3]. Forecast transport indicates that at 18:00 HST, 1 of 3 leads have the 925 hPa wind blowing toward Pahala with a mean component of 0.8 m/s [E6], and at 00:00 HST the 850 hPa wind is from 151 deg with a component of 0.7 m/s [E6]. Stability is characterized by a boundary layer that will collapse to 45 m by 06:00 HST [E6] under an inversion base at 562 m [E7], limiting vertical mixing.",
+ "content": "The current emission state is a pause; episode 46 ended 2.0 days ago [E5]. At Pahala, the last 24 usable hours show a maximum concentration of 26.0 ppb, a mean of 7.6 ppb, and the latest reading of 0.0 ppb at 16:00 HST [E1]; the upwind Volcanoes NP station reports a maximum of 2.0 ppb and a mean of 1.0 ppb over the last 6 hours [E3]. Forecast transport indicates that at 18:00 HST, 925 hPa winds are 3.4 m/s from 34 deg and 850 hPa winds are 3.7 m/s from 24 deg at the summit, with a 1-of-3 lead having a 925 hPa component toward Pahala of 0.8 m/s [E6]; by 00:00 HST the mean 925 hPa component toward Pahala drops to 1.1 m/s, and at 06:00 HST it further decreases to 0.8 m/s [E6]. Stability is characterized by a boundary layer that collapses from 482 m at 18:00 HST to 84 m at 00:00 HST and 45 m at 06:00 HST [E6], under an inversion base at 562 m [E7].",
  "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
  "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
  "reasoning": null,
  "usage": {
-  "prompt_tokens": 4362,
-  "completion_tokens": 248,
-  "total_tokens": 4610
+  "prompt_tokens": 4356,
+  "completion_tokens": 334,
+  "total_tokens": 4690
  },
- "latency_ms": 3829,
+ "latency_ms": 5601,
  "provider": "nightshift",
  "cached": false
 }
