@@ -63,6 +63,7 @@ These rules are enforced in code (`src/vogdesk/asof.py`) and tested (`tests/`).
 4. Model only: the logistic regression above.
 5. Desk without review: the agents without the duty lead's re-query step.
 6. Full desk.
+7. Recent-rate climatology (added after freezing, see below): event rate over the last 30 verified nights.
 
 ## Action threshold and recommendation
 
@@ -91,7 +92,7 @@ On the held-out period, the full desk has a lower Brier score than the model-onl
 
 ## Changes after freezing
 
-None yet.
+1. **23 October 2026, 19:50 PDT, forecast 7 added.** The development split showed a regime shift (DEVLOG.md, 23 Oct): the 2026 base rate is 0.19 against 0.059 in training, and the physical drivers changed sign. The model-only forecast (4) stays exactly as pre-registered, fit on 2025 only, so that the comparison "desk versus the model it was given" is clean. To make sure the desk is not credited merely for tracking a base-rate shift that any adaptive rule would track, a seventh forecast is added as a second reference: **recent-rate climatology**, the event rate over the last 30 verified nights before issue (nights whose window closed and were verified by 12:00 HST the day before issue; fewer than 10 such nights falls back to forecast 1). It uses no model, no memory engine and no reasoning. The primary claim is unchanged (6 beats 4 on Brier); a secondary claim is recorded: the full desk also has a lower Brier than forecast 7. Decided by Zeyu on 23 Oct after seeing dev results, before any held-out scoring.
 
 ## Changes made while drafting, before this file was frozen
 
