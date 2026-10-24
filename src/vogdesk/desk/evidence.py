@@ -165,7 +165,7 @@ def evidence_table(items: list[EvidenceItem]) -> str:
     return "\n".join(f"[{it.id}] {it.summary}" + (f" (DQ: {', '.join(it.dq_flags)})" if it.dq_flags else "") for it in items)
 
 
-NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w.])")
+NUMBER = re.compile(r"(?<![\w.])-?\d+(?:\.\d+)?(?![\w])(?!\.\d)")  # a full stop after the number is allowed (sentence end)
 CITE = re.compile(r"\[(E\d+|G\d+|V\d+|D\d+)\]")
 
 

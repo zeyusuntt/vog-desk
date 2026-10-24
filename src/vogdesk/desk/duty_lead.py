@@ -101,7 +101,7 @@ def template_decision(guidance: list[Guidance], flags: list[Flag], t_star: float
     parts = [f"The model gives {g['lr'].p:.2f} [G1]."]
     if g.get("analog") and g["analog"].p is not None:
         parts.append(f"The memory's analog nights give {g['analog'].p:.2f} [G2].")
-    if g.get("recent_rate"):
+    if g.get("recent_rate") and g["recent_rate"].p is not None:
         parts.append(f"The event rate over recent verified nights is {g['recent_rate'].p:.2f} [G3].")
     parts.append(f"The desk combines them with weights {', '.join(f'{k} {v:.2f}' for k, v in weights.items())} to {p:.2f}.")
     if flags:
