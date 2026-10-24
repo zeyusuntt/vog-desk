@@ -70,7 +70,7 @@ def test_situation_text_reports_given_numbers():
     f = feats(gfs925_speed_summit=5.26, raob_inversion_base_m=1534.0, log_pahala_max_24h=math.log1p(12.0))
     text = situation_text(f, situation_tags(f))
     assert "5.3 m/s" in text and "1534 m" in text and "12 ppb" in text and "trade" in text
-    assert "," not in text
+    assert "\u2014" not in text  # no em-dash in generated text
 
 
 # retrieve_analogs
