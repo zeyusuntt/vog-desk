@@ -75,6 +75,12 @@ The labels match the Department of Health's own exceedance list on all 39 held-o
 
 ## Run it
 
+Once installed (see below), one command re-checks the headline numbers. It reads only committed files and the git history, and prints PASS or FAIL for each check: every Brier score and paired interval above, the warning counts, the label audit, and the commit times of the pre-registration, the freeze, the scoring and each live forecast.
+
+```bash
+.venv/bin/python scripts/prove.py
+```
+
 No keys needed for the recorded nights (2026-03-02, 2026-05-07, 2026-06-16): local input slices under `samples/data`, recorded Nemotron replies under `samples/llm`, an in-process memory seeded with every verified night through 30 June 2026.
 
 ```bash
