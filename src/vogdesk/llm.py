@@ -204,7 +204,7 @@ class NightshiftChat:
 
     name = "nightshift"
     TIMEOUT_S = 180.0
-    TRIES = 3
+    TRIES = 4
     INTEGRATION_LEVEL = "L0"
 
     def __init__(self, base_url: str, token: str, app: str = "vog-desk"):
@@ -278,8 +278,10 @@ class NightshiftChat:
                 continue
             if r.status_code >= 500:
                 last = _error_from_http(r)
+                # NVIDIA's 429 arrives wrapped in a Nightshift 502; back off for real (15, 30, 60 s), not seconds.
+                rate_limited = "429" in _body_snippet(r) or "Too Many Requests" in _body_snippet(r)
                 if attempt + 1 < self.TRIES:
-                    time.sleep(2 ** attempt)
+                    time.sleep(15 * (2 ** attempt) if rate_limited else 2 ** attempt)
                 continue
             if r.status_code >= 400:
                 raise _error_from_http(r)
