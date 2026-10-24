@@ -60,17 +60,32 @@ Paired Brier difference, 7-day block bootstrap 90% interval: full desk minus mod
 
 ## Run it
 
+No keys needed for the recorded nights (2026-03-02, 2026-05-07, 2026-06-16): local input slices under `samples/data`, recorded Nemotron replies under `samples/llm`, an in-process memory seeded with every verified night through 30 June 2026.
+
 ```bash
-uv venv --python 3.12 && uv pip install -e ".[dev,model,agents,infra]"
-.venv/bin/python -m pytest -q tests                       # 100+ tests, the Zetaris and sidecar ones skip when those are down
-SAMPLE_MODE=true python run.py --issue 2025-09-02         # no keys: local Parquet, recorded model replies, in-process memory
-python run.py --issue 2025-09-02                          # live: Zetaris, Nightshift, memory-service
-python run.py --issue 2025-09-02 --no-review              # forecast 5
-uvicorn api:app --port 8000                               # POST /run {"issue_date": "2025-09-02"}
-docker build -t vog-desk . && docker run --rm vog-desk --issue 2025-09-02
+docker build -t vog-desk .
+docker run --rm vog-desk                                   # 2026-05-07, full desk, SAMPLE_MODE
+docker run --rm vog-desk --issue 2026-06-16 --no-review    # forecast 5 on another recorded night
 ```
 
-Local data layer and Zetaris wiring: [infra/README.md](infra/README.md), then `python infra/zetaris/setup.py`. Memory sidecar: [memory-service/README.md](memory-service/README.md). Raw data is rebuilt by `scripts/fetch_*.py` and listed with SHA-256 in `data/MANIFEST.tsv`; derived Parquet is not committed.
+Without Docker:
+
+```bash
+uv venv --python 3.12 && uv pip install -e ".[dev,model,agents]"
+SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07
+.venv/bin/python -m pytest -q tests        # Zetaris, sidecar and full-data tests skip when those are absent
+```
+
+Live (needs `.env` from `.env.example`, the local data layer, Zetaris and Nightshift):
+
+```bash
+docker compose -f infra/compose.yml up -d && python infra/zetaris/setup.py          # S3 store, Postgres, the USL
+cd memory-service && npm install && MEMORY_ROOT=$PWD/data/live npm start             # H-MEM and World Model sidecar
+python run.py --issue 2026-10-23                                                    # Zetaris data, Nightshift models, sidecar memory
+uvicorn api:app --port 8000                                                         # POST /run {"issue_date": "2026-10-23"}
+```
+
+The full dataset is rebuilt by `scripts/fetch_*.py` and the ingest modules (sources and SHA-256 in `data/MANIFEST.tsv`); per-night forecasts behind the results are in `results/`. Local data layer and Zetaris wiring: [infra/README.md](infra/README.md). Memory sidecar: [memory-service/README.md](memory-service/README.md).
 
 ## Sponsor technology
 
