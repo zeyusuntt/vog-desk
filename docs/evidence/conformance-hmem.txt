@@ -1,5 +1,5 @@
 
-H-MEM conformance: implementation = ~/dev/vog-desk/memory-service/engines/hmem/reference/src/index.ts
+H-MEM conformance: implementation = <repo>/memory-service/engines/hmem/reference/src/index.ts
 
   record-validation
     PASS rv-001 a record with no source is rejected by construction
