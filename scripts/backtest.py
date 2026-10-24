@@ -47,21 +47,23 @@ def main() -> None:
     ap.add_argument("--limit", type=int, default=None)
     ap.add_argument("--t-star", type=float, default=float(os.environ.get("T_STAR", DEFAULT_T_STAR)))
     ap.add_argument("--memory-path", type=Path, default=None)
+    ap.add_argument("--tag", default="", help="suffix for the output and memory files, e.g. v2")
     args = ap.parse_args()
+    suffix = f"_{args.tag}" if args.tag else ""
     if args.split == "heldout" and "--i-am-sure" not in sys.argv:
         sys.exit("The held-out split is run once, after freezing. Pass --i-am-sure.")
 
     src = sources.load()
     X, lab = dataset.build(src, args.split)
     dates = [d.strftime("%Y-%m-%d") for d in lab.index]
-    out_path = ROOT / "data" / "derived" / f"backtest_{args.split}_{args.variant}.parquet"
+    out_path = ROOT / "data" / "derived" / f"backtest_{args.split}_{args.variant}{suffix}.parquet"
     done = set(pd.read_parquet(out_path)["issue_date_hst"]) if out_path.exists() else set()
     todo = [d for d in dates if d not in done][: args.limit]
     print(f"{args.split} {args.variant}: {len(dates)} nights, {len(done)} done, {len(todo)} to run")
     if not todo:
         return
 
-    mem_path = args.memory_path or ROOT / "data" / "memory" / f"backtest_{args.split}_{args.variant}.json"
+    mem_path = args.memory_path or ROOT / "data" / "memory" / f"backtest_{args.split}_{args.variant}{suffix}.json"
     mem_path.parent.mkdir(parents=True, exist_ok=True)
     memory = FakeMemory(mem_path)
     seeded = {t for r in memory.query("verified night", ["station:pahala"], pd.Timestamp.now(tz="UTC").to_pydatetime(), k=5000)
@@ -75,18 +77,19 @@ def main() -> None:
     backend = open_backend(args.data, src)
     chat = open_chat(args.provider)
     m = model_mod.load()
-    log_dir = ROOT / "logs" / "backtest" / args.variant
+    log_dir = ROOT / "logs" / "backtest" / f"{args.variant}{suffix}"
     log_dir.mkdir(parents=True, exist_ok=True)
 
     def one(date: str) -> dict:
         ctx = DeskContext(backend=backend, sources=src, chat=chat, memory=memory, model=m, trace=Trace("init", log_dir / "init.jsonl"), t_star=args.t_star)
         try:
-            state = run_case(ctx, date, review_enabled=(args.variant == "full"), case_id=f"bt-{args.split}-{args.variant}-{date}")
+            state = run_case(ctx, date, review_enabled=(args.variant == "full"), case_id=f"bt-{args.split}-{args.variant}{suffix}-{date}")
             ver = verify_case(state, src, memory, args.t_star, write_memory=False, feedback=True)  # nights are pre-seeded; only feedback
             g = {x["stream"]: x for x in state["guidance"]}
             dec = state["decision"]
             return {"issue_date_hst": date, "variant": args.variant, "p": dec["p"], "kind": dec["kind"], "level": dec["level"],
-                    "p_model": g.get("lr", {}).get("p"), "p_analog": g.get("analog", {}).get("p"), "p_recent": g.get("recent_rate", {}).get("p"),
+                    "p_model": g.get("lr", {}).get("p"), "p_memory": g.get("memory_model", {}).get("p"),
+                    "p_analog": g.get("analog", {}).get("p"), "p_recent": g.get("recent_rate", {}).get("p"),
                     "n_analogs": len(g.get("analog", {}).get("analog_ids", [])), "flags": ",".join(sorted({f["code"] for f in state["flags"]})),
                     "review_round": state.get("review_round", 0), "weights": json.dumps(dec.get("weights", {})),
                     "llm_validation": ",".join(c["validation"] for c in state["llm_calls"]),

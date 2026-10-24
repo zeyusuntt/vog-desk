@@ -20,7 +20,9 @@ HANDOVER_GAP = 0.3
 ORANGE_ANALOG_PPB = 210.0  # 0.21 ppm, the plan's orange threshold, on an analog night's hourly maximum
 
 REQUERY_FOR = {
+    "model_memory_disagree": ["hvnp_6h", "gfs", "episode"],
     "model_analog_disagree": ["hvnp_6h", "gfs", "episode"],
+    "memory_model_unavailable": [],
     "analog_split": ["gfs", "pahala_6h"],
     "persistence_contradiction": ["pahala_6h", "hvnp_6h", "ocean_view_6h"],
     "regime_unseen": ["gfs", "sounding"],
@@ -95,14 +97,21 @@ def _parse_json(text: str) -> dict | None:
 def template_decision(guidance: list[Guidance], flags: list[Flag], t_star: float, analog_max: float | None,
                       kind: str, reason: str | None) -> Decision:
     g = {x.stream: x for x in guidance}
-    weights = {"lr": 0.5, "analog": 0.5} if g.get("analog") and g["analog"].p is not None else {"lr": 1.0}
+    if g.get("memory_model") and g["memory_model"].p is not None:
+        weights = {"lr": 0.2, "memory_model": 0.5, "recent_rate": 0.3} if g.get("recent_rate") else {"lr": 0.3, "memory_model": 0.7}
+    elif g.get("analog") and g["analog"].p is not None:
+        weights = {"lr": 0.5, "analog": 0.5}
+    else:
+        weights = {"lr": 1.0}
     p = combine(guidance, weights)
     level = action_level(p, t_star, analog_max)
-    parts = [f"The model gives {g['lr'].p:.2f} [G1]."]
-    if g.get("analog") and g["analog"].p is not None:
-        parts.append(f"The memory's analog nights give {g['analog'].p:.2f} [G2].")
+    parts = [f"The frozen 2025 model gives {g['lr'].p:.2f} [{g['lr'].id}]."]
+    if g.get("memory_model") and g["memory_model"].p is not None:
+        parts.append(f"The model refit on the verified nights in memory gives {g['memory_model'].p:.2f} [{g['memory_model'].id}].")
     if g.get("recent_rate") and g["recent_rate"].p is not None:
-        parts.append(f"The event rate over recent verified nights is {g['recent_rate'].p:.2f} [G3].")
+        parts.append(f"The event rate over recent verified nights is {g['recent_rate'].p:.2f} [{g['recent_rate'].id}].")
+    if g.get("analog") and g["analog"].p is not None:
+        parts.append(f"The analog nights give {g['analog'].p:.2f} [{g['analog'].id}].")
     parts.append(f"The desk combines them with weights {', '.join(f'{k} {v:.2f}' for k, v in weights.items())} to {p:.2f}.")
     if flags:
         parts.append("Review flags: " + "; ".join(f.code for f in flags) + ".")
@@ -115,8 +124,9 @@ def template_decision(guidance: list[Guidance], flags: list[Flag], t_star: float
 def must_handover(guidance: list[Guidance], flags: list[Flag], round_: int) -> str | None:
     g = {x.stream: x for x in guidance}
     unresolved = [f for f in flags if not f.resolved]
-    gap = (g.get("analog") and g["analog"].p is not None and abs(g["lr"].p - g["analog"].p) > HANDOVER_GAP)
-    if round_ >= MAX_ROUNDS and gap and any(f.code in ("model_analog_disagree", "analog_split") for f in unresolved):
+    mem = g.get("memory_model") or g.get("analog")
+    gap = (mem is not None and mem.p is not None and abs(g["lr"].p - mem.p) > HANDOVER_GAP)
+    if round_ >= MAX_ROUNDS and gap and any(f.code in ("model_memory_disagree", "model_analog_disagree", "analog_split") for f in unresolved):
         return f"model and memory disagree by more than {HANDOVER_GAP:.1f} after {round_} review rounds"
     if any(f.code == "data_gap" and "GFS" in f.detail for f in unresolved) and round_ >= MAX_ROUNDS:
         return "the GFS run for tonight is missing after re-query"

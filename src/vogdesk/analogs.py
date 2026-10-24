@@ -11,7 +11,7 @@ window closed and its outcome was verified (docs/PREREG.md, "Information availab
 from __future__ import annotations
 
 import math
-from datetime import datetime
+from datetime import datetime, timedelta
 
 import numpy as np
 from pydantic import BaseModel, Field
@@ -134,6 +134,9 @@ def wilson(k: int, n: int, z: float = WILSON_Z_90) -> tuple[float, float]:
 
 
 class AnalogResult(BaseModel):
+    p_shrunk: float | None = None  # rate shrunk toward a prior (recent rate), (k + m*prior)/(n + m)
+    prior: float | None = None
+    prior_weight: int = 0
     p: float | None  # event rate among analogs with a known outcome, None when there are none
     lo: float | None
     hi: float | None
@@ -162,11 +165,14 @@ def _max_ppb_of(rec: MemoryRecord) -> float | None:
     return float(v)
 
 
-def retrieve_analogs(memory: Memory, f: dict, as_of_utc: datetime, k: int = 10, min_n: int = 5) -> AnalogResult:
+def retrieve_analogs(memory: Memory, f: dict, as_of_utc: datetime, k: int = 20, min_n: int = 5,
+                     window_days: int | None = 365, fetch: int = 60) -> AnalogResult:
     """Ask memory for the k most similar earlier nights as of the issue time and summarise them.
 
     If fewer than min_n records come back, drop the inversion tag and retry, then the sector tag
-    too. Station, episode and regime are never dropped.
+    too. Station, episode and regime are never dropped. Dev tuning (23 Oct 2026, DEVLOG): fetch more
+    candidates, prefer nights verified within `window_days` of the issue time when at least min_n of
+    them exist, keep the k best by engine score. k went from 10 to 20 to reduce sampling noise.
     """
     if as_of_utc.tzinfo is None or as_of_utc.utcoffset() is None:
         raise ValueError("as_of_utc must be timezone-aware")
@@ -180,7 +186,12 @@ def retrieve_analogs(memory: Memory, f: dict, as_of_utc: datetime, k: int = 10, 
     ]
     level, tags, hits = 0, levels[0], []
     for level, tags in enumerate(levels):
-        hits = memory.query(text, tags, as_of_utc, k)
+        hits = memory.query(text, tags, as_of_utc, max(k, fetch))
+        if window_days is not None:
+            recent = [h for h in hits if h.record.available_utc >= as_of_utc - timedelta(days=window_days)]
+            if len(recent) >= min_n:
+                hits = recent
+        hits = hits[:k]  # memory returns them ranked by the engine's score
         if len(hits) >= min_n:
             break
 
@@ -265,3 +276,17 @@ def night_record(
             "features": {k: _finite_or_none(f.get(k)) for k in FEATURES},
         },
     )
+
+
+SHRINK_WEIGHT = 10   # dev tuning 23 Oct 2026: analogs with k=20 shrunk toward the recent rate with m=10 (DEVLOG)
+ANALOG_WINDOW_DAYS = 365
+
+
+def shrink(result: AnalogResult, prior: float | None, m: int = SHRINK_WEIGHT) -> AnalogResult:
+    """Pull a noisy analog rate toward the recent-rate prior; with n analog nights the prior counts as m nights."""
+    if prior is None:
+        return result
+    k, n = result.n_events, result.n
+    result.p_shrunk = (k + m * prior) / (n + m) if (n + m) > 0 else prior
+    result.prior, result.prior_weight = prior, m
+    return result

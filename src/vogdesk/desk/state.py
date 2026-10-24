@@ -28,7 +28,7 @@ class EvidenceItem(BaseModel):
 
 class Guidance(BaseModel):
     id: str                                  # G1, G2, ...
-    stream: Literal["lr", "analog", "recent_rate", "persistence", "climatology"]
+    stream: Literal["lr", "memory_model", "analog", "recent_rate", "persistence", "climatology"]
     p: float | None                          # None when the stream has nothing to say
     interval: tuple[float, float] | None = None
     inputs: list[str] = Field(default_factory=list)   # evidence ids
@@ -37,8 +37,8 @@ class Guidance(BaseModel):
 
 
 class Flag(BaseModel):
-    code: Literal["analog_split", "model_analog_disagree", "analogs_sparse", "persistence_contradiction",
-                  "regime_unseen", "data_gap", "dq_failed", "stale_data"]
+    code: Literal["analog_split", "model_analog_disagree", "model_memory_disagree", "analogs_sparse", "persistence_contradiction",
+                  "regime_unseen", "data_gap", "dq_failed", "stale_data", "memory_model_unavailable"]
     detail: str
     evidence_ids: list[str] = Field(default_factory=list)
     resolved: bool = False

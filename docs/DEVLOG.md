@@ -81,3 +81,29 @@ None yet. The model is the pre-registered one. The decision that the dev result 
 
 - `live/2026-10-23/forecast.json`, model only, p = 0.077 (raw 0.068); climatology 0.059, persistence 0, episode rule 0 (episode 55 ended 17 Oct). GFS 18Z of 23 Oct present (105 rows). The Hilo sounding fetch (IEM) and the HVO notice fetch (USGS) timed out at issue time; the forecast says so in `refresh_status` and used the archived values (latest sounding 17 Oct 12Z, imputed; last known episode 55). Committed at 21:02 PDT, before the window's first hour was public.
 - Finding: at 18:00 HST the AirNow hourly files for 13:00 to 16:00 HST existed (33 to 35 Hawaii rows each) but held no Pahala SO2. The latest Pahala hour was 12:00 HST, posted in the 22:00 UTC file. The NPS station (Volcanoes NP) posts within the hour; the Hawaii DOH stations appear to post with a lag of about 4 to 6 hours. PREREG's 2-hour availability rule is therefore optimistic for Pahala in live operation. The archive used for training and dev cannot show this lag because AirNow re-publishes hourly files when late data arrive. Decision pending: measure the lag over the next nights (compare `pahala_last_hour_hst` in each live forecast with the issue time) and, if it holds, log a PREREG change that sets the Pahala availability lag to 6 h before the held-out run. The DOH-station lag is itself a finding worth reporting: a desk that waits for Pahala's own latest hour is working with data five hours old.
+
+## 2026-10-24 00:30 PDT: first full dev backtest of the desk (version 1), and what it taught
+
+Both variants ran over the 175 dev nights (no-review: 172, three nights failed on NVIDIA rate limits and were not rerun before the design changed). Provisional t* = 0.19 was used for the orange/yellow mapping; probabilities are stored so t* can be chosen afterwards.
+
+| forecast | Brier | BSS vs clim | AUC | CSI-max t* | CSI |
+|---|---|---|---|---|---|
+| 4 model only | 0.175 | −0.032 | 0.536 | 0.02 | 0.192 |
+| 5 desk, no review (v1) | 0.160 | +0.012 | 0.534 | 0.07 | 0.202 |
+| 6 full desk (v1) | 0.167 | +0.015 | 0.517 | 0.06 | 0.209 |
+| 7 recent rate | 0.154 | +0.092 | 0.564 | 0.15 | 0.204 |
+
+Paired differences (7-day blocks, 90% CI): full desk minus model −0.0080 [−0.0146, −0.0014]; full desk minus recent rate +0.0131 [−0.0015, +0.0290]; full desk minus no-review +0.0017 [−0.0008, +0.0046]. Full desk handed over 0 nights; the no-review variant 16 (Ultra chose handover itself when the streams conflicted and no re-query was allowed).
+
+Reading: version 1 of the desk beats the frozen model (the primary claim's direction) but loses to the memory-free adaptive baseline, and the review loop did not help. The DutyLead's mean weights were lr 0.32, analog 0.29, recent rate 0.38. The analog stream was the weak link: Brier 0.173, AUC 0.45, mean probability 0.03, because memory holds 356 nights from 2025 and the ten "most similar" nights were mostly quiet 2025 nights in the same tag class. The memory was feeding the stale regime back in.
+
+Offline experiments on the dev nights (no model calls, memory as of each issue time):
+- Analog recency window (365, 180, 120, 90, 60, 45 days) and k = 10, 20, 30: at best Brier 0.161, AUC 0.60 raw; shrinking toward the recent rate with prior weight m = 10 gives 0.154, matching the recent rate itself. The tag classes carry little signal beyond the base rate in 2026.
+- Refitting the same 12-input logistic regression on the verified nights in memory as of each issue time: last 120 days, C = 0.1: Brier 0.147, AUC 0.68; 60-day half-life weights over all history: 0.147, 0.68; whole history unweighted: 0.160, 0.68. This is the memory stream that works: memory as training data, not as a lookup of similar nights.
+
+Decisions (dev tuning, desk only; forecasts 1 to 4 and 7 unchanged):
+1. New stream G2 "memory model": the frozen model's pipeline refit at issue time on verified nights in memory within the last 120 days (at least 40 nights and 3 events; else all history with a 60-day half-life; else unavailable and flagged). `src/vogdesk/desk/memory_model.py`.
+2. Analogs become G4: k = 20, candidates from the last 365 days when at least 5 exist, rate shrunk toward the recent rate with weight 10; still used for the discussion, the split flag and the orange clause.
+3. The disagreement check compares the frozen model with the memory model (gap 0.3) instead of with the analog rate.
+4. The DutyLead prompt names the four streams and says what each is; the template fallback weights are lr 0.2, memory model 0.5, recent rate 0.3.
+Version 2 backtests run as `--tag v2`; version 1 results stay in `backtest_dev_<variant>.parquet` for the record.

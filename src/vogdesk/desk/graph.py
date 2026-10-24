@@ -73,20 +73,24 @@ def build_graph(ctx: DeskContext):
         evidence = [EvidenceItem.model_validate(e) for e in state["evidence"]]
         feats = {k: (float("nan") if v is None else v) for k, v in state["features"].items()}
         g1, p_model, outside = forecaster.model_guidance(ctx.model, feats, [e.id for e in evidence if e.kind in ("sql", "forecast", "sounding", "notice")])
-        g2, analogs = forecaster.analog_guidance(ctx.memory, feats, as_of_of(state).to_pydatetime())
-        g3 = forecaster.recent_rate_guidance(ctx.memory, as_of_of(state).to_pydatetime())
-        flags = forecaster.review_flags(evidence, p_model, analogs, outside)
+        as_of = as_of_of(state).to_pydatetime()
+        g2, mm_note = forecaster.memory_model_guidance(ctx.memory, feats, as_of)
+        g3 = forecaster.recent_rate_guidance(ctx.memory, as_of)
+        g4, analogs = forecaster.analog_guidance(ctx.memory, feats, as_of, prior=g3.p)
+        flags = forecaster.review_flags(evidence, p_model, analogs, outside, p_memory=g2.p, memory_ids=g2.analog_ids)
         # Flags already resolved in an earlier round stay resolved.
         prior = {f["code"]: f for f in state.get("flags", []) if f.get("resolved")}
         for fl in flags:
             if fl.code in prior:
                 fl.resolved, fl.resolution = True, prior[fl.code]["resolution"]
         ctx.trace.write("ForecasterAgent", "guidance", inputs={"features": state["features"]},
-                        output={"G1": g1.model_dump(), "G2": g2.model_dump(), "G3": g3.model_dump(), "analog_trace": analogs.trace[:10],
+                        output={"G1": g1.model_dump(), "G2": g2.model_dump(), "G3": g3.model_dump(), "G4": g4.model_dump(),
+                                "memory_model": {k: v for k, v in mm_note.items() if k != "record_ids"}, "analog_trace": analogs.trace[:10],
                                 "flags": [f.model_dump() for f in flags]}, duration_ms=int((time.perf_counter() - t0) * 1000))
-        ctx.wm(state, "guidance", "ForecasterAgent", p_model=g1.p, p_analog=g2.p, p_recent=g3.p, n_analogs=analogs.n, flags=[f.code for f in flags])
-        return {"guidance": [g1.model_dump(), g2.model_dump(), g3.model_dump()], "model_p": p_model, "flags": [f.model_dump() for f in flags],
-                "analog_max_ppb": analogs.max_ppb_seen}
+        ctx.wm(state, "guidance", "ForecasterAgent", p_model=g1.p, p_memory=g2.p, p_recent=g3.p, p_analog=g4.p, n_analogs=analogs.n,
+               flags=[f.code for f in flags])
+        return {"guidance": [g1.model_dump(), g2.model_dump(), g3.model_dump(), g4.model_dump()], "model_p": p_model,
+                "flags": [f.model_dump() for f in flags], "analog_max_ppb": analogs.max_ppb_seen}
 
     def review_node(state: CaseState) -> dict:
         flags = [Flag.model_validate(f) for f in state["flags"]]

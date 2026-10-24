@@ -11,7 +11,8 @@ from datetime import datetime
 import numpy as np
 import pandas as pd
 
-from vogdesk.analogs import AnalogResult, conflict_flags, retrieve_analogs
+from vogdesk.analogs import AnalogResult, conflict_flags, retrieve_analogs, shrink
+from vogdesk.desk import memory_model as mm
 from vogdesk.dataset import CLIMATOLOGY
 from vogdesk.desk.state import EvidenceItem, Flag, Guidance
 from vogdesk.memory import Memory
@@ -29,12 +30,30 @@ def model_guidance(m: VogModel, features: dict, evidence_ids: list[str]) -> tupl
             p, outside)
 
 
-def analog_guidance(memory: Memory, features: dict, as_of_utc: datetime) -> tuple[Guidance, AnalogResult]:
-    a = retrieve_analogs(memory, features, as_of_utc, k=10)
-    note = (f"{a.n_events} of {a.n} analog nights had an event; tags {', '.join(a.tags_used)}"
-            + (f"; fallback level {a.fallback_level}" if a.fallback_level else "")
-            + (f"; highest analog max {a.max_ppb_seen:.0f} ppb" if a.max_ppb_seen is not None else ""))
-    g = Guidance(id="G2", stream="analog", p=None if a.p is None else round(a.p, 4),
+def memory_model_guidance(memory: Memory, features: dict, as_of_utc: datetime) -> tuple[Guidance, dict]:
+    """G2: the same 12-input model refit on the verified nights in memory (memory_model.py)."""
+    pipe, note = mm.fit_memory_model(memory, as_of_utc)
+    if pipe is None:
+        return Guidance(id="G2", stream="memory_model", p=None, note=f"memory model unavailable: {note.get('reason')}"), note
+    p = mm.predict(pipe, features)
+    return (Guidance(id="G2", stream="memory_model", p=round(p, 4), analog_ids=note.get("record_ids", [])[:50],
+                     note=f"logistic regression refit on {note['n_train']} verified nights in memory ({note['how']}, "
+                          f"{note['events_train']} events, nights {note['oldest_night']} to {note['newest_night']})"), note)
+
+
+def analog_guidance(memory: Memory, features: dict, as_of_utc: datetime, prior: float | None = None) -> tuple[Guidance, AnalogResult]:
+    """G4: the event rate among the most similar remembered nights, shrunk toward the recent rate."""
+    a = shrink(retrieve_analogs(memory, features, as_of_utc), prior)
+    p_use = a.p_shrunk if a.p_shrunk is not None else a.p
+    note = (f"{a.n_events} of {a.n} analog nights had an event (raw rate {a.p:.2f})" if a.p is not None else "no analog nights with a known outcome")
+    note += f"; tags {', '.join(a.tags_used)}"
+    if a.p_shrunk is not None:
+        note += f"; shrunk toward the recent rate {a.prior:.2f} with weight {a.prior_weight}"
+    if a.fallback_level:
+        note += f"; fallback level {a.fallback_level}"
+    if a.max_ppb_seen is not None:
+        note += f"; highest analog max {a.max_ppb_seen:.0f} ppb"
+    g = Guidance(id="G4", stream="analog", p=None if p_use is None else round(p_use, 4),
                  interval=None if a.p is None else (round(a.lo, 4), round(a.hi, 4)),
                  analog_ids=a.analog_ids, note=note)
     return g, a
@@ -84,10 +103,19 @@ def data_gap_flags(evidence: list[EvidenceItem]) -> list[Flag]:
     return flags
 
 
-def review_flags(evidence: list[EvidenceItem], p_model: float, analogs: AnalogResult, outside: list[str]) -> list[Flag]:
-    """The DutyLead's five checks, in code: (a) disagreement, (b) split, (c) persistence, (d) regime unseen, (e) gaps."""
-    flags: list[Flag] = [Flag(code=f["code"], detail=f["detail"], evidence_ids=f["evidence_ids"]) for f in conflict_flags(p_model, analogs)]
-    pf = persistence_flag(evidence, p_model, analogs.p)
+def review_flags(evidence: list[EvidenceItem], p_model: float, analogs: AnalogResult, outside: list[str],
+                 p_memory: float | None = None, memory_ids: list[str] | None = None, gap: float = 0.3) -> list[Flag]:
+    """The DutyLead's checks, in code: (a) model vs memory disagreement, (b) analog split, (c) persistence,
+    (d) regime unseen, (e) data gaps and data quality."""
+    flags: list[Flag] = []
+    if p_memory is None:
+        flags.append(Flag(code="memory_model_unavailable", detail="too few verified nights in memory to refit the model"))
+    elif abs(p_model - p_memory) > gap:
+        flags.append(Flag(code="model_memory_disagree", detail=f"frozen model {p_model:.2f} against memory model {p_memory:.2f}, gap above {gap:.2f}",
+                          evidence_ids=(memory_ids or [])[:20]))
+    flags += [Flag(code=f["code"], detail=f["detail"], evidence_ids=f["evidence_ids"]) for f in conflict_flags(p_model, analogs)
+              if f["code"] != "model_analog_disagree"]  # the memory model, not the noisy analog rate, carries the disagreement check
+    pf = persistence_flag(evidence, p_model, p_memory if p_memory is not None else analogs.p)
     if pf:
         flags.append(pf)
     if outside:
