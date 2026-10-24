@@ -9,7 +9,7 @@ T = pd.Timestamp("2025-09-03 04:00", tz="UTC")
 
 def test_asof_view_is_wrapped_with_the_cutoff():
     out = rewrite_asof("SELECT max(so2_ppb) FROM pahala_exposure.so2_hourly WHERE site_id = '150012016'", T)
-    assert "FROM (SELECT * FROM pahala_exposure.so2_hourly WHERE available_utc <= TIMESTAMP '2025-09-03 04:00:00') so2_hourly" in out
+    assert "FROM (SELECT * FROM lightning.metastore.vog.pahala_exposure.so2_hourly WHERE available_utc <= TIMESTAMP '2025-09-03 04:00:00') so2_hourly" in out
     assert out.endswith("WHERE site_id = '150012016'")
 
 
@@ -17,7 +17,7 @@ def test_join_and_column_qualifiers_survive():
     sql = ("SELECT s.site_id, so2_hourly.so2_ppb FROM pahala_exposure.so2_hourly "
            "JOIN pahala_exposure.stations s ON s.site_id = so2_hourly.site_id")
     out = rewrite_asof(sql, T)
-    assert "JOIN pahala_exposure.stations stations" in out  # plain view, no cutoff column
+    assert "JOIN lightning.metastore.vog.pahala_exposure.stations stations" in out  # plain view, no cutoff column
     assert "so2_hourly.so2_ppb" in out and out.count("available_utc <=") == 1
 
 

@@ -24,6 +24,7 @@ import httpx
 import pandas as pd
 
 SEMANTIC_SCHEMA = "pahala_exposure"
+USL_PREFIX = "lightning.metastore.vog.pahala_exposure"  # the activated USL tables behind the agent-facing name
 ASOF_VIEWS = {"so2_hourly", "station_wind", "episodes_known", "gfs_points", "sounding_levels"}
 PLAIN_VIEWS = {"stations", "action_plan_levels", "forecast_verification"}
 ALLOWED_VIEWS = ASOF_VIEWS | PLAIN_VIEWS
@@ -142,9 +143,18 @@ def rewrite_asof(sql: str, as_of: pd.Timestamp) -> str:
 
     def wrap(m: re.Match) -> str:
         keyword, view = m.group(1), m.group(2)
+        if view.lower() == "episodes_known":
+            # Each boundary has its own publication time. An episode is visible once its start was
+            # published; its end (and the end's publication time) stays NULL until the end was published.
+            # Fountain height and volume come from the retrospective USGS table and are never shown.
+            return (f"{keyword} (SELECT episode, start_utc, start_known_utc, start_known_source, "
+                    f"CASE WHEN end_known_utc <= TIMESTAMP '{ts}' THEN end_utc END AS end_utc, "
+                    f"CASE WHEN end_known_utc <= TIMESTAMP '{ts}' THEN end_known_utc END AS end_known_utc, "
+                    f"CASE WHEN end_known_utc <= TIMESTAMP '{ts}' THEN end_known_source END AS end_known_source "
+                    f"FROM {USL_PREFIX}.{view} WHERE start_known_utc <= TIMESTAMP '{ts}') {view}")
         if view.lower() in ASOF_VIEWS:
-            return f"{keyword} (SELECT * FROM {SEMANTIC_SCHEMA}.{view} WHERE available_utc <= TIMESTAMP '{ts}') {view}"
-        return f"{keyword} {SEMANTIC_SCHEMA}.{view} {view}"
+            return f"{keyword} (SELECT * FROM {USL_PREFIX}.{view} WHERE available_utc <= TIMESTAMP '{ts}') {view}"
+        return f"{keyword} {USL_PREFIX}.{view} {view}"
 
     # Only table references after FROM or JOIN are wrapped; column qualifiers such as so2_hourly.site_id
     # keep working because each subquery is aliased with the view name.
@@ -158,10 +168,13 @@ def smoke() -> None:
         print(sql, "->", len(r.rows), "rows", r.columns[:6], r.rows[:3])
     for view in sorted(ALLOWED_VIEWS):
         try:
-            r = z.execute(f"SELECT count(*) AS n FROM {SEMANTIC_SCHEMA}.{view}", limit=1)
-            print(f"{SEMANTIC_SCHEMA}.{view}: {r.rows}")
+            r = z.execute(f"SELECT count(*) AS n FROM {USL_PREFIX}.{view}", limit=1)
+            print(f"{SEMANTIC_SCHEMA}.{view}: {r.rows[0]['n']} rows ({r.elapsed_ms} ms)")
         except ZetarisError as e:
             print(f"{SEMANTIC_SCHEMA}.{view}: not available ({str(e)[:120]})")
+    t = pd.Timestamp("2025-09-03 04:00", tz="UTC")
+    r = z.run_sql(f"SELECT max(available_utc) AS latest, count(*) AS n FROM {SEMANTIC_SCHEMA}.so2_hourly WHERE site_id = '150012016'", t)
+    print("as-of check at", t, "->", r.rows, "(latest must be <= as_of)")
 
 
 if __name__ == "__main__":

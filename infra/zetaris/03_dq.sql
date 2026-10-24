@@ -1,10 +1,16 @@
 -- Layer 3: data quality rules on the semantic layer. One line each; the desk reads the rule names in
 -- its evidence items so a flagged value is never cited as a plain number.
 
--- Analyzer range: the Pahala and Ocean View analyzers top out near 1,000 ppb. A value above that is
+-- Analyzer upper range: the Pahala and Ocean View analyzers top out near 1,000 ppb. A value above that is
 -- censored ("at least"), not a measurement. Ocean View read 1,206 ppb on 3 Sep 2025 and DOH marked it.
-REGISTER DQ analyzer_range TABLE lightning.metastore.vog.pahala_exposure.so2_hourly AS
-so2_ppb IS NOT NULL AND so2_ppb >= 0 AND so2_ppb <= 1000;
+REGISTER DQ analyzer_upper_range TABLE lightning.metastore.vog.pahala_exposure.so2_hourly AS
+so2_ppb IS NOT NULL AND so2_ppb <= 1000;
+
+-- Zero noise: validated analyzers report small negatives (down to about -1 ppb) when the true value is
+-- zero; the first DQ run found 4,468 such hours, almost all at the Volcanoes NP station. Within -5 ppb
+-- they are instrument noise, and the features clip them at 0. Below that something is wrong.
+REGISTER DQ zero_noise_within_tolerance TABLE lightning.metastore.vog.pahala_exposure.so2_hourly AS
+so2_ppb IS NULL OR so2_ppb >= -5;
 
 -- Publication order: a value can never be public before the hour it describes has ended.
 REGISTER DQ published_after_observed TABLE lightning.metastore.vog.pahala_exposure.so2_hourly AS

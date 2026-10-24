@@ -1,0 +1,47 @@
+Zetaris data quality run on USL lightning.metastore.vog.pahala_exposure, 23 Oct 2026 evening PDT
+
+LIST DQ USL:
+   {'name': 'analyzer_upper_range', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'expression': 'so2_ppb IS NOT NULL AND so2_ppb <= 1000'}
+   {'name': 'published_after_observed', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'expression': 'available_utc >= time_utc + INTERVAL 1 HOURS'}
+   {'name': 'preliminary_flag_matches_source', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'expression': "(data_source = 'airnow' AND preliminary = true) OR (data_source = 'aqs' AND preliminary = false)"}
+   {'name': 'required_columns', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'expression': 'site_id IS NOT NULL AND time_utc IS NOT NULL AND data_source IS NOT NULL AND preliminary IS NOT NULL AND available_utc IS NOT NULL'}
+   {'name': 'zero_noise_within_tolerance', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'expression': 'so2_ppb IS NULL OR so2_ppb >= -5'}
+   {'name': 'episode', 'table': 'episodes_known', 'type': 'Primary key constraints', 'expression': ''}
+   {'name': 'boundary_known_after_event', 'table': 'episodes_known', 'type': 'Custom Data Quality', 'expression': '(start_known_utc IS NULL OR start_known_utc >= start_utc) AND (end_known_utc IS NULL OR end_utc IS NULL OR end_known_utc >= end_utc)'}
+   {'name': 'gfs_run_is_18z', 'table': 'gfs_points', 'type': 'Custom Data Quality', 'expression': 'hour(run_init_utc) = 18 AND fxx IN (10, 16, 22)'}
+   {'name': 'required_columns', 'table': 'gfs_points', 'type': 'Custom Data Quality', 'expression': 'run_init_utc IS NOT NULL AND valid_utc IS NOT NULL AND var IS NOT NULL AND point IS NOT NULL AND available_utc IS NOT NULL'}
+   {'name': 'valid_utc', 'table': 'sounding_levels', 'type': 'Primary key constraints', 'expression': ''}
+   {'name': 'inversion_in_search_window', 'table': 'sounding_levels', 'type': 'Custom Data Quality', 'expression': 'inversion_base_m IS NULL OR (inversion_base_m >= 500 AND inversion_base_m <= 4000)'}
+   {'name': 'site_id', 'table': 'stations', 'type': 'Primary key constraints', 'expression': ''}
+   {'name': 'plan_level', 'table': 'action_plan_levels', 'type': 'Primary key constraints', 'expression': ''}
+   {'name': 'action_levels_in_ppm', 'table': 'action_plan_levels', 'type': 'Custom Data Quality', 'expression': "so2_ppm_min >= 0 AND (so2_ppm_max IS NULL OR so2_ppm_max > so2_ppm_min) AND averaging = '15-minute average'"}
+   {'name': 'case_id', 'table': 'forecast_verification', 'type': 'Primary key constraints', 'expression': ''}
+
+RUN DQ TABLE so2_hourly (28820 ms):
+   {'name': 'analyzer_upper_range', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'total_record': '175053', 'valid_record': '175051', 'invalid_record': '2'}
+   {'name': 'published_after_observed', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'total_record': '175053', 'valid_record': '175053', 'invalid_record': '0'}
+   {'name': 'preliminary_flag_matches_source', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'total_record': '175053', 'valid_record': '175053', 'invalid_record': '0'}
+   {'name': 'required_columns', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'total_record': '175053', 'valid_record': '175053', 'invalid_record': '0'}
+   {'name': 'zero_noise_within_tolerance', 'table': 'so2_hourly', 'type': 'Custom Data Quality', 'total_record': '175053', 'valid_record': '175053', 'invalid_record': '0'}
+
+RUN DQ TABLE episodes_known (3232 ms):
+   {'name': 'boundary_known_after_event', 'table': 'episodes_known', 'type': 'Custom Data Quality', 'total_record': '55', 'valid_record': '55', 'invalid_record': '0'}
+   {'name': 'episode', 'table': 'episodes_known', 'type': 'Primary Key Constraint', 'total_record': '55', 'valid_record': '55', 'invalid_record': '0'}
+
+RUN DQ TABLE gfs_points (10586 ms):
+   {'name': 'gfs_run_is_18z', 'table': 'gfs_points', 'type': 'Custom Data Quality', 'total_record': '70245', 'valid_record': '70245', 'invalid_record': '0'}
+   {'name': 'required_columns', 'table': 'gfs_points', 'type': 'Custom Data Quality', 'total_record': '70245', 'valid_record': '70245', 'invalid_record': '0'}
+
+RUN DQ TABLE sounding_levels (2500 ms):
+   {'name': 'inversion_in_search_window', 'table': 'sounding_levels', 'type': 'Custom Data Quality', 'total_record': '1424', 'valid_record': '1424', 'invalid_record': '0'}
+   {'name': 'valid_utc', 'table': 'sounding_levels', 'type': 'Primary Key Constraint', 'total_record': '1424', 'valid_record': '1424', 'invalid_record': '0'}
+
+RUN DQ TABLE action_plan_levels (2046 ms):
+   {'name': 'action_levels_in_ppm', 'table': 'action_plan_levels', 'type': 'Custom Data Quality', 'total_record': '6', 'valid_record': '6', 'invalid_record': '0'}
+   {'name': 'plan_level', 'table': 'action_plan_levels', 'type': 'Primary Key Constraint', 'total_record': '6', 'valid_record': '6', 'invalid_record': '0'}
+
+analyzer_upper_range invalid records (censored, at least 1,000 ppb):
+   {'site_id': '150012020', 'time_utc': '2025-09-03 11:00:00.0', 'so2_ppb': '1206.0', 'data_source': 'aqs', 'preliminary': 'false', 'available_utc': '2025-09-03 13:00:00.0'}
+   {'site_id': '150012020', 'time_utc': '2025-09-03 12:00:00.0', 'so2_ppb': '1165.8', 'data_source': 'aqs', 'preliminary': 'false', 'available_utc': '2025-09-03 14:00:00.0'}
+
+Reading: the two invalid hours are Ocean View on 3 Sep 2025 (01:00 and 02:00 HST), the night DOH's own list marks with an asterisk. Everything else passes. 4,468 small negative readings (zero noise, mostly Volcanoes NP) were caught by the first version of the range rule and are now covered by zero_noise_within_tolerance (>= -5 ppb); the features clip them at 0.
