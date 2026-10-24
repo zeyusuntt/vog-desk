@@ -1,0 +1,61 @@
+{
+ "t_star": 0.18,
+ "cases": [
+  {
+   "date": "2026-05-07",
+   "review": true,
+   "case": "samples/cases/sample-2026-05-07-full.json",
+   "trace": "logs/sample-2026-05-07-full.jsonl",
+   "decision": "issue",
+   "p": 0.1049,
+   "level": "normal"
+  },
+  {
+   "date": "2026-05-07",
+   "review": false,
+   "case": "samples/cases/sample-2026-05-07-noreview.json",
+   "trace": "logs/sample-2026-05-07-noreview.jsonl",
+   "decision": "issue",
+   "p": 0.1049,
+   "level": "normal"
+  },
+  {
+   "date": "2026-03-02",
+   "review": true,
+   "case": "samples/cases/sample-2026-03-02-full.json",
+   "trace": "logs/sample-2026-03-02-full.jsonl",
+   "decision": "issue",
+   "p": 0.1761,
+   "level": "normal"
+  },
+  {
+   "date": "2026-03-02",
+   "review": false,
+   "case": "samples/cases/sample-2026-03-02-noreview.json",
+   "trace": "logs/sample-2026-03-02-noreview.jsonl",
+   "decision": "issue",
+   "p": 0.1761,
+   "level": "normal"
+  },
+  {
+   "date": "2026-06-16",
+   "review": true,
+   "case": "samples/cases/sample-2026-06-16-full.json",
+   "trace": "logs/sample-2026-06-16-full.jsonl",
+   "decision": "issue",
+   "p": 0.0873,
+   "level": "normal"
+  },
+  {
+   "date": "2026-06-16",
+   "review": false,
+   "case": "samples/cases/sample-2026-06-16-noreview.json",
+   "trace": "logs/sample-2026-06-16-noreview.jsonl",
+   "decision": "issue",
+   "p": 0.0873,
+   "level": "normal"
+  }
+ ],
+ "memory_seed": "samples/memory_seed.json",
+ "note": "Replay with SAMPLE_MODE=true and T_STAR equal to t_star; the replay key hashes the exact prompt."
+}

@@ -1,0 +1,171 @@
+{
+ "case_id": "sample-2026-05-07-full",
+ "issue_date_hst": "2026-05-07",
+ "decision": {
+  "kind": "issue",
+  "p": 0.1049,
+  "level": "normal",
+  "recommendation": "Normal operations. The probability is shown for information; no action under the schools plan is triggered by a forecast.",
+  "discussion": "The base probability for tonight is 0.10, taken from the memory model stream [G2]. The frozen 2025 logistic regression [G1] gives 0.08, while the memory model refit on the last 120 days [G2] gives 0.10, showing close agreement. The recent event rate over the last 30 verified nights [G3] is 0.13, and the analog memory [G4] yields a point estimate of 0.06 with a 90% interval of 0.00 to 0.17 and a highest analog maximum of 64 ppb. The review raised no flags. Current conditions show a pause in emissions with episode 46 ending 2.0 days ago [E5], and very low concentrations at Pahala (last 24-hour max 26.0 ppb, latest 0.0 ppb at 16:00 HST) [E1] despite moderate upwind readings at Volcanoes NP (max 2.0 ppb) [E3]. Transport toward Pahala is limited, with only 1 of 3 leads showing a 925 hPa wind component toward Pahala of 0.8 m/s at 18:00 HST [E6], and the boundary layer is forecast to collapse to 45 m by 06:00 HST under an inversion base at 562 m [E7], limiting vertical mixing. Given the low observed concentrations, the pause regime, and the unfavorable transport and stability, the base probability of 0.10 is appropriate and no adjustment is made. The final probability remains 0.10, which is below the action threshold of 0.18, so the recommendation is normal operations. An observation by midnight that would increase concern would be a sustained rise in Pahala concentrations above 75 ppb or a shift in wind direction bringing stronger transport from the summit, which would raise the probability toward the yellow threshold.",
+  "cites": [
+   "E1",
+   "E3",
+   "E5",
+   "E6",
+   "E7",
+   "G1",
+   "G2",
+   "G3",
+   "G4"
+  ],
+  "handover_reason": null,
+  "weights": {
+   "memory_model": 1.0
+  },
+  "base_p": 0.1049,
+  "adjustment": 0.0,
+  "adjustment_reason": null
+ },
+ "guidance": [
+  {
+   "id": "G1",
+   "stream": "lr",
+   "p": 0.0769,
+   "interval": null,
+   "inputs": [
+    "E1",
+    "E2",
+    "E3",
+    "E4",
+    "E5",
+    "E6",
+    "E7"
+   ],
+   "analog_ids": [],
+   "note": "logistic regression fit on 2025 with isotonic calibration; raw 0.070"
+  },
+  {
+   "id": "G2",
+   "stream": "memory_model",
+   "p": 0.1049,
+   "interval": null,
+   "inputs": [],
+   "analog_ids": [
+    "31e8fae74c1a45b7ba7e3545cb1c2e9f",
+    "44b250d71aed4e4ea041cf121fe2f26e",
+    "193052b646494b6a95a4db383f95cc0d",
+    "72ec9870b45e435d967792c38014aeb8",
+    "03ef7edfc8314ab5b363dc40588170e4",
+    "400a9d0863e04ebea9b5b031999e1650",
+    "82d3b31237144849814661c82344bc9b",
+    "7f53e04dbff44e9d885462927ae80e0f",
+    "82b415456f83455a9e2336b7cf421b8d",
+    "4fa5aa131a26494198fcc9350db21af9",
+    "4df2fcd3d71743f98187716499b94e52",
+    "e979a5005d484302bc1db06bd6767c1a",
+    "83c36a5130c74199bdb5e7967591488c",
+    "22bf58a577c840b0a2684d518f493ef0",
+    "8bdf71f7f1784a62be29e417c2099421",
+    "a373f670f8664022934155875d7b6178",
+    "1a0a3544fe1d4e89a472d9020a8f08b3",
+    "decc8c7ef11c4a7cb4d1b2dfc186d235",
+    "055c14625b60487d9f8999642afebc47",
+    "68065fa894d5436e849a2cba4f6ca99a",
+    "0ffaf246888b444ea2931a5f725f30e7",
+    "6741240663e04065b20be458ab5a009b",
+    "34bce40b5e2e4d05853df32e6adb9042",
+    "ded0a73ce7714607b81efb1a36ef3ba3",
+    "6569852494b94c458a6c6bf65b84c94c",
+    "e77a1f4f61ec4c6c824d770f3780be91",
+    "7cdaaf15f00a405ead86503c1d7ecee6",
+    "c4251ec737594a89b377a82a10e5f8e9",
+    "009b8e4deee044b2b28a0c839705cfda",
+    "935f77c2782e4c08ae107a117bcefeb5",
+    "06d967bfa61e499e908936aff96033fe",
+    "40c389615e0341cca3ba0681ed2f6331",
+    "8c14e0520556466385eabc1948991711",
+    "a40ac3d8c9f54e8e88a9bf87a3224b07",
+    "22e30af14f6a4b63ab88318fe896f139",
+    "ff4c953c36f5459a9d1c0db54483e424",
+    "b91582f02cd54fdfb8c36eacdbb8f6de",
+    "002d3cca8bda40e390e859c879e85994",
+    "c9175f9c684144acae3eb687b57b3e10",
+    "8204fb6ab42a43da9873e07e04c595f7",
+    "5801be6b6fc24abe900e887a48be59db",
+    "70826b14855844839d7ea8c1e264aa0d",
+    "ac724677d4fb4a7b8d227afda58c01d5",
+    "5ed486c8eef24edd8bf6c334fec7bbfd",
+    "0623ad57484e46cf8c6b2faf92720c05",
+    "ac731a73a01a4b80ad8682ae136114c8",
+    "3600ee43360145c98c70de48f585185f",
+    "6203a960f2a3453587b788e8f971cac1",
+    "5a74d082ac2f449d9d42b930ca2c52d1",
+    "dea180038b2e4d64a0f9a3a8d8bc5d00"
+   ],
+   "note": "logistic regression refit on 118 verified nights in memory (last 120 days, 18 events, nights 2026-01-07 to 2026-05-06)"
+  },
+  {
+   "id": "G3",
+   "stream": "recent_rate",
+   "p": 0.1333,
+   "interval": null,
+   "inputs": [],
+   "analog_ids": [],
+   "note": "event rate over the last 30 verified nights"
+  },
+  {
+   "id": "G4",
+   "stream": "analog",
+   "p": 0.058,
+   "interval": [
+    0.0,
+    0.1723
+   ],
+   "inputs": [],
+   "analog_ids": [
+    "922ce7a64ec24e1daf9fde5793aae555",
+    "b4691c5204444bc7b8e0dd938ed536ec",
+    "37b0151fe01445cc846e01c5a152ae44",
+    "2971e6133e8c49028915e200abb8641b",
+    "905c12a9e74a46edb4a81a39311349ed",
+    "62404b1ba271494780bb6f56560464fb",
+    "b9644077a6eb46fc854016b43451ada6",
+    "110314cc5f464be2aec9c0844a44a0c9",
+    "f19d9760037644c5b3caaa4078c9acd7",
+    "273968208d5d4d4daecceba202745951",
+    "8928caa4802a433eb164c9c2ea6d2eba",
+    "193052b646494b6a95a4db383f95cc0d",
+    "31e8fae74c1a45b7ba7e3545cb1c2e9f"
+   ],
+   "note": "0 of 13 analog nights had an event (raw rate 0.00); tags episode:pause, inversion:low, regime:light, sector:part, station:pahala; shrunk toward the recent rate 0.13 with weight 10; highest analog max 64 ppb"
+  }
+ ],
+ "flags": [],
+ "llm_calls": [
+  {
+   "agent": "EvidenceAgent",
+   "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
+   "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+   "latency_ms": 3829,
+   "prompt_tokens": 4362,
+   "completion_tokens": 248,
+   "cached": false,
+   "validation": "ok",
+   "problems": [],
+   "reply_preview": "The current emission state is a pause, with episode 46 ending 2.0 days ago [E5]. At Pahala, the last 24 usable hours show a maximum concentration of 26.0 ppb and a latest reading of 0.0 ppb at 16:00 HST [E1], while the upwind Volcanoes NP station reports a maximum of 2.0 ppb and a latest of 0.5 ppb at 16:00 HST [E3]. Forecast transport indicates that at 18:00 HST, 1 of 3 leads have the 925 hPa wind blowing toward Pahala with a mean component of 0.8 m/s [E6], and at 00:00 HST the 850 hPa wind is from 151 deg with a component of 0.7 m/s [E6]. Stability is characterized by a boundary layer that w"
+  },
+  {
+   "agent": "DutyLead",
+   "model_requested": "nvidia/nemotron-3-ultra-550b-a55b",
+   "provider_model": "nvidia/nemotron-3-ultra-550b-a55b",
+   "latency_ms": 15937,
+   "prompt_tokens": 5340,
+   "completion_tokens": 1848,
+   "cached": false,
+   "validation": "ok",
+   "problems": [],
+   "reply_preview": "{\n  \"kind\": \"issue\",\n  \"adjustment\": 0,\n  \"adjustment_reason\": null,\n  \"discussion\": \"The base probability for tonight is 0.10, taken from the memory model stream [G2]. The frozen 2025 logistic regression [G1] gives 0.08, while the memory model refit on the last 120 days [G2] gives 0.10, showing close agreement. The recent event rate over the last 30 verified nights [G3] is 0.13, and the analog memory [G4] yields a point estimate of 0.06 with a 90% interval of 0.00 to 0.17 and a highest analog maximum of 64 ppb. The review raised no flags. Current conditions show a pause in emissions with epis"
+  }
+ ],
+ "review_round": 0
+}

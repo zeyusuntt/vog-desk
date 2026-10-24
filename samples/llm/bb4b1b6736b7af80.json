@@ -1,0 +1,14 @@
+{
+ "content": "The current emission state is a pause; episode 49 ended 2.0 days ago on 2026-06-14 at 17:05 HST [E5]. At Pahala, the last 24-hour maximum was 69.0 ppb with a latest reading of 1.0 ppb at 16:00 HST [E1], and the last 6-hour maximum was 1.0 ppb [E2]; the upwind Volcanoes NP station shows a maximum of 4.6 ppb and a mean of 1.9 ppb [E3]. Forecast transport indicates 1 of 3 925 hPa leads have a component toward Pahala with a mean toward component of -0.3 m/s [E6], while 850 hPa winds are 3.3 m/s from 190 deg at 00:00 HST and 3.0 m/s from 201 deg at 06:00 HST, generally away from the monitor. Stability features a boundary layer that was 418 m at 18:00 HST and will collapse to 150 m by 00:00 HST and 163 m by 06:00 HST [E6], under an inversion base at 1426 m from the Hilo sounding [E7].",
+ "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
+ "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+ "reasoning": null,
+ "usage": {
+  "prompt_tokens": 4308,
+  "completion_tokens": 313,
+  "total_tokens": 4621
+ },
+ "latency_ms": 3255,
+ "provider": "nightshift",
+ "cached": false
+}
