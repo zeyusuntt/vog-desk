@@ -184,3 +184,7 @@ Run at frozen commit 4b766f1 (code), scored with `scripts/results.py --split hel
 | 7 recent rate | 0.246 | +0.28 | 0.397 | 0.13 | 1.00 | 0.62 | 0.38 |
 
 Paired differences (7-day blocks, 90%): 6 minus 4 −0.117 [−0.157, −0.080]; 6 minus 7 −0.031 [−0.048, −0.014]; 6 minus 5 −0.009 [−0.019, +0.001] (14-day: [−0.016, −0.000]); 4 minus 1 −0.009 [−0.023, +0.004]. Both pre-registered claims hold. Inside the desk: base (memory model) 0.2199, full desk 0.2153, no-review 0.2244; 82 nights flagged; 8 handovers in the no-review variant (5 events), none in the full desk; Ultra fell back to the template on 23 nights. Nothing was changed after seeing these numbers; the live desk runs the same frozen code.
+
+## 2026-10-24 06:40 PDT: SAMPLE_MODE recordings
+
+`scripts/record_samples.py` ran the frozen desk on 7 May, 2 Mar and 16 Jun 2026 (local Parquet, memory seeded through 30 Jun, t* 0.18), both variants, through Nightshift with recording on. Six distinct model replies were saved (the no-review variant shares the full variant's prompts when no flag is raised, so the same reply serves both). `tests/test_sample_mode.py` replays a full and a no-review case with SAMPLE_MODE=true and no token, checks every model call came from the recording, and matches the recorded decision. 180 tests. Note for judges: the replay key hashes the exact prompt, so a changed prompt or t* needs new recordings; `samples/manifest.json` records both.
