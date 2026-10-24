@@ -98,6 +98,13 @@ def data_gap_flags(evidence: list[EvidenceItem]) -> list[Flag]:
             flags.append(Flag(code="data_gap", detail="no Hilo sounding in the last 18 hours", evidence_ids=[e.id]))
         if q == "pahala_24h" and e.values.get("n_hours", 24) < 14:
             flags.append(Flag(code="data_gap", detail=f"only {e.values.get('n_hours', 0)} of 24 recent Pahala hours published", evidence_ids=[e.id]))
+        if q == "pahala_24h" and e.values.get("n_hours", 0) and e.values.get("latest_hour_hst"):
+            # The usable cutoff is 16:00 HST (hour beginning). A latest hour before 13:00 HST means a hole right before issue
+            # (seen live on 23 Oct 2026: 13:00 to 16:00 HST missing from AirNow while the hours before and after posted on time).
+            hh = int(str(e.values["latest_hour_hst"]).split(":")[0])
+            if hh < 13:
+                flags.append(Flag(code="stale_data", detail=f"latest published Pahala hour begins {e.values['latest_hour_hst']} HST, more than 3 h before the usable cutoff",
+                                  evidence_ids=[e.id]))
         if e.dq_flags:
             flags.append(Flag(code="dq_failed", detail=f"{e.id} failed data quality rule(s): {', '.join(e.dq_flags)}", evidence_ids=[e.id]))
     return flags

@@ -107,3 +107,11 @@ Decisions (dev tuning, desk only; forecasts 1 to 4 and 7 unchanged):
 3. The disagreement check compares the frozen model with the memory model (gap 0.3) instead of with the analog rate.
 4. The DutyLead prompt names the four streams and says what each is; the template fallback weights are lr 0.2, memory model 0.5, recent rate 0.3.
 Version 2 backtests run as `--tag v2`; version 1 results stay in `backtest_dev_<variant>.parquet` for the record.
+
+## 2026-10-24 00:30 PDT: the publication-lag question, settled before the held-out run
+
+The Pahala availability rule had to be settled before the held-out period was scored. Measurement at 07:25 UTC on 24 Oct against the live AirNow files: the 05Z hour (19:00 HST) already held a Pahala SO2 row in a file last modified 07:24 UTC, so that hour was public within 2 h 24 min of its end; 04Z and 03Z likewise (within 3 h, the files are rewritten as late data arrive). The hours 23Z to 02Z (13:00 to 16:00 HST on 23 Oct), which were missing at the 18:00 HST issue, were still missing at 07:25 UTC: that was a four-hour hole in the station's feed, not a lag. The Volcanoes NP station had every hour.
+
+Decision: PREREG's 2-hour availability rule stands (no change 2). What the 23 Oct evening showed is a data gap right before issue, which the desk must notice: a new review flag `stale_data` fires when the latest published Pahala hour begins before 13:00 HST (more than 3 h before the usable cutoff) and orders a re-query of the last 6 hours. The 23 Oct entry above is corrected by this one. `scripts/verify_live.py` keeps recording the latest Pahala hour at each issue so the lag can be watched over the live nights; if a systematic lag ever appears, it will be logged as a PREREG change before any held-out scoring, not after.
+
+Order of events for the record: dev backtest v2 is running with the 2-hour rule; t* and the conflict thresholds will be frozen from it; the held-out run follows the freeze.

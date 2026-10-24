@@ -541,3 +541,13 @@ def test_trace_step_still_writes_its_line_when_the_block_raises(tmp_path):
     [line] = tr.lines()
     assert line["step"] == "decide"
     assert line["output"] == {"partial": True}
+
+
+
+def test_data_gap_flags_mark_a_hole_right_before_issue_as_stale_data():
+    from vogdesk.desk.forecaster import data_gap_flags
+    fresh = ev("E1", "pahala_24h", summary="Pahala 24 h", n_hours=24, latest_hour_hst="16:00")
+    stale = ev("E1", "pahala_24h", summary="Pahala 24 h", n_hours=20, latest_hour_hst="12:00")
+    assert [f.code for f in data_gap_flags([fresh])] == []
+    codes = [f.code for f in data_gap_flags([stale])]
+    assert codes == ["stale_data"]
