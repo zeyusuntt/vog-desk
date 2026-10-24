@@ -33,9 +33,15 @@ A negative difference means the first forecast has the lower (better) Brier scor
 
 ## Figures
 
-![reliability](figures/reliability_heldout.png)
+Drawn by `scripts/figures.py` from the per-night CSVs in `results/`.
 
-![value](figures/value_heldout.png)
+![Brier score by forecast](figures/brier_heldout.png)
+
+![Every held-out night](figures/nights_heldout.png)
+
+![Reliability](figures/reliability_heldout.png)
+
+![Relative value](figures/value_heldout.png)
 
 ### Reliability bins, 6 full desk
 
