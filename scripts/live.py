@@ -12,6 +12,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -93,12 +94,39 @@ def data_basis(src: sources.Sources, issue: pd.Timestamp, t: pd.Timestamp) -> di
     }
 
 
+def run_desk(issue: pd.Timestamp, memory_path: str) -> dict:
+    """Run the LangGraph desk for the issue date; failures are recorded, never hidden."""
+    import shutil
+    try:
+        sys.path.insert(0, str(ROOT))
+        from run import build_context
+        from vogdesk.desk.graph import DEFAULT_T_STAR, run_case
+        ctx = build_context("zetaris", "nightshift", "http", Path(memory_path), float(os.environ.get("T_STAR", DEFAULT_T_STAR)))
+        state = run_case(ctx, issue.strftime("%Y-%m-%d"), review_enabled=True, case_id=f"live-{issue:%Y-%m-%d}")
+        out_dir = ROOT / "live" / issue.strftime("%Y-%m-%d")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        shutil.copy(ctx.trace.path, out_dir / "trace.jsonl")
+        try:
+            from vogdesk.institutional import record_forecast
+            state["trace_path"] = str(out_dir / "trace.jsonl")
+            record_forecast(state, forecast_kind="full_desk")
+        except Exception as e:
+            print("postgres write failed:", type(e).__name__)
+        return {"case_id": state["case_id"], "decision": state["decision"], "guidance": state["guidance"], "flags": state["flags"],
+                "review_round": state.get("review_round"), "llm_calls": state["llm_calls"], "data_backend": state["data_backend"],
+                "regime_summary": state.get("regime_summary"), "trace": "trace.jsonl"}
+    except Exception as e:
+        return {"error": f"{type(e).__name__}: {str(e)[:300]}"}
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     now_hst = datetime.now(timezone.utc) - HST.to_pytimedelta()
     ap.add_argument("--issue", default=now_hst.strftime("%Y-%m-%d"), help="issue date (HST), default today")
     ap.add_argument("--no-fetch", action="store_true")
     ap.add_argument("--out", default="live")
+    ap.add_argument("--desk", action="store_true", help="also run the full desk (Zetaris, Nightshift, memory) and record its decision")
+    ap.add_argument("--memory-path", default="data/memory/live.json", help="in-process memory file when the sidecar is down")
     args = ap.parse_args()
     issue = pd.Timestamp(args.issue)
     t = issue_time_utc(issue)
@@ -138,6 +166,12 @@ def main() -> None:
                   "git_head_at_training": m.notes.get("git_head")},
         "verification": None,
     }
+    if args.desk:
+        out["desk"] = run_desk(issue, args.memory_path)
+        if out["desk"].get("decision"):
+            out["kind"] = "full_desk"
+            out["note"] = ("Full desk forecast: evidence through Zetaris, model and memory guidance, DutyLead review on Nemotron Ultra. "
+                           "The model-only probability is kept alongside for comparison (forecast 4 versus 6).")
     out_dir = ROOT / args.out / issue.strftime("%Y-%m-%d")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "forecast.json").write_text(json.dumps(out, indent=1, default=str))
