@@ -20,3 +20,5 @@ memory-service/vendor/
 models/*.joblib
 memory-service/data/
 data/memory/
+!samples/data/
+!samples/data/*.parquet

@@ -17,6 +17,14 @@ from vogdesk.asof import GFS_LAG, HOURLY_LAG, RAOB_LAG
 ROOT = Path(__file__).resolve().parents[2]
 DERIVED = ROOT / "data" / "derived"
 RAW = ROOT / "data" / "raw"
+# Input slices for the three recorded SAMPLE_MODE nights (scripts/record_samples.py). Used when SAMPLE_MODE is
+# on, or when a fresh clone has no data/derived yet; the full dataset is rebuilt by scripts/fetch_*.py.
+SAMPLE_DATA = ROOT / "samples" / "data"
+
+
+def sample_mode() -> bool:
+    import os
+    return os.environ.get("SAMPLE_MODE", "false").lower() in ("1", "true", "yes")
 
 SITES = {"pahala": "150012016", "hvnp": "150010005", "ocean_view": "150012020"}
 INVERSION_SEARCH_M = (500.0, 4000.0)
@@ -76,14 +84,23 @@ def raob_launches(levels: pd.DataFrame) -> pd.DataFrame:
     return out
 
 
-def load(derived: Path = DERIVED, raw: Path = RAW) -> Sources:
+def load(derived: Path | None = None, raw: Path | None = None) -> Sources:
+    if derived is None:
+        full = (DERIVED / "aqs_hawaii_so2.parquet").exists()
+        derived = SAMPLE_DATA if (sample_mode() or not full) else DERIVED
+    raw = raw or RAW
     aqs = pd.read_parquet(derived / "aqs_hawaii_so2.parquet", columns=["site_id", "poc", "time_utc", "so2_ppb"])
     airnow = pd.read_parquet(derived / "airnow_hawaii.parquet", columns=["site_id", "time_utc", "parameter", "value"])
     episodes = pd.read_parquet(derived / "episodes_master.parquet")
-    gfs_files = sorted((raw / "gfs").glob("gfs_points_*.parquet"))
+    gfs_files = [] if derived == SAMPLE_DATA else sorted((raw / "gfs").glob("gfs_points_*.parquet"))
+    if not gfs_files:
+        gfs_files = [derived / "gfs_points.parquet"]
     gfs = gfs_long(pd.concat([pd.read_parquet(p) for p in gfs_files], ignore_index=True))
-    raob_files = sorted((raw / "raob").glob("PITO_*.csv"))
-    raob = raob_launches(pd.concat([pd.read_csv(p, low_memory=False) for p in raob_files], ignore_index=True))
+    raob_files = [] if derived == SAMPLE_DATA else sorted((raw / "raob").glob("PITO_*.csv"))
+    if raob_files:
+        raob = raob_launches(pd.concat([pd.read_csv(p, low_memory=False) for p in raob_files], ignore_index=True))
+    else:
+        raob = pd.read_parquet(derived / "raob_launches.parquet")
     raob = raob.drop_duplicates("valid_utc", keep="last").sort_values("valid_utc").reset_index(drop=True)
     return Sources(so2=so2_hourly(aqs, airnow), episodes=episodes, gfs=gfs, raob=raob)
 

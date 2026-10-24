@@ -117,5 +117,63 @@ def fit(X: pd.DataFrame, y: pd.Series, features: list[str] = FEATURES, c_grid=C_
     return m
 
 
-def load(path: Path = MODEL_DIR / "lr_2025.joblib") -> VogModel:
-    return joblib.load(path)
+PARAMS = MODEL_DIR / "lr_2025.params.json"
+
+
+class ParamsModel:
+    """Forecast 4 rebuilt from its exported parameters, for clones without the joblib pickle.
+
+    Same arithmetic as the fitted pipeline: median imputation with missing indicators, standardisation,
+    logistic regression, then the isotonic map by linear interpolation clipped at both ends. A test checks
+    it agrees with the pickle to 1e-9 on every development night.
+    """
+
+    def __init__(self, params: dict):
+        self.params = params
+        self.features = list(params["features"])
+        self.columns = list(params["columns"])
+        self.C = params["C"]; self.n_train = params["n_train"]; self.n_events = params["n_events"]
+        self.fitted_on = params["fitted_on"]; self.notes = params.get("notes", {})
+        self.train_range = {k: tuple(v) for k, v in params["train_range"].items()}
+        self._median = np.array([params["impute_medians"][f] for f in self.features])
+        self._mean = np.array(params["scale_mean"]); self._std = np.array(params["scale_std"])
+        self._coef = np.array(params["coef"]); self._intercept = float(params["intercept"])
+        self._iso_x = np.array(params["isotonic_x"]); self._iso_y = np.array(params["isotonic_y"])
+        self._indicator_of = [self.features.index(c.removeprefix("missingindicator_")) for c in self.columns[len(self.features):]]
+
+    def _design(self, X: pd.DataFrame) -> np.ndarray:
+        raw = X[self.features].to_numpy(dtype=float)
+        missing = np.isnan(raw)
+        filled = np.where(missing, self._median, raw)
+        ind = missing[:, self._indicator_of].astype(float) if self._indicator_of else np.empty((len(raw), 0))
+        return (np.hstack([filled, ind]) - self._mean) / self._std
+
+    def raw_probability(self, X: pd.DataFrame) -> np.ndarray:
+        z = self._design(X) @ self._coef + self._intercept
+        return 1.0 / (1.0 + np.exp(-z))
+
+    def probability(self, X: pd.DataFrame) -> np.ndarray:
+        return np.interp(self.raw_probability(X), self._iso_x, self._iso_y)
+
+    outside_training_range = VogModel.outside_training_range
+
+
+def export_params(m: VogModel, path: Path = PARAMS) -> None:
+    pipe = m.pipeline
+    params = {"features": m.features, "columns": list(pipe.named_steps["impute"].get_feature_names_out(m.features)),
+              "C": m.C, "n_train": m.n_train, "n_events": m.n_events, "fitted_on": m.fitted_on,
+              "notes": {k: v for k, v in m.notes.items() if not k.startswith("_")},
+              "impute_medians": dict(zip(m.features, map(float, pipe.named_steps["impute"].statistics_))),
+              "scale_mean": list(map(float, pipe.named_steps["scale"].mean_)),
+              "scale_std": list(map(float, pipe.named_steps["scale"].scale_)),
+              "coef": list(map(float, pipe.named_steps["lr"].coef_[0])), "intercept": float(pipe.named_steps["lr"].intercept_[0]),
+              "isotonic_x": list(map(float, m.isotonic.X_thresholds_)), "isotonic_y": list(map(float, m.isotonic.y_thresholds_)),
+              "train_range": {k: [float(a), float(b)] for k, (a, b) in m.train_range.items()}}
+    path.write_text(json.dumps(params, indent=1))
+
+
+def load(path: Path = MODEL_DIR / "lr_2025.joblib"):
+    """The frozen 2025 model: the pickle when present, else the parameter export (a fresh clone)."""
+    if path.exists():
+        return joblib.load(path)
+    return ParamsModel(json.loads(PARAMS.read_text()))

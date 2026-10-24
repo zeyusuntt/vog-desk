@@ -31,9 +31,25 @@ from vogdesk.memory import FakeMemory, HttpMemory  # noqa: E402
 from vogdesk.trace import Trace  # noqa: E402
 
 
+SAMPLE_SEED = ROOT / "samples" / "memory_seed.json"
+
+
+def _scratch_copy(path: Path) -> Path:
+    """The committed memory seed is never written to: the desk works on a temporary copy."""
+    import shutil
+    import tempfile
+    tmp = Path(tempfile.mkdtemp(prefix="vogdesk-mem-")) / path.name
+    shutil.copy(path, tmp)
+    return tmp
+
+
 def build_context(data: str, provider: str | None, memory: str, memory_path: Path | None, t_star: float,
                   sample_root: Path | None = None) -> DeskContext:
     src = sources.load()
+    if memory == "fake" and memory_path is None and sources.sample_mode():
+        memory_path = SAMPLE_SEED
+    if memory_path is not None and Path(memory_path).resolve().is_relative_to(ROOT / "samples"):
+        memory_path = _scratch_copy(Path(memory_path))
     backend = open_backend(data, src)
     chat = open_chat(provider, sample_root=sample_root)
     if memory == "http":
