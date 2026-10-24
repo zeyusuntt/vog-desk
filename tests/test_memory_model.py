@@ -305,3 +305,15 @@ def test_analog_guidance_with_no_analogs_has_no_p_and_says_so():
     assert a.n == 0
     assert g.id == "G4"
     assert "no analog nights" in g.note
+
+
+
+def test_recent_rate_guidance_uses_the_last_30_nights_even_when_memory_holds_hundreds():
+    # Regression: the stream used a relevance-ranked top 400, so with more nights in memory it was not the last 30.
+    from vogdesk.desk.forecaster import recent_rate_guidance
+    mem = FakeMemory()
+    events = [False] * 470 + [True] * 30  # the 30 most recent nights are all events
+    fill_memory(mem, date(2025, 1, 1), 500, events=events)
+    as_of = datetime(2026, 6, 1, tzinfo=timezone.utc)
+    g = recent_rate_guidance(mem, as_of)
+    assert g.p == pytest.approx(1.0)

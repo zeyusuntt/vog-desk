@@ -61,7 +61,9 @@ def analog_guidance(memory: Memory, features: dict, as_of_utc: datetime, prior: 
 
 def recent_rate_guidance(memory: Memory, as_of_utc: datetime, n_nights: int = 30, min_nights: int = 10) -> Guidance:
     """Forecast 7 from memory: the event rate over the last 30 verified nights visible at issue."""
-    recs = memory.query("verified night Pahala", ["station:pahala"], as_of_utc, k=400)
+    # k must exceed the number of nights in memory: the query ranks by relevance, and a cap below the memory's size
+    # returned a relevance-ranked subset, not the most recent nights (defect found 24 Oct 2026 after held-out scoring).
+    recs = memory.query("verified night Pahala", ["station:pahala"], as_of_utc, k=100000)
     nights = sorted(((r.record.available_utc, r.record.metadata.get("event")) for r in recs
                      if isinstance(r.record.metadata.get("event"), bool)), key=lambda x: x[0])[-n_nights:]
     if len(nights) < min_nights:
