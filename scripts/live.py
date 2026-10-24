@@ -180,6 +180,11 @@ def main() -> None:
     out_dir = ROOT / args.out / issue.strftime("%Y-%m-%d")
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "forecast.json").write_text(json.dumps(out, indent=1, default=str))
+    try:  # the night scene for web/3d.html: forecast wind and inversion as of 18:00; monitor hours are added after verification
+        from vogdesk.scene import build_scene
+        (out_dir / "scene.json").write_text(json.dumps(build_scene(src, issue), indent=1, ensure_ascii=False))
+    except Exception as e:  # the forecast stands without the scene
+        print("scene:", type(e).__name__, str(e)[:120])
     print(json.dumps({k: out[k] for k in ("issue_date_hst", "probability", "probability_raw_uncalibrated", "reference",
                                            "features_outside_training_range", "refresh_status")}, indent=1, default=str))
     print("data basis:", json.dumps(out["data_basis"], indent=1, default=str))

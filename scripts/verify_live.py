@@ -101,6 +101,11 @@ def main() -> None:
     fc["verification"] = ver.model_dump(mode="json") | {"model_only_brier": model_brier, "memory": memory_note, "postgres": bool(pg),
                                                          "label_source": "airnow preliminary", "t_star_used": args.t_star, "hours": hours}
     path.write_text(json.dumps(fc, indent=1, default=str))
+    try:  # refresh the night scene with the measured hours at all three monitors
+        from vogdesk.scene import build_scene
+        (path.parent / "scene.json").write_text(json.dumps(build_scene(src, issue), indent=1, ensure_ascii=False))
+    except Exception as e:
+        print("scene:", type(e).__name__, str(e)[:120])
     index = ROOT / "live" / "index.json"
     dates = sorted({p.name for p in (ROOT / "live").iterdir() if p.is_dir() and (p / "forecast.json").exists()}, reverse=True)
     index.write_text(json.dumps(dates))

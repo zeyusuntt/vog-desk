@@ -22,3 +22,4 @@ memory-service/data/
 data/memory/
 !samples/data/
 !samples/data/*.parquet
+.claude/launch.json

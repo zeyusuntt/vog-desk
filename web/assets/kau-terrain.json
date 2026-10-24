@@ -1,0 +1,15 @@
+{
+ "box": {
+  "lonMin": -155.95,
+  "lonMax": -155.1,
+  "latMin": 18.9,
+  "latMax": 19.56
+ },
+ "widthPx": 448,
+ "heightPx": 366,
+ "kmWidth": 89.34,
+ "kmHeight": 73.0,
+ "elevMaxM": 4152.3,
+ "packing": "value16 = R*256 + G; metres = value16 / 65535 * elevMaxM",
+ "source": "USGS 3DEP via the Windward island heightmap (public domain)"
+}
