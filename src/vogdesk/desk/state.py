@@ -53,7 +53,10 @@ class Decision(BaseModel):
     discussion: str                          # 6 to 10 sentences, each number followed by its evidence id
     cites: list[str] = Field(default_factory=list)
     handover_reason: str | None = None
-    weights: dict[str, float] = Field(default_factory=dict)  # how p was formed from the guidance streams
+    weights: dict[str, float] = Field(default_factory=dict)  # the stream(s) the code's base probability came from
+    base_p: float | None = None              # code-set base before the DutyLead's adjustment
+    adjustment: float = 0.0                  # DutyLead's bounded adjustment, within [-MAX_ADJUSTMENT, +MAX_ADJUSTMENT]
+    adjustment_reason: str | None = None
 
 
 class Verification(BaseModel):

@@ -313,17 +313,24 @@ def test_must_handover_other_data_gaps_do_not_force_a_handover():
 
 # ---------------------------------------------------------------- template_decision
 
-def test_template_decision_with_analogs_weights_lr_and_analog_equally():
-    d = template_decision(streams(lr=0.2, analog=0.4, recent=0.1), [], 0.25, None, "issue_with_caveat", None)
+def test_template_decision_base_follows_the_stream_order_recent_before_lr():
+    # v3 (24 Oct 2026): the base probability is the first available stream in memory model, recent rate, frozen model order.
+    d = template_decision(streams(lr=0.2, analog=0.4, recent=0.3), [], 0.25, None, "issue_with_caveat", None)
     assert isinstance(d, Decision)
-    assert d.weights == {"lr": 0.5, "analog": 0.5}
+    assert d.weights == {"recent_rate": 1.0} and d.base_p == pytest.approx(0.3) and d.adjustment == 0.0
     assert d.p == pytest.approx(0.3)
     assert d.level == "prepare_yellow"
     assert d.recommendation == RECOMMENDATION["prepare_yellow"]
 
 
-def test_template_decision_without_an_analog_value_uses_lr_alone():
-    d = template_decision(streams(lr=0.2, analog=None, recent=0.1), [], 0.25, None, "issue", None)
+def test_template_decision_prefers_the_memory_model_when_present():
+    g = streams(lr=0.2, analog=0.4, recent=0.3) + [Guidance(id="G2", stream="memory_model", p=0.45)]
+    d = template_decision(g, [], 0.25, None, "issue", None)
+    assert d.weights == {"memory_model": 1.0} and d.p == pytest.approx(0.45)
+
+
+def test_template_decision_falls_back_to_lr_when_memory_streams_are_missing():
+    d = template_decision(streams(lr=0.2, analog=None, recent=None), [], 0.25, None, "issue", None)
     assert d.weights == {"lr": 1.0}
     assert d.p == pytest.approx(0.2)
     assert d.level == "normal"
@@ -357,7 +364,7 @@ def test_template_decision_passes_kind_and_handover_reason_through():
 
 def test_template_decision_high_analog_maximum_gives_orange_with_low_p():
     d = template_decision(streams(lr=0.02, analog=0.04), [], 0.25, 250.0, "issue", None)
-    assert d.p == pytest.approx(0.03)
+    assert d.p == pytest.approx(0.02)  # base is the frozen model here (no memory model, no recent rate)
     assert d.level == "prepare_orange"
 
 

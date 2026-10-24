@@ -1,7 +1,11 @@
-"""DutyLead: reviews, orders re-queries, and decides. The probability is formed from the guidance
-streams with weights the model states; the code checks the weights, applies the action mapping frozen
-in PREREG, and validates every number in the discussion against the evidence. A reply that fails twice
-is replaced by a template decision so the desk always issues something auditable.
+"""DutyLead: reviews, orders re-queries, and decides.
+
+The base probability is set by code from the guidance streams in a fixed order (memory model, then
+recent rate, then the frozen model; dev tuning 24 Oct 2026, DEVLOG). The DutyLead reads the evidence
+and the flags and either accepts the base, adjusts it by at most MAX_ADJUSTMENT with a reason tied to a
+flag or an evidence id, or hands the case to a human. The code clips the adjustment, applies the action
+mapping frozen in PREREG, and validates every number in the discussion against the evidence. A reply
+that fails twice is replaced by a template decision so the desk always issues something auditable.
 """
 from __future__ import annotations
 
@@ -17,6 +21,8 @@ from vogdesk.llm import ULTRA, ChatClient, Message
 
 MAX_ROUNDS = 2
 HANDOVER_GAP = 0.3
+MAX_ADJUSTMENT = 0.15
+BASE_ORDER = ("memory_model", "recent_rate", "lr")  # first stream with a value sets the base probability
 ORANGE_ANALOG_PPB = 210.0  # 0.21 ppm, the plan's orange threshold, on an analog night's hourly maximum
 
 REQUERY_FOR = {
@@ -74,8 +80,19 @@ def flags_table(flags: list[Flag]) -> str:
     return "\n".join(f"- {f.code}: {f.detail}" + (f" (resolved: {f.resolution})" if f.resolved else " (unresolved)") for f in flags)
 
 
+def base_probability(guidance: list[Guidance]) -> tuple[float, dict[str, float]]:
+    """Code-set base: the first available stream in BASE_ORDER (dev tuning; see DEVLOG 24 Oct 2026)."""
+    streams = {g.stream: g.p for g in guidance if g.p is not None}
+    for name in BASE_ORDER:
+        if name in streams:
+            return float(streams[name]), {name: 1.0}
+    return 0.0, {}
+
+
 def combine(guidance: list[Guidance], weights: dict[str, float]) -> float:
     streams = {g.stream: g.p for g in guidance if g.p is not None}
+    by_id = {g.id: g.stream for g in guidance}
+    weights = {by_id.get(k, k): v for k, v in weights.items()}  # accept G1..G4 as well as stream names
     w = {k: float(v) for k, v in weights.items() if k in streams and v >= 0}
     if not w or sum(w.values()) <= 0:
         w = {"lr": 1.0} if "lr" in streams else {next(iter(streams)): 1.0}
@@ -97,13 +114,7 @@ def _parse_json(text: str) -> dict | None:
 def template_decision(guidance: list[Guidance], flags: list[Flag], t_star: float, analog_max: float | None,
                       kind: str, reason: str | None) -> Decision:
     g = {x.stream: x for x in guidance}
-    if g.get("memory_model") and g["memory_model"].p is not None:
-        weights = {"lr": 0.2, "memory_model": 0.5, "recent_rate": 0.3} if g.get("recent_rate") else {"lr": 0.3, "memory_model": 0.7}
-    elif g.get("analog") and g["analog"].p is not None:
-        weights = {"lr": 0.5, "analog": 0.5}
-    else:
-        weights = {"lr": 1.0}
-    p = combine(guidance, weights)
+    p, weights = base_probability(guidance)
     level = action_level(p, t_star, analog_max)
     parts = [f"The frozen 2025 model gives {g['lr'].p:.2f} [{g['lr'].id}]."]
     if g.get("memory_model") and g["memory_model"].p is not None:
@@ -112,13 +123,13 @@ def template_decision(guidance: list[Guidance], flags: list[Flag], t_star: float
         parts.append(f"The event rate over recent verified nights is {g['recent_rate'].p:.2f} [{g['recent_rate'].id}].")
     if g.get("analog") and g["analog"].p is not None:
         parts.append(f"The analog nights give {g['analog'].p:.2f} [{g['analog'].id}].")
-    parts.append(f"The desk combines them with weights {', '.join(f'{k} {v:.2f}' for k, v in weights.items())} to {p:.2f}.")
+    parts.append(f"The desk's base probability is the {next(iter(weights), 'frozen model').replace('_', ' ')} stream, {p:.2f}, with no adjustment.")
     if flags:
         parts.append("Review flags: " + "; ".join(f.code for f in flags) + ".")
     parts.append(RECOMMENDATION[level])
     parts.append("This discussion was produced by the desk's template because the language model's reply did not pass validation.")
     return Decision(kind=kind, p=round(p, 4), level=level, recommendation=RECOMMENDATION[level], discussion=" ".join(parts),
-                    cites=[x.id for x in guidance], handover_reason=reason, weights=weights)
+                    cites=[x.id for x in guidance], handover_reason=reason, weights=weights, base_p=round(p, 4), adjustment=0.0)
 
 
 def must_handover(guidance: list[Guidance], flags: list[Flag], round_: int) -> str | None:
@@ -136,13 +147,17 @@ def must_handover(guidance: list[Guidance], flags: list[Flag], round_: int) -> s
 def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: list[EvidenceItem], guidance: list[Guidance],
            flags: list[Flag], t_star: float, round_: int, analog_max: float | None) -> tuple[Decision, LLMCall]:
     forced = must_handover(guidance, flags, round_)
+    base, base_weights = base_probability(guidance)
+    base_name = next(iter(base_weights), "none").replace("_", " ")
     user = DUTY_LEAD_USER.format(issue_date=issue_date, round=round_, max_rounds=MAX_ROUNDS, regime_summary=regime_summary,
                                  evidence_table=evidence_table(evidence), guidance_table=guidance_table(guidance),
-                                 flags_table=flags_table(flags), t_star=t_star)
+                                 flags_table=flags_table(flags), t_star=t_star, base=base, base_name=base_name,
+                                 max_adj=MAX_ADJUSTMENT, lo=max(0.0, base - MAX_ADJUSTMENT), hi=min(1.0, base + MAX_ADJUSTMENT))
     if forced:
         user += f"\n\nThe code has determined this case must be handed to a human: {forced}. Set kind to handover and explain in the discussion."
     messages = [Message(role="system", content=DUTY_LEAD_SYSTEM), Message(role="user", content=user)]
     allowed = {round(g.p, 2) for g in guidance if g.p is not None} | {round(g.p, 4) for g in guidance if g.p is not None} | {round(t_star, 2), round(2 * t_star, 2)}
+    allowed |= {round(base, 2), round(base, 4), MAX_ADJUSTMENT, round(max(0.0, base - MAX_ADJUSTMENT), 2), round(min(1.0, base + MAX_ADJUSTMENT), 2)}
     for g in guidance:
         if g.interval:
             allowed |= {round(g.interval[0], 2), round(g.interval[1], 2)}
@@ -157,15 +172,17 @@ def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: lis
         last = r
         data = _parse_json(r.content)
         problems = []
-        if not data or not isinstance(data.get("weights"), dict) or not isinstance(data.get("discussion"), str):
-            problems.append("reply is not the required JSON with weights and discussion")
+        if not data or not isinstance(data.get("discussion"), str) or not isinstance(data.get("adjustment"), (int, float)):
+            problems.append("reply is not the required JSON with adjustment (a number) and discussion")
         else:
             kind = data.get("kind") if data.get("kind") in ("issue", "issue_with_caveat", "handover") else "issue"
             if forced:
                 kind = "handover"
-            p = combine(guidance, data["weights"])
-            weight_numbers = {round(float(v), 2) for v in data["weights"].values() if isinstance(v, (int, float))}
-            problems = validate_numbers(data["discussion"], evidence, allowed | weight_numbers | {round(p, 2), round(p, 4)})
+            adj = float(np.clip(float(data["adjustment"]), -MAX_ADJUSTMENT, MAX_ADJUSTMENT))
+            if adj != 0.0 and not str(data.get("adjustment_reason") or "").strip():
+                problems.append("an adjustment needs an adjustment_reason that names a flag or an evidence id")
+            p = float(np.clip(base + adj, 0.0, 1.0))
+            problems += validate_numbers(data["discussion"], evidence, allowed | {round(abs(adj), 2), round(p, 2), round(p, 4)})
             sentences = [s for s in re.split(r"(?<=[.!?])\s+", data["discussion"].strip()) if s]
             if not 5 <= len(sentences) <= 12:
                 problems.append(f"discussion has {len(sentences)} sentences, need 6 to 10")
@@ -174,7 +191,8 @@ def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: lis
             cites = sorted(set(re.findall(r"\[(E\d+|G\d+)\]", data["discussion"])))
             dec = Decision(kind=kind, p=round(p, 4), level=level, recommendation=RECOMMENDATION[level], discussion=data["discussion"].strip(),
                            cites=cites, handover_reason=(data.get("handover_reason") or forced) if kind == "handover" else None,
-                           weights={k: float(v) for k, v in data["weights"].items()})
+                           weights=base_weights, base_p=round(base, 4), adjustment=round(adj, 4),
+                           adjustment_reason=(str(data.get("adjustment_reason")).strip() or None) if adj != 0.0 else None)
             return dec, LLMCall(agent="DutyLead", model_requested=r.model_requested, provider_model=r.provider_model, latency_ms=r.latency_ms,
                                 prompt_tokens=(r.usage or {}).get("prompt_tokens"), completion_tokens=(r.usage or {}).get("completion_tokens"),
                                 cached=r.cached, validation=validation, problems=all_problems, reply_preview=r.content[:600])
@@ -182,7 +200,7 @@ def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: lis
         validation = "retried"
         messages.append(Message(role="assistant", content=r.content))
         messages.append(Message(role="user", content="Your reply failed validation: " + "; ".join(problems[:6]) +
-                                ". Return the JSON again, using only numbers from the evidence and guidance, each followed by its id."))
+                                ". Return the JSON again (kind, adjustment, adjustment_reason, discussion, handover_reason, caveat), using only numbers from the evidence and guidance, each followed by its id."))
     dec = template_decision(guidance, flags, t_star, analog_max, "handover" if forced else "issue_with_caveat", forced)
     return dec, LLMCall(agent="DutyLead", model_requested=ULTRA, provider_model=getattr(last, "provider_model", None),
                         latency_ms=getattr(last, "latency_ms", 0), cached=getattr(last, "cached", False), validation="fallback_template",

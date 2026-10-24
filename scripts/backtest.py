@@ -92,6 +92,7 @@ def main() -> None:
                     "p_analog": g.get("analog", {}).get("p"), "p_recent": g.get("recent_rate", {}).get("p"),
                     "n_analogs": len(g.get("analog", {}).get("analog_ids", [])), "flags": ",".join(sorted({f["code"] for f in state["flags"]})),
                     "review_round": state.get("review_round", 0), "weights": json.dumps(dec.get("weights", {})),
+                    "base_p": dec.get("base_p"), "adjustment": dec.get("adjustment", 0.0), "adjustment_reason": dec.get("adjustment_reason"),
                     "llm_validation": ",".join(c["validation"] for c in state["llm_calls"]),
                     "llm_ms": sum(c["latency_ms"] for c in state["llm_calls"]),
                     "event": ver.event, "max_ppb": ver.observed_max_ppb, "outcome": ver.outcome, "brier": ver.brier,

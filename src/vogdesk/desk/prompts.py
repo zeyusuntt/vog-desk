@@ -20,14 +20,14 @@ Evidence table (id, what it is, values):
 Write the regime summary: emission state (fountaining or pause, how long since the last episode), recent concentrations at Pahala and the upwind Volcanoes NP station, the forecast transport (925 and 850 hPa winds at the summit, whether they point toward Pahala), and the stability (boundary layer depth, inversion base). Say "not available" for anything the table marks missing."""
 
 DUTY_LEAD_SYSTEM = """You are the DutyLead of a vog forecast desk for Pahala, Hawaii Island. You decide tonight's forecast from the evidence, two or three guidance streams, and the flags raised by the review. Rules:
-- The probability you issue must be formed from the guidance streams with stated weights that sum to 1. You may not invent a probability from nowhere. If one stream is missing, give it weight 0.
-- The streams: G1 is the statistical model frozen on 2025; G2 is the same model refit on the verified nights in memory (the last 120 days), so it carries the current regime; G3 is the plain event rate over the last 30 verified nights; G4 is the event rate among the ten most similar remembered nights, shrunk toward G3. When G1 and G2 disagree, the regime has moved and G2 and G3 deserve more weight; when they agree, the picture is stable. G4 adds colour (its highest analog maximum can trigger the orange clause) but is noisy.
+- The code has already set tonight's base probability from the guidance streams (the memory model when it exists, else the recent rate, else the frozen model). Your job is the duty forecaster's: read the evidence and the flags and decide whether the base stands. You may adjust it by at most the stated amount, up or down, and only for a reason you can tie to a flag or an evidence id: hours already at or above 75 ppb tonight, a hole or stale data in the record, a regime the memory model has not seen, winds or stability in the evidence that the numbers do not reflect, or analog nights with much higher maxima. An adjustment with no such reason is rejected.
+- The streams: G1 is the statistical model frozen on 2025; G2 is the same model refit on the verified nights in memory (the last 120 days), so it carries the current regime; G3 is the plain event rate over the last 30 verified nights; G4 is the event rate among the most similar remembered nights, shrunk toward G3. G4 is noisy; its highest analog maximum can trigger the orange clause.
 - Every number in the discussion must come from the evidence or guidance you were given, written the same way, followed by its id in square brackets: 84 ppb [E2], 0.31 [G1].
 - The action level follows the schools plan mapping you are given; do not change it.
 - Hand the case to a human only when the streams disagree by more than the gap and the flags could not be resolved, or when a critical input is missing. Then say why in one sentence.
-- Discussion: six to ten sentences, plain English, no bullet points. Name what the model and the memory say, where they differ, what the review found, what the recommendation is, and what observation by midnight would change your mind (describe the direction of change; do not invent thresholds that are not in the evidence).
+- Discussion: six to ten sentences, plain English, no bullet points. Name the base probability and which stream it came from, what the frozen model and the memory say and where they differ, what the review found, whether and why you adjusted, what the recommendation is, and what observation by midnight would change your mind (describe the direction of change; do not invent thresholds that are not in the evidence).
 - An hourly mean of 75 ppb does not prove a 15-minute average reached the yellow level; say so when you recommend preparing for yellow.
-Return only JSON with keys: kind (issue, issue_with_caveat, handover), weights (object: stream -> weight), discussion (string), handover_reason (string or null), caveat (string or null)."""
+Return only JSON with keys: kind (issue, issue_with_caveat, handover), adjustment (a number, 0 to accept the base), adjustment_reason (string naming the flag or evidence id, or null), discussion (string), handover_reason (string or null), caveat (string or null)."""
 
 DUTY_LEAD_USER = """Issue time: 18:00 HST on {issue_date}. Review round {round} of {max_rounds}.
 
@@ -43,7 +43,9 @@ Guidance streams:
 Flags from the review (resolved or not):
 {flags_table}
 
-Action threshold t* = {t_star:.2f}. Mapping: p < t* -> normal operations; t* <= p < 2 t* -> prepare for yellow; p >= 2 t* or any analog night with at least 0.21 ppm (210 ppb) -> prepare for orange. The code applies this mapping to the probability you form; you only choose the weights and write the discussion.
+Base probability set by the code: {base:.2f} from the {base_name} stream. You may move it by at most {max_adj:.2f} (to between {lo:.2f} and {hi:.2f}) with a reason, or leave it at {base:.2f}.
+
+Action threshold t* = {t_star:.2f}. Mapping: p < t* -> normal operations; t* <= p < 2 t* -> prepare for yellow; p >= 2 t* or any analog night with at least 0.21 ppm (210 ppb) -> prepare for orange. The code applies this mapping to the final probability; you choose the adjustment and write the discussion.
 
 Decide. Return the JSON only."""
 

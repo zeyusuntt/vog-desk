@@ -115,3 +115,20 @@ The Pahala availability rule had to be settled before the held-out period was sc
 Decision: PREREG's 2-hour availability rule stands (no change 2). What the 23 Oct evening showed is a data gap right before issue, which the desk must notice: a new review flag `stale_data` fires when the latest published Pahala hour begins before 13:00 HST (more than 3 h before the usable cutoff) and orders a re-query of the last 6 hours. The 23 Oct entry above is corrected by this one. `scripts/verify_live.py` keeps recording the latest Pahala hour at each issue so the lag can be watched over the live nights; if a systematic lag ever appears, it will be logged as a PREREG change before any held-out scoring, not after.
 
 Order of events for the record: dev backtest v2 is running with the 2-hour rule; t* and the conflict thresholds will be frozen from it; the held-out run follows the freeze.
+
+## 2026-10-24 02:00 PDT: dev backtest v2, and the decision to let code hold the blend
+
+v2 over the dev nights (full 173 of 175, no-review 169 of 175; the rest hit NVIDIA rate limits and are being rerun):
+
+| stream or forecast | Brier | AUC | note |
+|---|---|---|---|
+| G1 frozen model | 0.177 | 0.539 | |
+| G2 memory model | **0.148** | **0.685** | refit on the last 120 days of verified nights, as of each issue |
+| G3 recent rate (from memory) | 0.163 | 0.478 | |
+| G4 analogs, shrunk | 0.175 | 0.431 | no signal beyond the base rate |
+| 6 full desk v2 (Ultra's weights) | 0.162 | 0.575 | mean weights lr 0.13, memory 0.30, recent 0.26, analog 0.12 |
+| 5 desk no review v2 | 0.160 | 0.528 | 6 handovers |
+
+Two findings. First, a bug: on some nights Ultra returned its weights keyed by guidance id (G1 to G4) instead of by stream name; `combine()` ignored them and fell back to the frozen model alone. Fixed (ids are now accepted). Second, and more important: the desk's blend was worse than its own best input. A grid search over convex weights of the four streams on the dev nights puts all weight on G2 (Brier 0.1477; 5-block cross-validation of the weight choice gives the same 0.1477, so this is not an overfit), and every mixture with the other streams is worse. The language model is not a better blender than arithmetic, and asking it to be one cost 0.014 Brier.
+
+Decision (dev tuning, desk only, logged): the base probability is set by code from the stream order memory model, then recent rate, then frozen model (the first one available). The DutyLead's job becomes what a duty forecaster actually does: read the evidence and the flags, and either accept the base, adjust it by at most 0.15 with a stated reason tied to a flag or an evidence id (persistence contradiction, stale or missing data, a regime the memory model has not seen, analog maxima), or hand the case to a human. The adjustment and its reason are recorded with the decision. The discussion rules are unchanged. The no-review variant gets the same protocol without the re-query step, so the ablation measures the review itself. Version 3 backtests run as `--tag v3`; v2 results are kept for the record. t* and the conflict thresholds are frozen from v3.
