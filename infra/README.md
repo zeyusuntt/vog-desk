@@ -31,7 +31,7 @@ Inside Docker the services keep their normal ports (5432 and 9000).
 
 ## Network
 
-Both services also join the external network `zetaris_default`. This lets the Zetaris containers reach them by service name (`postgres`, `s3`). The network existed when this was written. If `docker network ls` does not show it, the name of the Zetaris network must be checked and the `networks` block in `compose.yml` changed. Compose fails on start if an external network is missing.
+Both services also join the external network `zetaris_default`. This lets the Zetaris containers reach them by service name (`vogpg`, `s3`). The network existed when this was written. If `docker network ls` does not show it, the name of the Zetaris network must be checked and the `networks` block in `compose.yml` changed. Compose fails on start if an external network is missing.
 
 ## Load MinIO
 
@@ -47,7 +47,7 @@ The MinIO console is at http://localhost:9001.
 
 Database `vogdesk`, schema `institutional`.
 
-- From inside Docker (Zetaris): `jdbc:postgresql://postgres:5432/vogdesk`
+- From inside Docker (Zetaris): `jdbc:postgresql://vogpg:5432/vogdesk`
 - From the host: `jdbc:postgresql://localhost:5433/vogdesk`
 
 Tables: `stations`, `action_plan_levels`, `school_calendar`, `forecasts`, `verifications`, and the view `forecast_verification`.

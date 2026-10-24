@@ -10,7 +10,9 @@
 # come from .env in the repo root. Never commit them.
 #
 # Both services also join the external network "zetaris_default" so the Zetaris
-# containers can reach them by service name (s3, postgres).
+# containers can reach them by service name (s3, vogpg). The Postgres service is deliberately not
+# called postgres: Zetaris has its own container with that name on the shared network, and a
+# second one would shadow it (seen on 23 Oct 2026: Zetaris tried to log in to ours).
 
 services:
   s3:
@@ -30,7 +32,7 @@ services:
       - default
       - zetaris
 
-  postgres:
+  vogpg:
     image: postgres:16-alpine
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-vogdesk}
