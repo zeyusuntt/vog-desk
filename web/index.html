@@ -1,0 +1,358 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>vog-desk: next-night SO2 forecast for Pāhala</title>
+<style>
+:root{--bg:#f5f6f8;--card:#fff;--fg:#1c2128;--mute:#5d6672;--line:#dde1e6;--chip:#e6ecf3;
+--normal:#5b7a99;--prepare_yellow:#d9a400;--prepare_orange:#e8710a;--handover:#7e3fb3;--amber:#d9a400;--accent:var(--normal)}
+@media (prefers-color-scheme:dark){:root{--bg:#14171b;--card:#1d2127;--fg:#e6e9ed;--mute:#9aa4b0;--line:#323941;--chip:#2b3440;
+--normal:#7d9bba;--prepare_yellow:#e6b422;--prepare_orange:#f28a30;--handover:#a77bd6;--amber:#e6b422}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+.wrap{max-width:960px;margin:0 auto;padding:16px}
+h1{margin:0;font-size:1.6rem}
+h2{font-size:1.15rem;margin:0 0 8px}
+h3{font-size:1rem;margin:16px 0 6px}
+header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:16px}
+header p{margin:0;color:var(--mute)}
+select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
+section,.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
+.card{border-left:6px solid var(--accent)}
+.mute{color:var(--mute)}
+.small{font-size:.875rem}
+.big{font-size:3.2rem;line-height:1.1;font-weight:700;color:var(--accent)}
+.level{font-size:1.2rem;font-weight:600;color:var(--accent)}
+.row{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline}
+.notice{background:var(--chip);border-left:4px solid var(--amber);padding:8px 12px;border-radius:4px;margin:12px 0}
+.err{border-left-color:var(--handover)}
+.chip{display:inline-block;padding:0 6px;margin:0 1px;border-radius:10px;background:var(--chip);color:var(--fg);border:1px solid var(--line);font-size:.8rem;cursor:pointer;font-family:inherit;line-height:1.5}
+.chip:hover{border-color:var(--accent)}
+.chip.dead{cursor:default;opacity:.6}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
+.item{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--bg)}
+.item.hl{outline:2px solid var(--accent)}
+.item b{font-size:1.05rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}
+th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mute);font-weight:600}
+td.num{text-align:right;font-variant-numeric:tabular-nums}
+.scroll{overflow-x:auto}
+tr.cur td{background:var(--chip);font-weight:600}
+.ev{border-bottom:1px solid var(--line);padding:8px 0}
+.ev:last-child{border-bottom:0}
+.ev.hl{outline:2px solid var(--accent);outline-offset:2px}
+pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:8px;border-radius:4px;font-size:.8rem;margin:4px 0}
+code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
+.tl{list-style:none;margin:0;padding:0}
+.tl li{border-left:4px solid var(--line);padding:4px 0 4px 10px;margin-bottom:6px}
+.tl li.amber{border-left-color:var(--amber)}
+.tl li.decide{border-left-color:var(--accent)}
+.tl .out{color:var(--mute);font-size:.85rem;word-break:break-word}
+.tl .head{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:.9rem}
+footer{color:var(--mute);font-size:.85rem;padding:0 0 24px}
+.ok{color:var(--normal)}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1>vog-desk</h1>
+    <p>Next-night SO2 exposure forecast for Pāhala, Hawaiʻi Island</p>
+  </div>
+  <label class="small mute">Issue date <select id="date" aria-label="Issue date"></select></label>
+</header>
+<main>
+  <div id="card" class="card"><p class="mute">Loading forecast...</p></div>
+  <section id="evidence"><h2>Evidence</h2><div id="evbody" class="mute">Loading...</div></section>
+  <section id="trace"><h2>Agent trace</h2><div id="trbody" class="mute">Loading...</div></section>
+  <section id="log"><h2>Live log</h2><div id="logbody" class="mute">Loading...</div></section>
+</main>
+<footer>Built for the Open Agent Hackathon 2026, Track 3. Data: EPA AQS, AirNow, USGS HVO, IEM, NOAA GFS. An hourly mean of 75 ppb does not show that a 15-minute average reached the plan's yellow level.</footer>
+</div>
+<script>
+"use strict";
+var LEVELS = {normal: "Normal operations", prepare_yellow: "Prepare for yellow", prepare_orange: "Prepare for orange", handover: "Handed to a human"};
+var cache = {};
+var currentDate = null;
+
+function $(id) { return document.getElementById(id); }
+function el(tag, attrs, kids) {
+  var e = document.createElement(tag);
+  if (attrs) for (var k in attrs) {
+    if (k === "class") e.className = attrs[k];
+    else if (k === "text") e.textContent = attrs[k];
+    else e.setAttribute(k, attrs[k]);
+  }
+  (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+  return e;
+}
+function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); return n; }
+function fmt(v, d) { return typeof v === "number" ? v.toFixed(d === undefined ? 2 : d) : (v == null ? "n/a" : String(v)); }
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function utcStr(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + " UTC"; }
+function hstStr(ms) { var d = new Date(ms - 36e5 * 10); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + " HST"; }
+function hms(ts) { var ms = Date.parse(ts); if (isNaN(ms)) return "--:--:--"; var d = new Date(ms); return pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds()); }
+function levelOf(f) {
+  var dec = f && f.desk && f.desk.decision;
+  if (!dec) return "normal";
+  return dec.kind === "handover" ? "handover" : (dec.level || "normal");
+}
+function setAccent(node, lvl) { node.style.setProperty("--accent", "var(--" + (LEVELS[lvl] ? lvl : "normal") + ")"); }
+function short(v, n) {
+  var s; try { s = typeof v === "string" ? v : JSON.stringify(v); } catch (e) { s = String(v); }
+  if (s == null) s = "";
+  return s.length > n ? s.slice(0, n) + "..." : s;
+}
+
+function getJSON(url) {
+  return fetch(url, {cache: "no-cache"}).then(function (r) {
+    if (!r.ok) throw new Error(url + " " + r.status);
+    return r.text();
+  }).then(function (t) { return JSON.parse(t); });
+}
+function getTrace(date) {
+  return fetch("../live/" + date + "/trace.jsonl", {cache: "no-cache"}).then(function (r) {
+    return r.ok ? r.text() : null;
+  }).then(function (t) {
+    if (t == null) return null;
+    var out = [];
+    t.split("\n").forEach(function (ln) {
+      ln = ln.trim();
+      if (!ln || ln.charAt(0) !== "{") return;
+      try { out.push(JSON.parse(ln)); } catch (e) { /* skip bad line */ }
+    });
+    return out.length ? out : null;
+  }).catch(function () { return null; });
+}
+function loadForecast(date) {
+  if (!cache[date]) {
+    cache[date] = getJSON("../live/" + date + "/forecast.json").then(function (f) { return {ok: true, f: f}; },
+                                                                      function (e) { return {ok: false, err: String(e.message || e)}; });
+  }
+  return cache[date];
+}
+
+/* Turn [E1] / [G2] / [E1, E3] in text into clickable chips. */
+function linkify(text) {
+  var frag = document.createDocumentFragment();
+  var re = /\[([EG]\d+(?:\s*[,;]\s*[EG]\d+)*)\]/g, last = 0, m;
+  text = String(text == null ? "" : text);
+  while ((m = re.exec(text))) {
+    if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
+    m[1].split(/\s*[,;]\s*/).forEach(function (id) { frag.appendChild(chip(id)); });
+    last = re.lastIndex;
+  }
+  if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
+  return frag;
+}
+function chip(id) {
+  var b = el("button", {"class": "chip", type: "button", text: id, title: "Go to " + id});
+  b.addEventListener("click", function () {
+    var t = document.getElementById(id);
+    if (!t) { b.classList.add("dead"); b.title = id + " is not in the loaded data"; return; }
+    t.scrollIntoView({behavior: "smooth", block: "center"});
+    t.classList.add("hl");
+    setTimeout(function () { t.classList.remove("hl"); }, 2000);
+  });
+  return b;
+}
+
+function renderCard(res, date) {
+  var card = clear($("card"));
+  if (!res.ok) {
+    card.appendChild(el("h2", {text: "Forecast for " + date}));
+    card.appendChild(el("p", {text: "Could not load the forecast for " + date + " (" + res.err + ")."}));
+    setAccent(card, "normal");
+    return;
+  }
+  var f = res.f, desk = f.desk || null, dec = desk && desk.decision || null;
+  var lvl = levelOf(f);
+  setAccent(card, lvl);
+  var im = Date.parse(f.issue_utc);
+  card.appendChild(el("h2", {text: "Forecast issued " + (f.issue_date_hst || date)}));
+  card.appendChild(el("p", {"class": "mute small", text: isNaN(im) ? "Issue time not available" : "Issue time " + hstStr(im) + " (" + utcStr(im) + ")" +
+    (f.generated_utc ? ", generated " + String(f.generated_utc).replace("T", " ").slice(0, 19) + " UTC" : "")}));
+  card.appendChild(el("p", {text: "Will any hour at the Pāhala monitor reach 75 ppb of SO2 between 18:00 HST tonight and 12:00 HST tomorrow?"}));
+
+  var p = dec && typeof dec.p === "number" ? dec.p : f.probability;
+  var row = el("div", {"class": "row"});
+  row.appendChild(el("span", {"class": "big", text: typeof p === "number" ? (p * 100).toFixed(1) + "%" : "n/a"}));
+  var side = el("div");
+  side.appendChild(el("div", {"class": "level", text: LEVELS[lvl]}));
+  if (!dec) side.appendChild(el("div", {"class": "mute small", text: "model only"}));
+  else if (dec.kind === "issue_with_caveat") side.appendChild(el("div", {"class": "mute small", text: "issued with a caveat"}));
+  row.appendChild(side);
+  card.appendChild(row);
+
+  if (f.kind === "model_only" || !dec) {
+    card.appendChild(el("div", {"class": "notice", text: "Model-only forecast; the desk was not run for this night"}));
+    if (desk && desk.error) card.appendChild(el("div", {"class": "notice err small", text: "Desk error: " + desk.error}));
+    if (f.note) card.appendChild(el("p", {"class": "small mute", text: f.note}));
+    var ref = f.reference || {};
+    var t = el("table");
+    t.appendChild(el("tr", null, [el("th", {text: "Reference"}), el("th", {"class": "num", text: "Probability"})]));
+    [["Model (calibrated)", f.probability], ["Climatology 2025", ref.climatology_2025], ["Persistence", ref.persistence], ["Episode rule", ref.episode_rule]].forEach(function (r) {
+      t.appendChild(el("tr", null, [el("td", {text: r[0]}), el("td", {"class": "num", text: fmt(r[1], 3)})]));
+    });
+    card.appendChild(el("div", {"class": "scroll"}, [t]));
+  }
+
+  var rec = (dec && dec.recommendation) || f.recommendation;
+  if (rec) card.appendChild(el("p", null, [el("b", {text: "Recommendation: "}), rec]));
+  if (dec && dec.handover_reason) card.appendChild(el("p", null, [el("b", {text: "Handover reason: "}), dec.handover_reason]));
+  if (dec && dec.discussion) {
+    card.appendChild(el("h3", {text: "Discussion"}));
+    card.appendChild(el("p", null, [linkify(dec.discussion)]));
+  }
+  if (dec && dec.weights && Object.keys(dec.weights).length) {
+    card.appendChild(el("p", {"class": "small mute", text: "Stream weights: " + Object.keys(dec.weights).map(function (k) { return k + " " + fmt(dec.weights[k]); }).join(", ")}));
+  }
+  if (desk && desk.regime_summary) card.appendChild(el("p", {"class": "small", text: "Regime: " + desk.regime_summary}));
+
+  var g = desk && desk.guidance;
+  if (g && g.length) {
+    card.appendChild(el("h3", {text: "Guidance streams"}));
+    var grid = el("div", {"class": "grid"});
+    g.forEach(function (x) {
+      var iv = x.interval && x.interval.length === 2 ? " (" + fmt(x.interval[0]) + " to " + fmt(x.interval[1]) + ")" : "";
+      grid.appendChild(el("div", {"class": "item", id: x.id || null}, [
+        el("div", null, [el("span", {"class": "chip dead", text: x.id || "?"}), " " + (x.stream || "")]),
+        el("b", {text: x.p == null ? "no estimate" : fmt(x.p)}), iv ? el("span", {"class": "mute small", text: iv}) : null,
+        x.note ? el("div", {"class": "small mute", text: x.note}) : null]));
+    });
+    card.appendChild(grid);
+  }
+  var fl = desk && desk.flags;
+  if (fl && fl.length) {
+    card.appendChild(el("h3", {text: "Flags"}));
+    var ul = el("ul");
+    fl.forEach(function (x) {
+      ul.appendChild(el("li", null, [el("code", {text: x.code}), " " + (x.detail || "") + " ", el("b", {text: x.resolved ? "[resolved" + (x.resolution ? ": " + x.resolution : "") + "]" : "[unresolved]"})]));
+    });
+    card.appendChild(ul);
+  }
+  var lc = desk && desk.llm_calls;
+  if (lc && lc.length) {
+    card.appendChild(el("h3", {text: "Model calls"}));
+    var mt = el("table");
+    mt.appendChild(el("tr", null, ["Agent", "Provider model", "Latency (s)", "Validation"].map(function (h) { return el("th", {text: h}); })));
+    lc.forEach(function (c) {
+      mt.appendChild(el("tr", null, [el("td", {text: c.agent}), el("td", {text: c.provider_model || c.model_requested || "n/a"}),
+        el("td", {"class": "num", text: typeof c.latency_ms === "number" ? (c.latency_ms / 1000).toFixed(1) : "n/a"}), el("td", {text: c.validation || ""})]));
+    });
+    card.appendChild(el("div", {"class": "scroll"}, [mt]));
+  }
+  if (desk && desk.review_round != null || desk && desk.data_backend) {
+    card.appendChild(el("p", {"class": "small mute", text: [desk.review_round != null ? "Review rounds: " + desk.review_round : null, desk.data_backend ? "Data backend: " + desk.data_backend : null].filter(Boolean).join(". ")}));
+  }
+  var v = f.verification;
+  card.appendChild(el("h3", {text: "Verification"}));
+  if (v) {
+    card.appendChild(el("p", {text: "Observed max " + fmt(v.observed_max_ppb, 1) + " ppb over " + fmt(v.n_hours, 0) + " hours. Event: " + (v.event == null ? "unknown" : v.event ? "yes" : "no") +
+      ". Outcome: " + String(v.outcome).replace(/_/g, " ") + ". Brier score: " + fmt(v.brier, 3) + "."}));
+  } else {
+    card.appendChild(el("p", {"class": "mute", text: "Pending. The night is scored after 12:00 HST tomorrow."}));
+  }
+  if (f.data_basis && f.data_basis.pahala_last_hour_utc) {
+    card.appendChild(el("p", {"class": "small mute", text: "Last Pāhala hour seen: " + f.data_basis.pahala_last_hour_utc.replace("T", " ") + " UTC, " + fmt(f.data_basis.pahala_last_value_ppb, 0) + " ppb (" + (f.data_basis.pahala_source_last || "unknown source") + ")."}));
+  }
+}
+
+function renderEvidence(lines) {
+  var box = clear($("evbody"));
+  if (!lines) { box.appendChild(el("p", {"class": "mute", text: "No trace for this night, so there is no evidence list."})); return; }
+  var items = lines.filter(function (l) { return typeof l.step === "string" && /^(re)?query:/.test(l.step); });
+  if (!items.length) { box.appendChild(el("p", {"class": "mute", text: "The trace has no query steps."})); return; }
+  items.forEach(function (l, i) {
+    var o = (l.output && typeof l.output === "object") ? l.output : {};
+    var id = o.id || ("E" + (i + 1));
+    var d = el("div", {"class": "ev", id: id});
+    d.appendChild(el("div", null, [el("span", {"class": "chip dead", text: id}), " ", el("code", {text: l.step})]));
+    d.appendChild(el("div", {text: o.summary || (typeof l.output === "string" ? l.output : "No summary recorded.")}));
+    var meta = [];
+    if (o.rows_hash) meta.push("rows " + o.rows_hash);
+    if (o.available_utc) meta.push("available " + o.available_utc);
+    if (meta.length) d.appendChild(el("div", {"class": "small mute", text: meta.join(" | ")}));
+    if (l.sql && l.sql.length) {
+      d.appendChild(el("details", null, [el("summary", {"class": "small", text: "SQL (" + l.sql.length + ")"})].concat(l.sql.map(function (q) { return el("pre", {text: q}); }))));
+    }
+    box.appendChild(d);
+  });
+}
+
+function renderTrace(lines) {
+  var box = clear($("trbody"));
+  if (!lines) { box.appendChild(el("p", {"class": "mute", text: "No trace file for this night (the desk was not run, or the trace was not published)."})); return; }
+  var ul = el("ul", {"class": "tl"});
+  lines.forEach(function (l) {
+    var step = String(l.step || ""), cls = "";
+    if (step === "review" || /^requery:/.test(step)) cls = "amber";
+    else if (step === "decide") cls = "decide";
+    var li = el("li", {"class": cls});
+    li.appendChild(el("div", {"class": "head"}, [el("code", {text: hms(l.ts)}), el("b", {text: l.agent || ""}), el("span", {text: step}),
+      el("span", {"class": "mute", text: (typeof l.duration_ms === "number" ? l.duration_ms : 0) + " ms"})]));
+    if ((step === "regime_summary" || step === "decide") && l.llm_call) {
+      li.appendChild(el("div", {"class": "small mute", text: "Model " + (l.llm_call.provider_model || l.llm_call.model_requested || "n/a") + ", validation " + (l.llm_call.validation || "n/a")}));
+    }
+    if (l.output != null) li.appendChild(el("div", {"class": "out", text: short(l.output, 160)}));
+    ul.appendChild(li);
+  });
+  box.appendChild(ul);
+}
+
+function renderLog(dates) {
+  var box = clear($("logbody"));
+  Promise.all(dates.map(loadForecast)).then(function (rs) {
+    var t = el("table");
+    t.appendChild(el("tr", null, ["Date", "Kind", "Probability", "Level", "Outcome"].map(function (h) { return el("th", {text: h}); })));
+    rs.forEach(function (r, i) {
+      var tr = el("tr", {"class": dates[i] === currentDate ? "cur" : ""});
+      if (!r.ok) {
+        tr.appendChild(el("td", {text: dates[i]}));
+        tr.appendChild(el("td", {colspan: "4", "class": "mute", text: "could not load"}));
+      } else {
+        var f = r.f, dec = f.desk && f.desk.decision, p = dec && typeof dec.p === "number" ? dec.p : f.probability;
+        tr.appendChild(el("td", {text: dates[i]}));
+        tr.appendChild(el("td", {text: f.kind || "unknown"}));
+        tr.appendChild(el("td", {"class": "num", text: typeof p === "number" ? (p * 100).toFixed(1) + "%" : "n/a"}));
+        tr.appendChild(el("td", {text: dec ? LEVELS[levelOf(f)] : "not decided"}));
+        tr.appendChild(el("td", {text: f.verification ? String(f.verification.outcome).replace(/_/g, " ") : "pending"}));
+      }
+      t.appendChild(tr);
+    });
+    clear(box).appendChild(el("div", {"class": "scroll"}, [t]));
+  });
+}
+
+var allDates = [];
+function show(date) {
+  currentDate = date;
+  $("date").value = date;
+  loadForecast(date).then(function (res) { renderCard(res, date); });
+  getTrace(date).then(function (lines) {
+    if (currentDate !== date) return;
+    renderEvidence(lines);
+    renderTrace(lines);
+  });
+  renderLog(allDates);
+}
+
+function init() {
+  getJSON("../live/index.json").then(function (d) {
+    if (!Array.isArray(d) || !d.length) throw new Error("empty index");
+    return d.map(String);
+  }).catch(function () { return ["2026-10-23"]; }).then(function (dates) {
+    allDates = dates;
+    var sel = $("date");
+    dates.forEach(function (d) { sel.appendChild(el("option", {value: d, text: d})); });
+    sel.addEventListener("change", function () { show(sel.value); });
+    show(dates[0]);
+  });
+}
+init();
+</script>
+</body>
+</html>
