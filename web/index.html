@@ -3,356 +3,600 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>vog-desk: next-night SO2 forecast for Pāhala</title>
+<title>vog-desk, Pāhala</title>
+<meta name="description" content="Each evening at 18:00 HST: the chance that sulfur dioxide at the Pāhala monitor reaches 75 ppb before noon, what the schools plan says to prepare, the evidence behind it, and how the desk has done.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,400;0,500;0,700;0,800;1,400&display=swap" rel="stylesheet">
 <style>
-:root{--bg:#f5f6f8;--card:#fff;--fg:#1c2128;--mute:#5d6672;--line:#dde1e6;--chip:#e6ecf3;
---normal:#5b7a99;--prepare_yellow:#d9a400;--prepare_orange:#e8710a;--handover:#7e3fb3;--amber:#d9a400;--accent:var(--normal)}
-@media (prefers-color-scheme:dark){:root{--bg:#14171b;--card:#1d2127;--fg:#e6e9ed;--mute:#9aa4b0;--line:#323941;--chip:#2b3440;
---normal:#7d9bba;--prepare_yellow:#e6b422;--prepare_orange:#f28a30;--handover:#a77bd6;--amber:#e6b422}}
-*{box-sizing:border-box}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
-.wrap{max-width:960px;margin:0 auto;padding:16px}
-h1{margin:0;font-size:1.6rem}
-h2{font-size:1.15rem;margin:0 0 8px}
-h3{font-size:1rem;margin:16px 0 6px}
-header{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;justify-content:space-between;margin-bottom:16px}
-header p{margin:0;color:var(--mute)}
-select{font:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--card);color:var(--fg)}
-section,.card{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px;margin-bottom:16px}
-.card{border-left:6px solid var(--accent)}
-.mute{color:var(--mute)}
-.small{font-size:.875rem}
-.big{font-size:3.2rem;line-height:1.1;font-weight:700;color:var(--accent)}
-.level{font-size:1.2rem;font-weight:600;color:var(--accent)}
-.row{display:flex;flex-wrap:wrap;gap:8px 24px;align-items:baseline}
-.notice{background:var(--chip);border-left:4px solid var(--amber);padding:8px 12px;border-radius:4px;margin:12px 0}
-.err{border-left-color:var(--handover)}
-.chip{display:inline-block;padding:0 6px;margin:0 1px;border-radius:10px;background:var(--chip);color:var(--fg);border:1px solid var(--line);font-size:.8rem;cursor:pointer;font-family:inherit;line-height:1.5}
-.chip:hover{border-color:var(--accent)}
-.chip.dead{cursor:default;opacity:.6}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:8px}
-.item{border:1px solid var(--line);border-radius:6px;padding:8px;background:var(--bg)}
-.item.hl{outline:2px solid var(--accent)}
-.item b{font-size:1.05rem}
-table{width:100%;border-collapse:collapse;font-size:.9rem}
-th,td{text-align:left;padding:4px 8px;border-bottom:1px solid var(--line);vertical-align:top}
-th{color:var(--mute);font-weight:600}
-td.num{text-align:right;font-variant-numeric:tabular-nums}
-.scroll{overflow-x:auto}
-tr.cur td{background:var(--chip);font-weight:600}
-.ev{border-bottom:1px solid var(--line);padding:8px 0}
-.ev:last-child{border-bottom:0}
-.ev.hl{outline:2px solid var(--accent);outline-offset:2px}
-pre{white-space:pre-wrap;word-break:break-word;background:var(--bg);padding:8px;border-radius:4px;font-size:.8rem;margin:4px 0}
-code{font-family:ui-monospace,Menlo,Consolas,monospace;font-size:.85em}
-.tl{list-style:none;margin:0;padding:0}
-.tl li{border-left:4px solid var(--line);padding:4px 0 4px 10px;margin-bottom:6px}
-.tl li.amber{border-left-color:var(--amber)}
-.tl li.decide{border-left-color:var(--accent)}
-.tl .out{color:var(--mute);font-size:.85rem;word-break:break-word}
-.tl .head{display:flex;flex-wrap:wrap;gap:2px 12px;font-size:.9rem}
-footer{color:var(--mute);font-size:.85rem;padding:0 0 24px}
-.ok{color:var(--normal)}
+:root {
+  color-scheme: light;
+  --page: #eef2f3;            /* vog haze */
+  --paper: #fafbfb;           /* chart and panel surface */
+  --ink: #1c2227;             /* basalt */
+  --ink-2: #46525b;
+  --ink-3: #5c6870;
+  --rule: #d3d9dd;
+  --slot: #e1e6e8;
+  --accent: #1d5c78;          /* ocean off Kaʻū */
+  --lv-green: #3b8c55;
+  --lv-yellow: #d6a90e;
+  --lv-orange: #c4561c;
+  --lv-red: #951c2b;
+  --lv-handover: #5b4a8b;
+  --wash: 26%;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --page: #121618; --paper: #1a2024; --ink: #e7ecee; --ink-2: #b9c3c9; --ink-3: #98a4ab;
+    --rule: #2c353b; --slot: #242c31; --accent: #6db3d1;
+    --lv-green: #1d7d3e; --lv-yellow: #a9912b; --lv-orange: #a34100; --lv-red: #cc4a7c; --lv-handover: #9b8ad6;
+    --wash: 42%;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #121618; --paper: #1a2024; --ink: #e7ecee; --ink-2: #b9c3c9; --ink-3: #98a4ab;
+  --rule: #2c353b; --slot: #242c31; --accent: #6db3d1;
+  --lv-green: #1d7d3e; --lv-yellow: #a9912b; --lv-orange: #a34100; --lv-red: #cc4a7c; --lv-handover: #9b8ad6;
+  --wash: 42%;
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  margin: 0; background: var(--page); color: var(--ink);
+  font-family: "Public Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-size: 17px; line-height: 1.55;
+}
+a { color: var(--accent); text-underline-offset: 3px; }
+a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
+.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+@media (max-width: 560px) { .wrap { padding: 0 16px; } body { font-size: 16px; } }
+
+/* Masthead: the place, then the night picker */
+.masthead { padding: 22px 0 18px; border-bottom: 1px solid var(--rule); }
+.masthead .wrap { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.brand { font-weight: 800; font-size: 20px; letter-spacing: -0.01em; }
+.brand span { font-weight: 400; color: var(--ink-2); margin-left: 10px; }
+.picker { display: flex; align-items: baseline; gap: 8px; color: var(--ink-2); font-size: 15px; }
+.picker select { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; }
+
+/* Tonight's call */
+.call { padding: 44px 0 12px; }
+.dateline { margin: 0 0 14px; color: var(--ink-2); font-size: 16px; }
+.headline { margin: 0; font-size: clamp(28px, 4.6vw, 46px); line-height: 1.12; font-weight: 700; letter-spacing: -0.02em; max-width: 22ch; }
+.action { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; margin: 26px 0 8px; max-width: 70ch; }
+.swatch { width: 18px; height: 18px; border-radius: 4px; margin-top: 4px; }
+.action strong { font-size: 20px; }
+.action p { grid-column: 2; margin: 0; color: var(--ink-2); }
+.notice { margin: 18px 0 0; padding: 12px 14px; border-left: 4px solid var(--ink-3); background: var(--paper); color: var(--ink-2); max-width: 72ch; font-size: 15px; }
+
+.figure { margin: 28px 0 0; }
+.figure h2, .section h2 { font-size: 20px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.005em; }
+.figure .sub, .section .sub { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; max-width: 72ch; }
+svg text { font-family: inherit; fill: var(--ink); }
+svg .muted { fill: var(--ink-3); }
+svg .soft { fill: var(--ink-2); }
+.chart { width: 100%; height: auto; display: block; overflow: visible; }
+
+/* Sections below the call */
+.section { padding: 40px 0 8px; border-top: 1px solid var(--rule); margin-top: 40px; }
+.cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 40px; }
+@media (max-width: 860px) { .cols { grid-template-columns: 1fr; gap: 28px; } }
+.prose { max-width: 68ch; }
+.prose p { margin: 0 0 14px; }
+.cite { display: inline-block; font-size: 12px; font-weight: 700; line-height: 1; padding: 3px 5px 2px; margin: 0 1px; border-radius: 4px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); text-decoration: none; vertical-align: 2px; }
+.cite:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
+
+.streams { list-style: none; margin: 0; padding: 0; }
+.streams li { display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); }
+.streams li:first-child { border-top: 1px solid var(--rule); }
+.streams .name { font-weight: 700; }
+.streams .val { font-weight: 700; font-variant-numeric: tabular-nums; }
+.streams .note { grid-column: 1 / -1; color: var(--ink-2); font-size: 14px; }
+.streams li:target { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+
+.side h3 { font-size: 16px; margin: 0 0 8px; }
+.side + .side { margin-top: 26px; }
+.flags { list-style: none; margin: 0; padding: 0; font-size: 15px; }
+.flags li { padding: 8px 0 8px 22px; position: relative; border-bottom: 1px solid var(--rule); }
+.flags li::before { content: ""; position: absolute; left: 2px; top: 15px; width: 10px; height: 10px; border-radius: 50%; border: 2px solid var(--ink-3); }
+.flags li.open::before { background: var(--lv-orange); border-color: var(--lv-orange); }
+.flags .state { color: var(--ink-2); display: block; font-size: 14px; }
+.calls { width: 100%; border-collapse: collapse; font-size: 14px; }
+.calls th, .calls td { text-align: left; padding: 6px 8px 6px 0; border-bottom: 1px solid var(--rule); vertical-align: top; }
+.calls th { color: var(--ink-2); font-weight: 500; }
+.calls td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.evidence { list-style: none; margin: 0; padding: 0; }
+.evidence li { display: grid; grid-template-columns: 52px 1fr; gap: 4px 12px; padding: 12px 0; border-bottom: 1px solid var(--rule); scroll-margin-top: 16px; }
+.evidence li:target { background: color-mix(in srgb, var(--accent) 8%, transparent); }
+.evidence .id { font-weight: 800; color: var(--accent); }
+.evidence .meta { grid-column: 2; color: var(--ink-3); font-size: 13px; }
+.evidence details { grid-column: 2; font-size: 13px; }
+.evidence summary { cursor: pointer; color: var(--ink-2); }
+.evidence pre { white-space: pre-wrap; word-break: break-word; background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 10px; margin: 6px 0 0; font-size: 12.5px; }
+.requery-tag { font-size: 13px; color: var(--ink-2); font-weight: 400; }
+
+/* The run, step by step: a sequence, so it is numbered */
+.steps { list-style: none; margin: 0; padding: 0; counter-reset: step; }
+.steps li { counter-increment: step; display: grid; grid-template-columns: 40px 1fr auto; gap: 2px 12px; padding: 9px 0; border-bottom: 1px solid var(--rule); font-size: 15px; }
+.steps li::before { content: counter(step); color: var(--ink-3); font-variant-numeric: tabular-nums; text-align: right; }
+.steps .who { font-weight: 700; }
+.steps .what { color: var(--ink-2); grid-column: 2 / -1; font-size: 14px; overflow-wrap: anywhere; }
+.steps .ms { color: var(--ink-3); font-variant-numeric: tabular-nums; font-size: 14px; }
+.steps li.loop { box-shadow: inset 4px 0 0 var(--lv-yellow); }
+.steps li.decide { box-shadow: inset 4px 0 0 var(--accent); }
+
+.log { width: 100%; border-collapse: collapse; font-size: 15px; }
+.log th, .log td { text-align: left; padding: 8px 10px 8px 0; border-bottom: 1px solid var(--rule); }
+.log th { color: var(--ink-2); font-weight: 500; }
+.log td.num { font-variant-numeric: tabular-nums; }
+.log tr.current td { font-weight: 700; }
+.lvl { display: inline-flex; align-items: center; gap: 7px; }
+.lvl i { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+
+.tip { position: fixed; pointer-events: none; background: var(--ink); color: var(--paper); font-size: 13px; line-height: 1.35; padding: 6px 9px; border-radius: 6px; transform: translate(-50%, calc(-100% - 10px)); white-space: nowrap; opacity: 0; transition: opacity .08s; z-index: 10; }
+.tip.on { opacity: 1; }
+.empty { color: var(--ink-2); font-style: italic; }
+footer { margin: 56px 0 0; padding: 26px 0 44px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 14px; }
+footer p { margin: 0 0 8px; max-width: 80ch; }
+
 </style>
 </head>
 <body>
-<div class="wrap">
-<header>
-  <div>
-    <h1>vog-desk</h1>
-    <p>Next-night SO2 exposure forecast for Pāhala, Hawaiʻi Island</p>
+<header class="masthead">
+  <div class="wrap">
+    <div class="brand">vog-desk<span>Pāhala, Kaʻū, Hawaiʻi Island</span></div>
+    <label class="picker">Night <select id="night" aria-label="Choose an issue night"></select></label>
   </div>
-  <label class="small mute">Issue date <select id="date" aria-label="Issue date"></select></label>
 </header>
-<main>
-  <div id="card" class="card"><p class="mute">Loading forecast...</p></div>
-  <section id="evidence"><h2>Evidence</h2><div id="evbody" class="mute">Loading...</div></section>
-  <section id="trace"><h2>Agent trace</h2><div id="trbody" class="mute">Loading...</div></section>
-  <section id="log"><h2>Live log</h2><div id="logbody" class="mute">Loading...</div></section>
-</main>
-<footer>Built for the Open Agent Hackathon 2026, Track 3. Data: EPA AQS, AirNow, USGS HVO, IEM, NOAA GFS. An hourly mean of 75 ppb does not show that a 15-minute average reached the plan's yellow level.</footer>
-</div>
-<script>
-"use strict";
-var LEVELS = {normal: "Normal operations", prepare_yellow: "Prepare for yellow", prepare_orange: "Prepare for orange", handover: "Handed to a human"};
-var cache = {};
-var currentDate = null;
 
-function $(id) { return document.getElementById(id); }
-function el(tag, attrs, kids) {
-  var e = document.createElement(tag);
-  if (attrs) for (var k in attrs) {
-    if (k === "class") e.className = attrs[k];
-    else if (k === "text") e.textContent = attrs[k];
-    else e.setAttribute(k, attrs[k]);
-  }
-  (kids || []).forEach(function (c) { if (c != null) e.appendChild(typeof c === "string" ? document.createTextNode(c) : c); });
+<main class="wrap">
+  <section class="call" id="call" aria-live="polite"><p class="empty">Loading tonight's forecast.</p></section>
+
+  <section class="section" id="why" hidden>
+    <div class="cols">
+      <div>
+        <h2>Why the desk said this</h2>
+        <p class="sub" id="how-set"></p>
+        <div class="prose" id="discussion"></div>
+        <h2 style="margin-top:28px">The four streams of guidance</h2>
+        <p class="sub" id="streams-sub"></p>
+        <ul class="streams" id="streams"></ul>
+      </div>
+      <aside>
+        <div class="side"><h3>What the review found</h3><ul class="flags" id="flags"></ul></div>
+        <div class="side"><h3>Model calls</h3><table class="calls" id="calls"></table></div>
+      </aside>
+    </div>
+  </section>
+
+  <section class="section" id="evidence-section" hidden>
+    <h2>Evidence</h2>
+    <p class="sub">Every number the desk used, as it stood at 18:00 HST. Each query ran through the Zetaris semantic layer with the cutoff applied; re-checks ordered by the review are marked.</p>
+    <ul class="evidence" id="evidence"></ul>
+  </section>
+
+  <section class="section" id="run-section" hidden>
+    <h2>How the desk worked through the night's case</h2>
+    <p class="sub">Every step from the trace, in order. Steps on the amber rail are the review's re-checks; the blue rail is the decision.</p>
+    <ol class="steps" id="steps"></ol>
+  </section>
+
+  <section class="section" id="record">
+    <h2>How the desk has done</h2>
+    <p class="sub" id="record-sub">The held-out season, 1 July to 21 October 2026, scored once after every rule was frozen. Lower Brier score is better.</p>
+    <figure class="figure" style="margin-top:6px"><svg class="chart" id="brier" role="img" aria-labelledby="brier-title"><title id="brier-title">Brier score by forecast on the held-out season</title></svg></figure>
+    <figure class="figure">
+      <h2>Every held-out night</h2>
+      <p class="sub">The desk's probability each evening. Filled dots are nights that reached 75 ppb; open dots stayed below. The line is the action threshold.</p>
+      <svg class="chart" id="nights" role="img" aria-labelledby="nights-title"><title id="nights-title">Desk probability for each held-out night, with outcomes</title></svg>
+    </figure>
+    <figure class="figure">
+      <h2>Live log</h2>
+      <p class="sub">Forecasts issued since 23 October 2026, committed before the night happened and checked the next afternoon.</p>
+      <table class="log" id="log"></table>
+    </figure>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <p>Method fixed before any model was fit: <a href="../docs/PREREG.md">pre-registration</a>. Full results with intervals: <a href="../docs/RESULTS.md">results</a>. Every decision and what did not work: <a href="../docs/DEVLOG.md">development log</a>. Per-night numbers: <a href="../results/README.md">results/</a>.</p>
+    <p>Data: EPA AQS and AirNow (hourly SO2), USGS Hawaiian Volcano Observatory notices, Iowa Environmental Mesonet (Hilo soundings), NOAA GFS. The schools plan's levels are defined on 15-minute averages; an hourly mean of 75 ppb does not show that a 15-minute average reached the yellow level. The desk recommends; the school's designated person decides.</p>
+  </div>
+</footer>
+<div class="tip" id="tip" role="tooltip"></div>
+
+<script>
+const T_STAR = 0.18;
+const LEVEL = {
+  normal: { label: "Normal operations", color: "--lv-green" },
+  prepare_yellow: { label: "Prepare for yellow", color: "--lv-yellow" },
+  prepare_orange: { label: "Prepare for orange", color: "--lv-orange" },
+  handover: { label: "Handed to a person", color: "--lv-handover" },
+};
+const STREAM = {
+  lr: "Frozen 2025 model",
+  memory_model: "Memory model",
+  recent_rate: "Recent event rate",
+  analog: "Similar remembered nights",
+};
+const STREAM_SHORT = { lr: "frozen model", memory_model: "memory model", recent_rate: "recent rate", analog: "similar nights" };
+const FLAG = {
+  model_memory_disagree: "Frozen model and memory model disagree",
+  model_analog_disagree: "Model and similar nights disagree",
+  analog_split: "Similar nights split between events and quiet",
+  analogs_sparse: "Few similar nights in memory",
+  persistence_contradiction: "Recent hours contradict the guidance",
+  regime_unseen: "Inputs outside the 2025 training range",
+  data_gap: "Missing data",
+  dq_failed: "A data quality rule failed",
+  stale_data: "Latest Pāhala hour is stale",
+  memory_model_unavailable: "Memory model unavailable",
+};
+const QUERY = {
+  pahala_24h: "Pāhala, last 24 hours", pahala_6h: "Pāhala, last 6 hours", hvnp_6h: "Volcanoes NP, last 6 hours",
+  ocean_view_6h: "Ocean View, last 6 hours", episode: "Eruption episodes", gfs: "GFS winds and mixing", sounding: "Hilo sounding",
+};
+const css = (v) => getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const pct = (p) => (p == null || isNaN(p)) ? "n/a" : `${Math.round(p * 100)}%`;
+const NS = "http://www.w3.org/2000/svg";
+function svgEl(tag, attrs = {}, text) {
+  const e = document.createElementNS(NS, tag);
+  for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v);
+  if (text != null) e.textContent = text;
   return e;
 }
-function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); return n; }
-function fmt(v, d) { return typeof v === "number" ? v.toFixed(d === undefined ? 2 : d) : (v == null ? "n/a" : String(v)); }
-function pad(n) { return (n < 10 ? "0" : "") + n; }
-function utcStr(ms) { var d = new Date(ms); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + " UTC"; }
-function hstStr(ms) { var d = new Date(ms - 36e5 * 10); return d.getUTCFullYear() + "-" + pad(d.getUTCMonth() + 1) + "-" + pad(d.getUTCDate()) + " " + pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + " HST"; }
-function hms(ts) { var ms = Date.parse(ts); if (isNaN(ms)) return "--:--:--"; var d = new Date(ms); return pad(d.getUTCHours()) + ":" + pad(d.getUTCMinutes()) + ":" + pad(d.getUTCSeconds()); }
-function levelOf(f) {
-  var dec = f && f.desk && f.desk.decision;
-  if (!dec) return "normal";
-  return dec.kind === "handover" ? "handover" : (dec.level || "normal");
-}
-function setAccent(node, lvl) { node.style.setProperty("--accent", "var(--" + (LEVELS[lvl] ? lvl : "normal") + ")"); }
-function short(v, n) {
-  var s; try { s = typeof v === "string" ? v : JSON.stringify(v); } catch (e) { s = String(v); }
-  if (s == null) s = "";
-  return s.length > n ? s.slice(0, n) + "..." : s;
-}
-
-function getJSON(url) {
-  return fetch(url, {cache: "no-cache"}).then(function (r) {
-    if (!r.ok) throw new Error(url + " " + r.status);
-    return r.text();
-  }).then(function (t) { return JSON.parse(t); });
-}
-function getTrace(date) {
-  return fetch("../live/" + date + "/trace.jsonl", {cache: "no-cache"}).then(function (r) {
-    return r.ok ? r.text() : null;
-  }).then(function (t) {
-    if (t == null) return null;
-    var out = [];
-    t.split("\n").forEach(function (ln) {
-      ln = ln.trim();
-      if (!ln || ln.charAt(0) !== "{") return;
-      try { out.push(JSON.parse(ln)); } catch (e) { /* skip bad line */ }
-    });
-    return out.length ? out : null;
-  }).catch(function () { return null; });
-}
-function loadForecast(date) {
-  if (!cache[date]) {
-    cache[date] = getJSON("../live/" + date + "/forecast.json").then(function (f) { return {ok: true, f: f}; },
-                                                                      function (e) { return {ok: false, err: String(e.message || e)}; });
+async function getJSON(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw new Error(`${r.status} ${url}`); return r.json(); }
+async function getText(url) { const r = await fetch(url, { cache: "no-store" }); if (!r.ok) throw new Error(`${r.status} ${url}`); return r.text(); }
+function parseCSV(text) {
+  const rows = []; let row = [], f = "", q = false;
+  for (let i = 0; i < text.length; i++) {
+    const c = text[i];
+    if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+    else if (c === '"') q = true;
+    else if (c === ",") { row.push(f); f = ""; }
+    else if (c === "\n") { row.push(f); rows.push(row); row = []; f = ""; }
+    else if (c !== "\r") f += c;
   }
-  return cache[date];
+  if (f || row.length) { row.push(f); rows.push(row); }
+  const head = rows.shift();
+  return rows.filter((r) => r.length === head.length).map((r) => Object.fromEntries(head.map((h, i) => [h, r[i]])));
+}
+const tip = document.getElementById("tip");
+function showTip(evt, html) { tip.innerHTML = html; tip.style.left = `${evt.clientX}px`; tip.style.top = `${evt.clientY}px`; tip.classList.add("on"); }
+function hideTip() { tip.classList.remove("on"); }
+function levelOf(dec) { if (!dec) return null; return dec.kind === "handover" ? "handover" : dec.level; }
+function longDate(iso) {
+  const d = new Date(`${iso}T12:00:00Z`);
+  return d.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric", timeZone: "UTC" });
 }
 
-/* Turn [E1] / [G2] / [E1, E3] in text into clickable chips. */
-function linkify(text) {
-  var frag = document.createDocumentFragment();
-  var re = /\[([EG]\d+(?:\s*[,;]\s*[EG]\d+)*)\]/g, last = 0, m;
-  text = String(text == null ? "" : text);
-  while ((m = re.exec(text))) {
-    if (m.index > last) frag.appendChild(document.createTextNode(text.slice(last, m.index)));
-    m[1].split(/\s*[,;]\s*/).forEach(function (id) { frag.appendChild(chip(id)); });
-    last = re.lastIndex;
+/* The hero scale: the schools plan's bands on the probability axis, tonight's streams above, the desk below. */
+function drawScale(svg, p, guidance, animate = true) {
+  svg.replaceChildren(svgEl("title", {}, "Tonight's probability on the schools plan's action bands"));
+  const W = Math.max(300, Math.round(svg.parentElement.clientWidth || 1000)), H = 214, L = 6, R = W - 6, x = (v) => L + (R - L) * Math.max(0, Math.min(1, v));
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const bandY = 112, bandH = 38;
+  const bands = [[0, T_STAR, "--lv-green", "Normal operations", "Normal"], [T_STAR, 2 * T_STAR, "--lv-yellow", "Prepare for yellow", "Yellow"], [2 * T_STAR, 1, "--lv-orange", "Prepare for orange", "Orange"]];
+  for (const [a, b, c, long, short] of bands) {
+    const x0 = x(a) + (a > 0 ? 1 : 0), x1 = x(b) - (b < 1 ? 1 : 0);
+    svg.append(svgEl("rect", { x: x0, y: bandY, width: x1 - x0, height: bandH, rx: 4, fill: `color-mix(in srgb, var(${c}) var(--wash), var(--paper))` }));
+    svg.append(svgEl("rect", { x: x0, y: bandY + bandH - 4, width: x1 - x0, height: 4, fill: `var(${c})` }));
+    const room = x1 - x0 - 16, name = long.length * 8.2 <= room ? long : short.length * 8.2 <= room ? short : "";
+    if (name) svg.append(svgEl("text", { x: x0 + 8, y: bandY + 23, "font-size": 15, "font-weight": 700 }, name));
   }
-  if (last < text.length) frag.appendChild(document.createTextNode(text.slice(last)));
-  return frag;
+  for (const v of [T_STAR, 2 * T_STAR]) {
+    svg.append(svgEl("text", { x: x(v), y: bandY + bandH + 20, "text-anchor": "middle", "font-size": 13, class: "soft" }, pct(v)));
+  }
+  for (const v of [0, 0.5, 1]) {
+    svg.append(svgEl("text", { x: x(v), y: bandY + bandH + 20, "text-anchor": v === 0 ? "start" : v === 1 ? "end" : "middle", "font-size": 13, class: "muted" }, pct(v)));
+  }
+  // Streams: dots on a lane above the bands, labels in up to three rows, leader lines down to the dot.
+  const lane = 96, rows = W < 600 ? [14, 33, 52, 71] : [18, 44, 70];
+  const items = (guidance || []).filter((g) => g.p != null).map((g) => ({ g, xv: x(g.p),
+    label: W < 600 ? `${pct(g.p)} ${(STREAM_SHORT[g.stream] || g.stream).split(" ")[0]}` : `${STREAM_SHORT[g.stream] || g.stream} ${pct(g.p)}` })).sort((a, b) => a.xv - b.xv);
+  const ends = rows.map(() => -1e9);
+  for (const it of items) {
+    const w = it.label.length * 7.6 + 8;
+    let r = rows.findIndex((_, i) => it.xv - w / 2 > ends[i] + 6);
+    if (r < 0) r = rows.length - 1;
+    const cx = Math.max(w / 2, Math.min(W - w / 2, it.xv));
+    ends[r] = cx + w / 2;
+    svg.append(svgEl("line", { x1: it.xv, y1: rows[r] + 6, x2: it.xv, y2: lane - 7, stroke: "var(--ink-3)", "stroke-width": 1 }));
+    const t = svgEl("text", { x: cx, y: rows[r], "text-anchor": "middle", "font-size": 14, class: "soft" }, it.label);
+    svg.append(t);
+    const dot = svgEl("circle", { cx: it.xv, cy: lane, r: 5, fill: "var(--ink-2)", stroke: "var(--paper)", "stroke-width": 2 });
+    dot.addEventListener("mousemove", (e) => showTip(e, `${esc(STREAM[it.g.stream] || it.g.stream)}: ${pct(it.g.p)}`));
+    dot.addEventListener("mouseleave", hideTip);
+    svg.append(dot);
+  }
+  // The desk: one marker through the bands, its label below. The one moving thing on the page.
+  const g = svgEl("g", { class: "desk-marker", transform: `translate(${x(p)},0)` });
+  g.append(svgEl("line", { x1: 0, y1: bandY - 6, x2: 0, y2: bandY + bandH + 4, stroke: "var(--paper)", "stroke-width": 9, "stroke-linecap": "round" }));
+  g.append(svgEl("line", { x1: 0, y1: bandY - 6, x2: 0, y2: bandY + bandH + 4, stroke: "var(--ink)", "stroke-width": 3, "stroke-linecap": "round" }));
+  g.append(svgEl("path", { d: `M -8 ${bandY + bandH + 30} L 8 ${bandY + bandH + 30} L 0 ${bandY + bandH + 18} Z`, fill: "var(--ink)" }));
+  const lab = `Tonight ${pct(p)}`;
+  const anchor = x(p) < 70 ? "start" : x(p) > W - 70 ? "end" : "middle";
+  g.append(svgEl("text", { x: anchor === "start" ? -8 : anchor === "end" ? 8 : 0, y: bandY + bandH + 52, "text-anchor": anchor, "font-size": 17, "font-weight": 800 }, lab));
+  svg.append(g);
+  // One orchestrated moment: the marker travels from 0 to tonight's value. The final position never depends on it.
+  if (animate && g.animate && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    g.animate([{ transform: `translate(${x(0)}px, 0px)` }, { transform: `translate(${x(p)}px, 0px)` }], { duration: 900, easing: "cubic-bezier(.2,.7,.2,1)" });
+  }
 }
-function chip(id) {
-  var b = el("button", {"class": "chip", type: "button", text: id, title: "Go to " + id});
-  b.addEventListener("click", function () {
-    var t = document.getElementById(id);
-    if (!t) { b.classList.add("dead"); b.title = id + " is not in the loaded data"; return; }
-    t.scrollIntoView({behavior: "smooth", block: "center"});
-    t.classList.add("hl");
-    setTimeout(function () { t.classList.remove("hl"); }, 2000);
-  });
-  return b;
+
+/* The night window: 18 hourly slots, empty at issue, the measured hours after verification. */
+function bandOfPpb(v) { return v >= 1010 ? "--lv-red" : v >= 210 ? "--lv-orange" : v >= 110 ? "--lv-yellow" : "--lv-green"; }
+function drawNight(svg, ver, issueIso) {
+  svg.replaceChildren(svgEl("title", {}, "The forecast window, 18:00 to 12:00 HST"));
+  const W = Math.max(300, Math.round(svg.parentElement.clientWidth || 1000)), H = 98, n = 18, gap = W < 600 ? 2 : 3, cw = (W - gap * (n - 1)) / n, top = 26, ch = 42;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const hours = ver && ver.hours ? ver.hours : null;
+  let maxI = -1, maxV = -1;
+  if (hours) hours.forEach((h, i) => { if (h.ppb != null && h.ppb > maxV) { maxV = h.ppb; maxI = i; } });
+  for (let i = 0; i < n; i++) {
+    const hr = (18 + i) % 24, x0 = i * (cw + gap);
+    const h = hours ? hours[i] : null;
+    const fill = h && h.ppb != null ? `var(${bandOfPpb(h.ppb)})` : "var(--slot)";
+    const r = svgEl("rect", { x: x0, y: top, width: cw, height: ch, rx: 4, fill });
+    const hhmm = `${String(hr).padStart(2, "0")}:00`;
+    r.addEventListener("mousemove", (e) => showTip(e, h && h.ppb != null ? `${hhmm} HST: ${h.ppb.toFixed(0)} ppb` : `${hhmm} HST: ${hours ? "no value" : "not measured yet"}`));
+    r.addEventListener("mouseleave", hideTip);
+    svg.append(r);
+    if (h && h.ppb != null && h.ppb >= 75) svg.append(svgEl("rect", { x: x0 + cw / 2 - 3, y: top + ch - 11, width: 6, height: 6, rx: 1, fill: "var(--paper)" }));
+    if (hr % (W < 600 ? 6 : 3) === 0) svg.append(svgEl("text", { x: x0 + cw / 2, y: top + ch + 20, "text-anchor": "middle", "font-size": 13, class: "muted" }, hhmm));
+  }
+  if (maxI >= 0) svg.append(svgEl("text", { x: maxI * (cw + gap) + cw / 2, y: top - 8, "text-anchor": "middle", "font-size": 14, "font-weight": 700 }, `${maxV.toFixed(0)} ppb`));
+  else svg.append(svgEl("text", { x: 0, y: top - 8, "font-size": 14, class: "soft" }, W < 600 ? "Filled in after noon tomorrow." : "Measured hours appear here after 12:00 HST the next day."));
 }
 
-function renderCard(res, date) {
-  var card = clear($("card"));
-  if (!res.ok) {
-    card.appendChild(el("h2", {text: "Forecast for " + date}));
-    card.appendChild(el("p", {text: "Could not load the forecast for " + date + " (" + res.err + ")."}));
-    setAccent(card, "normal");
-    return;
-  }
-  var f = res.f, desk = f.desk || null, dec = desk && desk.decision || null;
-  var lvl = levelOf(f);
-  setAccent(card, lvl);
-  var im = Date.parse(f.issue_utc);
-  card.appendChild(el("h2", {text: "Forecast issued " + (f.issue_date_hst || date)}));
-  card.appendChild(el("p", {"class": "mute small", text: isNaN(im) ? "Issue time not available" : "Issue time " + hstStr(im) + " (" + utcStr(im) + ")" +
-    (f.generated_utc ? ", generated " + String(f.generated_utc).replace("T", " ").slice(0, 19) + " UTC" : "")}));
-  card.appendChild(el("p", {text: "Will any hour at the Pāhala monitor reach 75 ppb of SO2 between 18:00 HST tonight and 12:00 HST tomorrow?"}));
+function stripLabel(text, label) {
+  const t = String(text || "");
+  return t.toLowerCase().startsWith(label.toLowerCase()) ? t.slice(label.length).replace(/^[:.\s]+/, "").replace(/^./, (c) => c.toUpperCase()) : t;
+}
+function modelOnlyText(p, lv) {
+  return { normal: "No action under the schools plan is triggered by this forecast.", prepare_yellow: "Have the plan's yellow-level actions ready for the morning.",
+           prepare_orange: "Brief staff tonight on the plan's orange-level actions." }[lv] || "";
+}
+function citeify(text) {
+  return esc(text).replace(/\[((?:[EG]\d+)(?:\s*,\s*[EG]\d+)*)\]/g, (_, ids) =>
+    ids.split(/\s*,\s*/).map((id) => `<a class="cite" href="#${id}">${id}</a>`).join(""));
+}
 
-  var p = dec && typeof dec.p === "number" ? dec.p : f.probability;
-  var row = el("div", {"class": "row"});
-  row.appendChild(el("span", {"class": "big", text: typeof p === "number" ? (p * 100).toFixed(1) + "%" : "n/a"}));
-  var side = el("div");
-  side.appendChild(el("div", {"class": "level", text: LEVELS[lvl]}));
-  if (!dec) side.appendChild(el("div", {"class": "mute small", text: "model only"}));
-  else if (dec.kind === "issue_with_caveat") side.appendChild(el("div", {"class": "mute small", text: "issued with a caveat"}));
-  row.appendChild(side);
-  card.appendChild(row);
+function renderCall(fc) {
+  const desk = fc.desk && !fc.desk.error ? fc.desk : null;
+  const dec = desk ? desk.decision : null;
+  const p = dec ? dec.p : fc.probability;
+  const lv = levelOf(dec) || (p >= 2 * T_STAR ? "prepare_orange" : p >= T_STAR ? "prepare_yellow" : "normal");
+  const L = LEVEL[lv];
+  const issued = new Date(fc.issue_utc);
+  const box = document.getElementById("call");
+  const ver = fc.verification;
+  let outcome = "";
+  if (ver && ver.event != null) {
+    outcome = ver.event ? `It did. The highest hour reached ${Math.round(ver.observed_max_ppb)} ppb.` : `It did not. The highest hour was ${Math.round(ver.observed_max_ppb)} ppb.`;
+  }
+  box.innerHTML = `
+    <p class="dateline">Night of ${esc(longDate(fc.issue_date_hst))}, issued at 18:00 HST (${issued.toISOString().slice(11, 16)} UTC)</p>
+    <h1 class="headline">A ${pct(p)} chance that any hour at Pāhala reaches 75 ppb of sulfur dioxide before noon${ver && ver.event != null ? "." : " tomorrow."}</h1>
+    <div class="action"><span class="swatch" style="background:var(${L.color})" aria-hidden="true"></span>
+      <strong>${esc(L.label)}</strong>
+      <p>${esc(dec ? (dec.kind === "handover" ? `The desk handed this night to a person: ${dec.handover_reason || "the guidance conflicted."}` : stripLabel(dec.recommendation, L.label)) : modelOnlyText(p, lv))}</p>
+    </div>
+    ${outcome ? `<p class="notice"><strong>Next day:</strong> ${esc(outcome)} Brier score for this night ${ver.brier != null ? ver.brier.toFixed(3) : "n/a"}.</p>` : ""}
+    ${!desk ? `<p class="notice">This night shows the model alone: the desk's agents did not run${fc.desk && fc.desk.error ? ` (${esc(fc.desk.error.split(":")[0])})` : ""}.</p>` : ""}
+    <figure class="figure"><h2>Where tonight sits on the schools plan</h2>
+      <p class="sub">The plan's levels are set for 15-minute averages at the school; the desk maps its probability onto them with thresholds fixed before the held-out test.</p>
+      <svg class="chart" id="scale" role="img"></svg></figure>
+    <figure class="figure"><h2>The night in question</h2>
+      <p class="sub">Eighteen hours from 18:00 to 11:00 HST, coloured by the plan's bands once measured. A light square marks an hour at or above 75 ppb.</p>
+      <svg class="chart" id="night-strip" role="img"></svg></figure>`;
+  const guid = desk ? desk.guidance : [{ stream: "lr", p: fc.probability }];
+  drawScale(document.getElementById("scale"), p, guid);
+  drawNight(document.getElementById("night-strip"), ver, fc.issue_date_hst);
+  redraw.call = () => { const s1 = document.getElementById("scale"), n1 = document.getElementById("night-strip");
+    if (s1) drawScale(s1, p, guid, false); if (n1) drawNight(n1, ver, fc.issue_date_hst); };
+}
 
-  if (f.kind === "model_only" || !dec) {
-    card.appendChild(el("div", {"class": "notice", text: "Model-only forecast; the desk was not run for this night"}));
-    if (desk && desk.error) card.appendChild(el("div", {"class": "notice err small", text: "Desk error: " + desk.error}));
-    if (f.note) card.appendChild(el("p", {"class": "small mute", text: f.note}));
-    var ref = f.reference || {};
-    var t = el("table");
-    t.appendChild(el("tr", null, [el("th", {text: "Reference"}), el("th", {"class": "num", text: "Probability"})]));
-    [["Model (calibrated)", f.probability], ["Climatology 2025", ref.climatology_2025], ["Persistence", ref.persistence], ["Episode rule", ref.episode_rule]].forEach(function (r) {
-      t.appendChild(el("tr", null, [el("td", {text: r[0]}), el("td", {"class": "num", text: fmt(r[1], 3)})]));
-    });
-    card.appendChild(el("div", {"class": "scroll"}, [t]));
-  }
-
-  var rec = (dec && dec.recommendation) || f.recommendation;
-  if (rec) card.appendChild(el("p", null, [el("b", {text: "Recommendation: "}), rec]));
-  if (dec && dec.handover_reason) card.appendChild(el("p", null, [el("b", {text: "Handover reason: "}), dec.handover_reason]));
-  if (dec && dec.discussion) {
-    card.appendChild(el("h3", {text: "Discussion"}));
-    card.appendChild(el("p", null, [linkify(dec.discussion)]));
-  }
-  if (dec && dec.weights && Object.keys(dec.weights).length) {
-    card.appendChild(el("p", {"class": "small mute", text: "Stream weights: " + Object.keys(dec.weights).map(function (k) { return k + " " + fmt(dec.weights[k]); }).join(", ")}));
-  }
-  if (desk && desk.regime_summary) card.appendChild(el("p", {"class": "small", text: "Regime: " + desk.regime_summary}));
-
-  var g = desk && desk.guidance;
-  if (g && g.length) {
-    card.appendChild(el("h3", {text: "Guidance streams"}));
-    var grid = el("div", {"class": "grid"});
-    g.forEach(function (x) {
-      var iv = x.interval && x.interval.length === 2 ? " (" + fmt(x.interval[0]) + " to " + fmt(x.interval[1]) + ")" : "";
-      grid.appendChild(el("div", {"class": "item", id: x.id || null}, [
-        el("div", null, [el("span", {"class": "chip dead", text: x.id || "?"}), " " + (x.stream || "")]),
-        el("b", {text: x.p == null ? "no estimate" : fmt(x.p)}), iv ? el("span", {"class": "mute small", text: iv}) : null,
-        x.note ? el("div", {"class": "small mute", text: x.note}) : null]));
-    });
-    card.appendChild(grid);
-  }
-  var fl = desk && desk.flags;
-  if (fl && fl.length) {
-    card.appendChild(el("h3", {text: "Flags"}));
-    var ul = el("ul");
-    fl.forEach(function (x) {
-      ul.appendChild(el("li", null, [el("code", {text: x.code}), " " + (x.detail || "") + " ", el("b", {text: x.resolved ? "[resolved" + (x.resolution ? ": " + x.resolution : "") + "]" : "[unresolved]"})]));
-    });
-    card.appendChild(ul);
-  }
-  var lc = desk && desk.llm_calls;
-  if (lc && lc.length) {
-    card.appendChild(el("h3", {text: "Model calls"}));
-    var mt = el("table");
-    mt.appendChild(el("tr", null, ["Agent", "Provider model", "Latency (s)", "Validation"].map(function (h) { return el("th", {text: h}); })));
-    lc.forEach(function (c) {
-      mt.appendChild(el("tr", null, [el("td", {text: c.agent}), el("td", {text: c.provider_model || c.model_requested || "n/a"}),
-        el("td", {"class": "num", text: typeof c.latency_ms === "number" ? (c.latency_ms / 1000).toFixed(1) : "n/a"}), el("td", {text: c.validation || ""})]));
-    });
-    card.appendChild(el("div", {"class": "scroll"}, [mt]));
-  }
-  if (desk && desk.review_round != null || desk && desk.data_backend) {
-    card.appendChild(el("p", {"class": "small mute", text: [desk.review_round != null ? "Review rounds: " + desk.review_round : null, desk.data_backend ? "Data backend: " + desk.data_backend : null].filter(Boolean).join(". ")}));
-  }
-  var v = f.verification;
-  card.appendChild(el("h3", {text: "Verification"}));
-  if (v) {
-    card.appendChild(el("p", {text: "Observed max " + fmt(v.observed_max_ppb, 1) + " ppb over " + fmt(v.n_hours, 0) + " hours. Event: " + (v.event == null ? "unknown" : v.event ? "yes" : "no") +
-      ". Outcome: " + String(v.outcome).replace(/_/g, " ") + ". Brier score: " + fmt(v.brier, 3) + "."}));
+function renderWhy(fc) {
+  const sec = document.getElementById("why");
+  const desk = fc.desk && !fc.desk.error ? fc.desk : null;
+  if (!desk) { sec.hidden = true; return; }
+  sec.hidden = false;
+  const dec = desk.decision;
+  const how = document.getElementById("how-set");
+  if (dec.base_p != null) {
+    const src = STREAM[Object.keys(dec.weights || {})[0]] || "the guidance";
+    how.textContent = dec.adjustment
+      ? `Base ${pct(dec.base_p)} from the ${src.toLowerCase()}, moved ${dec.adjustment > 0 ? "up" : "down"} ${Math.round(Math.abs(dec.adjustment) * 100)} points by the duty lead: ${dec.adjustment_reason || ""}`
+      : `Base ${pct(dec.base_p)} from the ${src.toLowerCase()}; the duty lead left it unchanged.`;
   } else {
-    card.appendChild(el("p", {"class": "mute", text: "Pending. The night is scored after 12:00 HST tomorrow."}));
+    const w = Object.entries(dec.weights || {}).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+    how.textContent = `The duty lead weighed the streams: ${w.map(([k, v]) => `${(STREAM[k] || k).toLowerCase()} ${Math.round(v * 100)}%`).join(", ")}.`;
   }
-  if (f.data_basis && f.data_basis.pahala_last_hour_utc) {
-    card.appendChild(el("p", {"class": "small mute", text: "Last Pāhala hour seen: " + f.data_basis.pahala_last_hour_utc.replace("T", " ") + " UTC, " + fmt(f.data_basis.pahala_last_value_ppb, 0) + " ppb (" + (f.data_basis.pahala_source_last || "unknown source") + ")."}));
-  }
-}
-
-function renderEvidence(lines) {
-  var box = clear($("evbody"));
-  if (!lines) { box.appendChild(el("p", {"class": "mute", text: "No trace for this night, so there is no evidence list."})); return; }
-  var items = lines.filter(function (l) { return typeof l.step === "string" && /^(re)?query:/.test(l.step); });
-  if (!items.length) { box.appendChild(el("p", {"class": "mute", text: "The trace has no query steps."})); return; }
-  items.forEach(function (l, i) {
-    var o = (l.output && typeof l.output === "object") ? l.output : {};
-    var id = o.id || ("E" + (i + 1));
-    var d = el("div", {"class": "ev", id: id});
-    d.appendChild(el("div", null, [el("span", {"class": "chip dead", text: id}), " ", el("code", {text: l.step})]));
-    d.appendChild(el("div", {text: o.summary || (typeof l.output === "string" ? l.output : "No summary recorded.")}));
-    var meta = [];
-    if (o.rows_hash) meta.push("rows " + o.rows_hash);
-    if (o.available_utc) meta.push("available " + o.available_utc);
-    if (meta.length) d.appendChild(el("div", {"class": "small mute", text: meta.join(" | ")}));
-    if (l.sql && l.sql.length) {
-      d.appendChild(el("details", null, [el("summary", {"class": "small", text: "SQL (" + l.sql.length + ")"})].concat(l.sql.map(function (q) { return el("pre", {text: q}); }))));
-    }
-    box.appendChild(d);
-  });
+  document.getElementById("streams-sub").textContent = dec.base_p != null
+    ? "Each is a probability for the same question. The code takes the base from the memory model; the duty lead may move it, by at most 15 points, only when the review found something."
+    : "Each is a probability for the same question. On this night, before the rules were frozen on 24 October, the duty lead chose its own weights over the streams.";
+  document.getElementById("discussion").innerHTML = dec.discussion.split(/\n{2,}/).map((para) => `<p>${citeify(para)}</p>`).join("");
+  document.getElementById("streams").innerHTML = (desk.guidance || []).map((g) => `
+    <li id="${esc(g.id)}"><span class="name">${esc(STREAM[g.stream] || g.stream)} <span class="requery-tag">${esc(g.id)}</span></span>
+      <span class="val">${pct(g.p)}</span><span class="note">${esc(g.note)}</span></li>`).join("");
+  const flags = desk.flags || [];
+  const seen = new Set();
+  const uniq = flags.filter((f) => { const k = f.code + f.detail; if (seen.has(k)) return false; seen.add(k); return true; });
+  document.getElementById("flags").innerHTML = uniq.length ? uniq.map((f) => `
+    <li class="${f.resolved ? "" : "open"}">${esc(FLAG[f.code] || f.code)}
+      <span class="state">${esc(f.detail)}${f.resolved ? `. Resolved: ${esc(f.resolution)}` : ". Open when the desk decided."}</span></li>`).join("")
+    : `<li>Nothing. The guidance agreed and the data were complete.</li>`;
+  document.getElementById("calls").innerHTML = `<tr><th>Step</th><th>Model that answered</th><th>Time</th></tr>` + (desk.llm_calls || []).map((c) => `
+    <tr><td>${esc(c.agent === "DutyLead" ? "Duty lead" : c.agent === "EvidenceAgent" ? "Evidence summary" : c.agent)}${c.validation && c.validation !== "ok" ? `<br><span style="color:var(--ink-2)">${esc(c.validation === "retried" ? "passed on retry" : "template used")}</span>` : ""}</td>
+      <td>${esc((c.provider_model || "unknown").replace("nvidia/", ""))}</td><td class="num">${(c.latency_ms / 1000).toFixed(1)} s</td></tr>`).join("");
 }
 
 function renderTrace(lines) {
-  var box = clear($("trbody"));
-  if (!lines) { box.appendChild(el("p", {"class": "mute", text: "No trace file for this night (the desk was not run, or the trace was not published)."})); return; }
-  var ul = el("ul", {"class": "tl"});
-  lines.forEach(function (l) {
-    var step = String(l.step || ""), cls = "";
-    if (step === "review" || /^requery:/.test(step)) cls = "amber";
-    else if (step === "decide") cls = "decide";
-    var li = el("li", {"class": cls});
-    li.appendChild(el("div", {"class": "head"}, [el("code", {text: hms(l.ts)}), el("b", {text: l.agent || ""}), el("span", {text: step}),
-      el("span", {"class": "mute", text: (typeof l.duration_ms === "number" ? l.duration_ms : 0) + " ms"})]));
-    if ((step === "regime_summary" || step === "decide") && l.llm_call) {
-      li.appendChild(el("div", {"class": "small mute", text: "Model " + (l.llm_call.provider_model || l.llm_call.model_requested || "n/a") + ", validation " + (l.llm_call.validation || "n/a")}));
+  const evSec = document.getElementById("evidence-section"), runSec = document.getElementById("run-section");
+  if (!lines || !lines.length) { evSec.hidden = true; runSec.hidden = true; return; }
+  evSec.hidden = false; runSec.hidden = false;
+  const ev = lines.filter((l) => /^(query|requery):/.test(l.step) && l.output && l.output.id);
+  document.getElementById("evidence").innerHTML = ev.map((l) => {
+    const q = l.step.split(":")[1], re = l.step.startsWith("requery");
+    const pub = l.output.available_utc ? `latest row public ${String(l.output.available_utc).replace("T", " ").slice(0, 16)} UTC` : "";
+    return `<li id="${esc(l.output.id)}"><span class="id">${esc(l.output.id)}</span>
+      <span><strong>${esc(QUERY[q] || q)}</strong>${re ? ` <span class="requery-tag">re-checked by the review</span>` : ""}<br>${esc(l.output.summary)}</span>
+      <span class="meta">${esc(pub)}${l.output.rows_hash ? `${pub ? ", " : ""}rows ${esc(l.output.rows_hash)}` : ""}${l.output.dq && l.output.dq.length ? `, data quality: ${esc(l.output.dq.join(", "))}` : ""}</span>
+      ${l.sql && l.sql[0] ? `<details><summary>Query as run</summary><pre>${esc(l.sql[0])}</pre></details>` : ""}</li>`;
+  }).join("");
+  const label = (l) => {
+    if (l.step.startsWith("query:")) return `Queried ${QUERY[l.step.slice(6)] || l.step.slice(6)}`;
+    if (l.step.startsWith("requery:")) return `Re-checked ${QUERY[l.step.slice(8)] || l.step.slice(8)}`;
+    return { regime_summary: "Wrote the regime summary", guidance: "Computed the four streams", review: "Reviewed the streams and the data",
+             requery_done: "Settled the review's flags", decide: "Decided", wm_ingest_failed: "World Model write failed" }[l.step] || l.step;
+  };
+  const detail = (l) => {
+    const o = l.output;
+    if (l.step === "review") return o.flags && o.flags.length ? `Flags: ${o.flags.map((c) => FLAG[c] || c).join("; ")}. Next: ${o.next === "requery" ? "re-check " + o.requery.map((q) => QUERY[q] || q).join(", ") : "decide"}.` : "No flags. Next: decide.";
+    if (l.step === "guidance") return ["G1", "G2", "G3", "G4"].filter((k) => o[k]).map((k) => `${STREAM_SHORT[o[k].stream] || k} ${pct(o[k].p)}`).join(", ");
+    if (l.step === "decide") return `${pct(o.p)}, ${LEVEL[o.kind === "handover" ? "handover" : o.level].label.toLowerCase()}${l.llm_call ? `, by ${String(l.llm_call.provider_model || "").replace("nvidia/", "")}` : ""}`;
+    if (l.step === "regime_summary") return l.llm_call ? `by ${String(l.llm_call.provider_model || "").replace("nvidia/", "")}` : "";
+    if (l.step === "requery_done") return o.resolved && o.resolved.length ? `Resolved: ${o.resolved.map((c) => FLAG[c] || c).join("; ")}` : "";
+    if (o && o.summary) return o.summary;
+    return "";
+  };
+  const agent = (a) => ({ EvidenceAgent: "Evidence", ForecasterAgent: "Forecaster", DutyLead: "Duty lead" }[a] || a);
+  document.getElementById("steps").innerHTML = lines.map((l) => {
+    const cls = l.step.startsWith("requery") || l.step === "requery_done" ? "loop" : l.step === "decide" ? "decide" : "";
+    return `<li class="${cls}"><span><span class="who">${esc(agent(l.agent))}</span> ${esc(label(l))}</span><span class="ms">${l.duration_ms ? (l.duration_ms >= 1000 ? (l.duration_ms / 1000).toFixed(1) + " s" : l.duration_ms + " ms") : ""}</span><span class="what">${esc(detail(l))}</span></li>`;
+  }).join("");
+}
+
+/* Track record: one bar per forecast (lower is better), the desk highlighted, the rest quiet. */
+function drawBrier(svg, rows) {
+  const W = Math.max(300, Math.round(svg.parentElement.clientWidth || 1000)), rowH = 34, top = 8, labelW = Math.min(250, Math.round(W * 0.46)), right = 56;
+  svg.setAttribute("viewBox", `0 0 ${W} ${top + rows.length * rowH + 40}`);
+  const max = Math.max(...rows.map((r) => r.v), 0.36);
+  const x = (v) => labelW + (W - labelW - right) * v / max;
+  rows.forEach((r, i) => {
+    const y = top + i * rowH;
+    svg.append(svgEl("text", { x: labelW - 12, y: y + 17, "text-anchor": "end", "font-size": W < 600 ? 13 : 15, "font-weight": r.hi ? 700 : 400, class: r.hi ? "" : "soft" }, W < 600 && r.short ? r.short : r.name));
+    const bar = svgEl("rect", { x: labelW, y: y + 4, width: Math.max(2, x(r.v) - labelW), height: 18, rx: 4, fill: r.hi ? "var(--accent)" : "var(--ink-3)", opacity: r.hi ? 1 : 0.55 });
+    bar.addEventListener("mousemove", (e) => showTip(e, `${esc(r.name)}: Brier ${r.v.toFixed(3)}`));
+    bar.addEventListener("mouseleave", hideTip);
+    svg.append(bar);
+    svg.append(svgEl("text", { x: x(r.v) + 8, y: y + 18, "font-size": 15, "font-weight": r.hi ? 700 : 400 }, r.v.toFixed(3)));
+  });
+  const yb = top + rows.length * rowH + 4;
+  svg.append(svgEl("line", { x1: labelW, y1: yb, x2: W - right, y2: yb, stroke: "var(--rule)" }));
+  for (const t of [0, 0.1, 0.2, 0.3]) {
+    if (t > max) continue;
+    svg.append(svgEl("text", { x: x(t), y: yb + 18, "text-anchor": "middle", "font-size": 12, class: "muted" }, t.toFixed(1)));
+  }
+}
+function drawNights(svg, rows) {
+  const W = Math.max(300, Math.round(svg.parentElement.clientWidth || 1000)), H = 230, L = 40, R = W - 8, top = 14, bot = 196;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const n = rows.length, x = (i) => L + (R - L) * (i + 0.5) / n, y = (p) => bot - (bot - top) * p;
+  for (const t of [0, 0.5, 1]) {
+    svg.append(svgEl("line", { x1: L, y1: y(t), x2: R, y2: y(t), stroke: "var(--rule)", "stroke-width": 1 }));
+    svg.append(svgEl("text", { x: L - 8, y: y(t) + 4, "text-anchor": "end", "font-size": 12, class: "muted" }, pct(t)));
+  }
+  svg.append(svgEl("line", { x1: L, y1: y(T_STAR), x2: R, y2: y(T_STAR), stroke: "var(--lv-yellow)", "stroke-width": 2 }));
+  svg.append(svgEl("text", { x: L + 4, y: y(T_STAR) + 16, "font-size": 12, class: "soft" }, `action threshold ${pct(T_STAR)}`));
+  let lastMonth = "";
+  rows.forEach((r, i) => {
+    const ev = r.event === "True" || r.event === "true" || r.event === "1";
+    const p = parseFloat(r.p);
+    const m = r.issue_date_hst.slice(0, 7);
+    if (m !== lastMonth) {
+      lastMonth = m;
+      const label = new Date(`${r.issue_date_hst}T12:00:00Z`).toLocaleDateString("en-GB", { month: "long", timeZone: "UTC" });
+      svg.append(svgEl("text", { x: x(i), y: H - 8, "font-size": 12, class: "muted" }, label));
     }
-    if (l.output != null) li.appendChild(el("div", {"class": "out", text: short(l.output, 160)}));
-    ul.appendChild(li);
+    svg.append(svgEl("circle", { cx: x(i), cy: y(p), r: W < 600 ? 3 : 4.5, fill: ev ? "var(--ink)" : "var(--paper)", stroke: ev ? "var(--paper)" : "var(--ink-3)", "stroke-width": ev ? 2 : 1.5 }));
+    const hit = svgEl("rect", { x: x(i) - (R - L) / n / 2, y: top, width: (R - L) / n, height: bot - top, fill: "transparent", tabindex: -1 });
+    hit.addEventListener("mousemove", (e) => showTip(e, `${r.issue_date_hst}: desk ${pct(p)}, ${ev ? "reached" : "stayed below"} 75 ppb (max ${Math.round(parseFloat(r.max_ppb))} ppb)`));
+    hit.addEventListener("mouseleave", hideTip);
+    svg.append(hit);
   });
-  box.appendChild(ul);
+}
+const redraw = {};
+let resizeTimer = null, lastW = innerWidth;
+addEventListener("resize", () => {
+  if (innerWidth === lastW) return;
+  lastW = innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => Object.values(redraw).forEach((f) => f()), 150);
+});
+async function renderRecord() {
+  try {
+    const [full, nr] = await Promise.all([getText("../results/heldout_full_v4.csv"), getText("../results/heldout_noreview_v4.csv")]);
+    const a = parseCSV(full).filter((r) => r.brier !== ""), b = parseCSV(nr).filter((r) => r.brier !== "");
+    const y = (r) => (r.event === "True" ? 1 : 0);
+    const br = (rs, f) => rs.reduce((s, r) => s + (f(r) - y(r)) ** 2, 0) / rs.length;
+    const base = a.reduce((s, r) => s + y(r), 0) / a.length;
+    const rows = [
+      { name: "Full desk", v: br(a, (r) => +r.p), hi: true },
+      { name: "Desk without the review", short: "Without review", v: br(b, (r) => +r.p) },
+      { name: "Recent event rate", short: "Recent rate", v: br(a, (r) => +r.p_forecast7) },
+      { name: "Frozen 2025 model", short: "Frozen model", v: br(a, (r) => +r.p_model) },
+      { name: "2025 climatology (5.9%)", short: "Climatology", v: br(a, () => 0.059) },
+    ];
+    document.getElementById("record-sub").textContent =
+      `The held-out season, 1 July to 21 October 2026: ${a.length} nights, ${a.filter((r) => y(r)).length} reached 75 ppb. Scored once, after every rule was frozen. Lower Brier score is better; a constant at the season's own rate (${pct(base)}, known only afterwards) would score ${(base * (1 - base)).toFixed(3)}.`;
+    const sorted = a.sort((p, q) => p.issue_date_hst.localeCompare(q.issue_date_hst));
+    const draw = () => { const b1 = document.getElementById("brier"), n1 = document.getElementById("nights");
+      b1.replaceChildren(svgEl("title", {}, "Brier score by forecast on the held-out season")); drawBrier(b1, rows);
+      n1.replaceChildren(svgEl("title", {}, "Desk probability for each held-out night, with outcomes")); drawNights(n1, sorted); };
+    draw(); redraw.record = draw;
+  } catch (e) {
+    document.getElementById("record-sub").textContent = "The held-out results could not be loaded here. They are in results/ and docs/RESULTS.md.";
+  }
 }
 
-function renderLog(dates) {
-  var box = clear($("logbody"));
-  Promise.all(dates.map(loadForecast)).then(function (rs) {
-    var t = el("table");
-    t.appendChild(el("tr", null, ["Date", "Kind", "Probability", "Level", "Outcome"].map(function (h) { return el("th", {text: h}); })));
-    rs.forEach(function (r, i) {
-      var tr = el("tr", {"class": dates[i] === currentDate ? "cur" : ""});
-      if (!r.ok) {
-        tr.appendChild(el("td", {text: dates[i]}));
-        tr.appendChild(el("td", {colspan: "4", "class": "mute", text: "could not load"}));
-      } else {
-        var f = r.f, dec = f.desk && f.desk.decision, p = dec && typeof dec.p === "number" ? dec.p : f.probability;
-        tr.appendChild(el("td", {text: dates[i]}));
-        tr.appendChild(el("td", {text: f.kind || "unknown"}));
-        tr.appendChild(el("td", {"class": "num", text: typeof p === "number" ? (p * 100).toFixed(1) + "%" : "n/a"}));
-        tr.appendChild(el("td", {text: dec ? LEVELS[levelOf(f)] : "not decided"}));
-        tr.appendChild(el("td", {text: f.verification ? String(f.verification.outcome).replace(/_/g, " ") : "pending"}));
-      }
-      t.appendChild(tr);
-    });
-    clear(box).appendChild(el("div", {"class": "scroll"}, [t]));
-  });
+async function renderLog(dates, current) {
+  const t = document.getElementById("log");
+  const fcs = await Promise.all(dates.map((d) => getJSON(`../live/${d}/forecast.json`).catch(() => null)));
+  t.innerHTML = `<tr><th>Night</th><th>Probability</th><th>Call</th><th>What happened</th></tr>` + fcs.map((fc, i) => {
+    if (!fc) return `<tr><td>${esc(dates[i])}</td><td colspan="3">could not load</td></tr>`;
+    const dec = fc.desk && !fc.desk.error ? fc.desk.decision : null;
+    const p = dec ? dec.p : fc.probability;
+    const lv = levelOf(dec) || (p >= 2 * T_STAR ? "prepare_orange" : p >= T_STAR ? "prepare_yellow" : "normal");
+    const v = fc.verification;
+    const what = v && v.event != null ? `${v.event ? "Reached" : "Stayed below"} 75 ppb, max ${Math.round(v.observed_max_ppb)} ppb` : "Checked after 12:00 HST next day";
+    return `<tr class="${dates[i] === current ? "current" : ""}"><td>${esc(dates[i])}</td><td class="num">${pct(p)}${dec ? "" : " (model only)"}</td>
+      <td><span class="lvl"><i style="background:var(${LEVEL[lv].color})"></i>${esc(LEVEL[lv].label)}</span></td><td>${esc(what)}</td></tr>`;
+  }).join("");
 }
 
-var allDates = [];
-function show(date) {
-  currentDate = date;
-  $("date").value = date;
-  loadForecast(date).then(function (res) { renderCard(res, date); });
-  getTrace(date).then(function (lines) {
-    if (currentDate !== date) return;
-    renderEvidence(lines);
-    renderTrace(lines);
-  });
-  renderLog(allDates);
+async function show(date, dates) {
+  try {
+    const fc = await getJSON(`../live/${date}/forecast.json`);
+    renderCall(fc); renderWhy(fc);
+    const trace = await getText(`../live/${date}/trace.jsonl`).then((t) => t.split("\n").filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean)).catch(() => []);
+    renderTrace(trace);
+  } catch (e) {
+    document.getElementById("call").innerHTML = `<p class="empty">The forecast for ${esc(date)} is not available. Choose another night above.</p>`;
+    document.getElementById("why").hidden = true;
+    renderTrace([]);
+  }
+  renderLog(dates, date);
 }
 
-function init() {
-  getJSON("../live/index.json").then(function (d) {
-    if (!Array.isArray(d) || !d.length) throw new Error("empty index");
-    return d.map(String);
-  }).catch(function () { return ["2026-10-23"]; }).then(function (dates) {
-    allDates = dates;
-    var sel = $("date");
-    dates.forEach(function (d) { sel.appendChild(el("option", {value: d, text: d})); });
-    sel.addEventListener("change", function () { show(sel.value); });
-    show(dates[0]);
-  });
-}
-init();
+(async function main() {
+  let dates;
+  try { dates = await getJSON("../live/index.json"); } catch { dates = ["2026-10-23"]; }
+  const sel = document.getElementById("night");
+  sel.innerHTML = dates.map((d) => `<option value="${d}">${d}</option>`).join("");
+  const want = new URLSearchParams(location.search).get("night");
+  const start = dates.includes(want) ? want : dates[0];
+  sel.value = start;
+  sel.addEventListener("change", () => { history.replaceState(null, "", `?night=${sel.value}`); show(sel.value, dates); });
+  show(start, dates);
+  renderRecord();
+})();
 </script>
 </body>
 </html>
