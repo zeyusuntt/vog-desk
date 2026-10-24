@@ -99,72 +99,214 @@ class SampleChat:
 
 # --- provider contract (Cursor) -----------------------------------------------------------------
 # Piece B: the Nightshift provider block, built in Cursor.
-# "Add Meterless as a provider" recipe. The implementation
-# below is the minimal working version so the desk runs end to end in the meantime. Contract:
+# as a provider"), adapted for this desk. Contract:
 #   base URL METERLESS_BASE_URL (default http://127.0.0.1:8088/v1), bearer METERLESS_RUNTIME_TOKEN,
 #   headers `meterless-app: <METERLESS_APP>` and `meterless-scope: user`;
 #   GET /v1/models decides online(); POST /v1/chat/completions with an explicit model id;
 #   max_tokens floor MIN_TOKENS_LIGHTNING for LIGHTNING; strip_think on every reply;
 #   provider_model read from response["meterless"]["provider_model"] (fallback response["model"]);
 #   180 s timeout, 3 tries with backoff on 5xx and connection errors, never on 4xx; never log the token.
+# Deliberate deviation from the recipe's meterless/* routing modes: every call uses an explicit
+# Nemotron id so traces can prove which model answered.
+import httpx
+
+_PLACEHOLDER_TOKEN = "rt-local"
+
+
 class ProviderError(RuntimeError):
-    pass
+    """Nightshift / Meterless failure. `code` is one of offline, auth, rate_limited,
+    empty_response, timeout, server, client, bad_response."""
+
+    def __init__(self, message: str, code: str = "provider", status: int | None = None):
+        super().__init__(message)
+        self.code = code
+        self.status = status
+
+
+class ProviderOfflineError(ProviderError):
+    def __init__(self, message: str = "Nightshift is unreachable", status: int | None = None):
+        super().__init__(message, code="offline", status=status)
+
+
+class ProviderAuthError(ProviderError):
+    def __init__(self, message: str = "Nightshift rejected the runtime token", status: int | None = 401):
+        super().__init__(message, code="auth", status=status)
+
+
+class ProviderRateLimitError(ProviderError):
+    def __init__(self, message: str = "Nightshift rate limited the request", status: int = 429):
+        super().__init__(message, code="rate_limited", status=status)
+
+
+class ProviderEmptyResponseError(ProviderError):
+    def __init__(self, message: str = "Lightning returned an empty reply", status: int = 502):
+        super().__init__(message, code="empty_response", status=status)
+
+
+class ProviderTimeoutError(ProviderError):
+    def __init__(self, message: str = "Nightshift timed out", status: int | None = None):
+        super().__init__(message, code="timeout", status=status)
+
+
+def _normalise_base_url(url: str) -> str:
+    """Accept a host, a /v1 URL, or a pasted /models|/healthz|/chat/completions path. Never /v1/v1."""
+    raw = (url or "").strip()
+    if not raw:
+        raw = "http://127.0.0.1:8088/v1"
+    if "://" not in raw:
+        raw = "http://" + raw
+    host, _, _frag = raw.partition("#")
+    host = host.split("?", 1)[0]
+    for suffix in ("/chat/completions", "/models", "/healthz"):
+        if host.endswith(suffix):
+            host = host[: -len(suffix)]
+    host = host.rstrip("/")
+    if host.endswith("/v1"):
+        return host
+    return host + "/v1"
+
+
+def _body_snippet(response: httpx.Response) -> str:
+    try:
+        return (response.text or "")[:200]
+    except Exception:
+        return ""
+
+
+def _error_from_http(response: httpx.Response) -> ProviderError:
+    snippet = _body_snippet(response)
+    status = response.status_code
+    if status in (401, 403):
+        return ProviderAuthError(f"{status} from Nightshift (unauthorized)", status=status)
+    if status == 429:
+        return ProviderRateLimitError(f"429 from Nightshift (rate limited)")
+    if status == 502 and "empty_response" in snippet:
+        return ProviderEmptyResponseError(
+            "Lightning returned an empty reply (502). Raise max_tokens; the floor is MIN_TOKENS_LIGHTNING.",
+        )
+    if status >= 500:
+        return ProviderError(f"{status} from provider: {snippet}", code="server", status=status)
+    return ProviderError(f"{status} from provider: {snippet}", code="client", status=status)
 
 
 class NightshiftChat:
+    """OpenAI-compatible client for Meterless Nightshift (integration grade L0).
+
+    L0: real bearer token (rt-local rejected), meterless-app and meterless-scope headers,
+    GET /v1/models for liveness, POST /v1/chat/completions, 180 s timeout, typed 401/403 as
+    auth rather than a silent offline. This desk sends explicit Nemotron model ids, not
+    meterless/* routing modes, so each trace names the model that answered.
+
+    Not claimed: L1 (GET /v1/meterless/classes, health event, unknown meterless/* kept for
+    routing), L2 (attachments, SSE, task-to-class), L3 (3D jobs). See grade() and
+    docs/evidence/provider-grade.md.
+    """
+
     name = "nightshift"
     TIMEOUT_S = 180.0
     TRIES = 3
+    INTEGRATION_LEVEL = "L0"
 
     def __init__(self, base_url: str, token: str, app: str = "vog-desk"):
-        import httpx
-        self.base_url = base_url.rstrip("/")
+        if not (token or "").strip() or token.strip() == _PLACEHOLDER_TOKEN:
+            raise ProviderAuthError("Meterless runtime token is missing or is the rt-local placeholder")
+        self.base_url = _normalise_base_url(base_url)
+        self.app = app
+        self.last_error: ProviderError | None = None
         self._client = httpx.Client(
             base_url=self.base_url, timeout=self.TIMEOUT_S,
             headers={"Authorization": f"Bearer {token}", "meterless-app": app, "meterless-scope": "user",
-                     "Content-Type": "application/json"})
+                     "Content-Type": "application/json"},
+        )
 
     def models(self) -> list[str]:
-        r = self._client.get("/models")
-        r.raise_for_status()
-        return [m.get("id", "") for m in r.json().get("data", [])]
+        try:
+            r = self._client.get("/models")
+        except httpx.TimeoutException as exc:
+            raise ProviderTimeoutError("Nightshift timed out on GET /models") from exc
+        except httpx.TransportError as exc:
+            raise ProviderOfflineError("Nightshift is unreachable") from exc
+        if r.status_code >= 400:
+            raise _error_from_http(r)
+        try:
+            payload = r.json()
+        except ValueError as exc:
+            raise ProviderError("Nightshift /models returned non-JSON", code="bad_response") from exc
+        return [m.get("id", "") for m in payload.get("data", []) if m.get("id")]
 
     def online(self) -> bool:
+        """True only when GET /v1/models returns at least one id.
+
+        Unauthorized (401/403) is not treated as a live catalog: this method stays a bool
+        for ChatClient, and last_error.code is 'auth' so a caller can tell it from offline.
+        """
         try:
-            return len(self.models()) > 0
-        except Exception:
+            ids = self.models()
+        except ProviderError as exc:
+            self.last_error = exc
             return False
+        self.last_error = None
+        return len(ids) > 0
 
     def complete(self, messages: list[Message], model: str, max_tokens: int = 1024,
                  temperature: float = 0.2) -> ChatResult:
-        import httpx
         if model == LIGHTNING:
             max_tokens = max(max_tokens, MIN_TOKENS_LIGHTNING)
         body = {"model": model, "messages": [m.model_dump() for m in messages],
                 "max_tokens": max_tokens, "temperature": temperature}
-        last: Exception | None = None
+        last: ProviderError | None = None
         for attempt in range(self.TRIES):
             t0 = time.perf_counter()
             try:
                 r = self._client.post("/chat/completions", json=body)
-            except httpx.TransportError as e:
-                last = e
-                time.sleep(2 ** attempt)
+            except httpx.TimeoutException as exc:
+                last = ProviderTimeoutError("Nightshift timed out on chat completions")
+                last.__cause__ = exc
+                if attempt + 1 < self.TRIES:
+                    time.sleep(2 ** attempt)
+                continue
+            except httpx.TransportError as exc:
+                last = ProviderOfflineError("Nightshift is unreachable")
+                last.__cause__ = exc
+                if attempt + 1 < self.TRIES:
+                    time.sleep(2 ** attempt)
                 continue
             if r.status_code >= 500:
-                last = ProviderError(f"{r.status_code} from provider: {r.text[:200]}")
-                time.sleep(2 ** attempt)
+                last = _error_from_http(r)
+                if attempt + 1 < self.TRIES:
+                    time.sleep(2 ** attempt)
                 continue
             if r.status_code >= 400:
-                raise ProviderError(f"{r.status_code} from provider: {r.text[:200]}")
-            data = r.json()
+                raise _error_from_http(r)
+            try:
+                data = r.json()
+            except ValueError as exc:
+                raise ProviderError("Nightshift chat returned non-JSON", code="bad_response") from exc
             raw = (data.get("choices") or [{}])[0].get("message", {}).get("content") or ""
             content, reasoning = strip_think(raw)
-            provider_model = (data.get("meterless") or {}).get("provider_model") or data.get("model")
-            return ChatResult(content=content, model_requested=model, provider_model=provider_model,
-                              reasoning=reasoning, usage=data.get("usage") or {},
-                              latency_ms=int((time.perf_counter() - t0) * 1000), provider=self.name)
-        raise ProviderError(f"Nightshift request failed after {self.TRIES} tries: {last}")
+            meterless = data.get("meterless") or {}
+            provider_model = meterless.get("provider_model") or data.get("model")
+            usage = data.get("usage") or {}
+            return ChatResult(
+                content=content, model_requested=model, provider_model=provider_model,
+                reasoning=reasoning, usage=usage,
+                latency_ms=int((time.perf_counter() - t0) * 1000), provider=self.name,
+            )
+        raise last or ProviderError(f"Nightshift request failed after {self.TRIES} tries", code="server")
+
+    def grade(self) -> dict:
+        """Self-assessment against the IMPLEMENT 'Grade my provider integration' prompt."""
+        return {
+            "level": self.INTEGRATION_LEVEL,
+            "provider": self.name,
+            "app": self.app,
+            "notes": (
+                "L0 text chat through Nightshift with a real token and typed auth/offline/"
+                "rate_limited/empty_response/timeout errors. Explicit Nemotron ids instead of "
+                "meterless/* modes (settled 23 Oct 2026). L1 classes discovery, L2 attachments, "
+                "and L3 3D are not implemented."
+            ),
+        }
 # --- end provider contract (Cursor) -------------------------------------------------------------
 
 
