@@ -1,4 +1,4 @@
-"""Upload derived and raw GFS Parquet files to the local MinIO bucket.
+"""Upload derived and raw GFS Parquet files to the local S3 bucket (RustFS, MinIO-compatible).
 
 Zetaris cannot read files on the laptop, so it reads these objects as S3.
 data/derived/*.parquet goes to s3://vogdesk/derived/ and
@@ -53,7 +53,11 @@ def main() -> None:
 
     client = None
     if not args.dry_run:
+        import time
+
         import boto3
+        from botocore.config import Config
+        from botocore.exceptions import ClientError, EndpointConnectionError
 
         client = boto3.client(
             "s3",
@@ -61,7 +65,24 @@ def main() -> None:
             aws_access_key_id=os.environ.get("MINIO_ROOT_USER", "vogdesk"),
             aws_secret_access_key=os.environ.get("MINIO_ROOT_PASSWORD", "vogdesk-local-only"),
             region_name="us-east-1",
+            config=Config(s3={"addressing_style": "path"}, retries={"max_attempts": 3}),
         )
+        # The server may still be starting; wait up to a minute, then create the bucket if missing.
+        for attempt in range(12):
+            try:
+                existing = {b["Name"] for b in client.list_buckets().get("Buckets", [])}
+                break
+            except EndpointConnectionError:
+                time.sleep(5)
+        else:
+            raise SystemExit("S3 endpoint not reachable after 60 s")
+        if BUCKET not in existing:
+            try:
+                client.create_bucket(Bucket=BUCKET)
+                print(f"created bucket {BUCKET}")
+            except ClientError as e:
+                if e.response.get("Error", {}).get("Code") not in ("BucketAlreadyOwnedByYou", "BucketAlreadyExists"):
+                    raise
 
     total = 0
     for path, key in items:

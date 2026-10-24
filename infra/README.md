@@ -31,7 +31,7 @@ Inside Docker the services keep their normal ports (5432 and 9000).
 
 ## Network
 
-Both services also join the external network `zetaris_default`. This lets the Zetaris containers reach them by service name (`postgres`, `minio`). The network existed when this was written. If `docker network ls` does not show it, the name of the Zetaris network must be checked and the `networks` block in `compose.yml` changed. Compose fails on start if an external network is missing.
+Both services also join the external network `zetaris_default`. This lets the Zetaris containers reach them by service name (`postgres`, `s3`). The network existed when this was written. If `docker network ls` does not show it, the name of the Zetaris network must be checked and the `networks` block in `compose.yml` changed. Compose fails on start if an external network is missing.
 
 ## Load MinIO
 
@@ -60,3 +60,8 @@ Tables: `stations`, `action_plan_levels`, `school_calendar`, `forecasts`, `verif
 
 The defaults (`vogdesk` / `vogdesk-local-only`) are for local development only. Real values, if ever needed, go in `.env`. Never commit them.
 Variables: `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_ENDPOINT`, `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`.
+
+
+## Note on the S3 server
+
+The compose file ran MinIO at first. On 23 Oct 2026 MinIO's Docker Hub repository was gone and quay.io refused anonymous pulls, so the service now runs RustFS (`rustfs/rustfs:latest`), which speaks the same S3 API and accepts the same credential variables. The service is named `s3`; Zetaris reaches it at `http://s3:9000` on the `zetaris_default` network. `scripts/load_minio.py` creates the `vogdesk` bucket if it does not exist.

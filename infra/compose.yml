@@ -1,50 +1,34 @@
 # Local data layer for vog-desk. Zetaris reads from these two services.
-# MinIO holds derived Parquet (S3 API). Postgres holds institutional tables (JDBC).
+# s3 holds derived Parquet behind an S3 API. Postgres holds institutional tables (JDBC).
+#
+# The S3 server is RustFS, an S3-compatible store with the same API shape as MinIO. MinIO's own
+# images were no longer pullable on 23 Oct 2026 (Docker Hub repository removed, quay.io tags
+# unauthorised), so the service keeps the MinIO-style credential variables and swaps the image.
 #
 # The default credentials below are for local development only.
 # The services are bound to 127.0.0.1 on the host. Real values, if ever needed,
 # come from .env in the repo root. Never commit them.
 #
 # Both services also join the external network "zetaris_default" so the Zetaris
-# containers can reach them by service name (minio, postgres).
+# containers can reach them by service name (s3, postgres).
 
 services:
-  minio:
-    image: minio/minio:latest
-    command: server /data --console-address ":9001"
+  s3:
+    image: rustfs/rustfs:latest
     environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vogdesk}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vogdesk-local-only}
+      RUSTFS_ACCESS_KEY: ${MINIO_ROOT_USER:-vogdesk}
+      RUSTFS_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-vogdesk-local-only}
+      RUSTFS_VOLUMES: /data
+      RUSTFS_CONSOLE_ENABLE: "true"
     ports:
       - "127.0.0.1:9000:9000"
       - "127.0.0.1:9001:9001"
     volumes:
-      - minio-data:/data
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
-      interval: 10s
-      timeout: 5s
-      retries: 6
+      - s3-data:/data
+      - s3-logs:/logs
     networks:
       - default
       - zetaris
-
-  # Creates the bucket once, then exits.
-  minio-init:
-    image: minio/mc
-    depends_on:
-      minio:
-        condition: service_healthy
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-vogdesk}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-vogdesk-local-only}
-    entrypoint:
-      - /bin/sh
-      - -c
-      - >-
-        mc alias set local http://minio:9000 "$$MINIO_ROOT_USER" "$$MINIO_ROOT_PASSWORD"
-        && mc mb --ignore-existing local/vogdesk
-    restart: "no"
 
   postgres:
     image: postgres:16-alpine
@@ -67,7 +51,8 @@ services:
       - zetaris
 
 volumes:
-  minio-data:
+  s3-data:
+  s3-logs:
   pg-data:
 
 networks:
