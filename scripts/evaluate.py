@@ -19,7 +19,7 @@ from vogdesk.metrics import auc, block_bootstrap_diff, brier, bss, contingency, 
 from vogdesk.sources import station_series  # noqa: E402
 
 
-def forecasts(src: sources.Sources, X: pd.DataFrame, m: model.VogModel | None, split: str) -> pd.DataFrame:
+def forecasts(src: sources.Sources, X: pd.DataFrame, m: model.VogModel | None, split: str, tag: str = "v4") -> pd.DataFrame:
     idx = X.index
     f = pd.DataFrame(index=idx)
     f["climatology"] = dataset.CLIMATOLOGY
@@ -30,7 +30,7 @@ def forecasts(src: sources.Sources, X: pd.DataFrame, m: model.VogModel | None, s
         f["model"] = m.probability(X)
     # Forecasts 5 and 6 come from the desk backtest (scripts/backtest.py); 7 is the recent-rate baseline (PREREG change 1).
     for variant, name in (("noreview", "desk_no_review"), ("full", "desk_full")):
-        path = model.ROOT / "data" / "derived" / f"backtest_{split}_{variant}.parquet"
+        path = model.ROOT / "data" / "derived" / f"backtest_{split}_{variant}{'_' + tag if tag else ''}.parquet"
         if path.exists():
             bt = pd.read_parquet(path).set_index(pd.to_datetime(pd.read_parquet(path)["issue_date_hst"]))
             f[name] = bt["p"].reindex(idx)
@@ -88,6 +88,7 @@ def main() -> None:
     ap.add_argument("--model", default=str(model.MODEL_DIR / "lr_2025.joblib"))
     ap.add_argument("--markdown", help="append the report to this file")
     ap.add_argument("--dump", help="write per-night forecasts and labels to this parquet file")
+    ap.add_argument("--tag", default="v4", help="desk backtest version to read (file suffix); v4 is the frozen desk")
     ap.add_argument("--i-am-sure", action="store_true", help="required for the held-out split, which is scored once")
     args = ap.parse_args()
     if args.split == "heldout":
@@ -98,7 +99,7 @@ def main() -> None:
     X, lab = dataset.build(src, args.split)
     y = lab["event"].astype(float)
     m = model.load(Path(args.model)) if Path(args.model).exists() else None
-    f = forecasts(src, X, m, args.split)
+    f = forecasts(src, X, m, args.split, args.tag)
     text = report(f, y, args.split)
     print(text)
     if args.markdown:

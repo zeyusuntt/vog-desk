@@ -52,6 +52,7 @@ def main() -> None:
     ap.add_argument("--split", choices=list(dataset.SPLITS), default="dev")
     ap.add_argument("--t-star", type=float, default=None, help="frozen action threshold; default: CSI max on this split (dev only)")
     ap.add_argument("--out", default=None)
+    ap.add_argument("--tag", default="v4", help="desk backtest version to read (file suffix); v4 is the frozen desk")
     ap.add_argument("--i-am-sure", action="store_true", help="required for the held-out split, which is scored once")
     args = ap.parse_args()
     if args.split == "heldout" and not args.i_am_sure:
@@ -60,7 +61,7 @@ def main() -> None:
     X, lab = dataset.build(src, args.split)
     y = lab["event"].astype(float)
     m = model.load()
-    f = forecasts(src, X, m, args.split)
+    f = forecasts(src, X, m, args.split, args.tag)
     cols = [c for c in NAMES if c in f and f[c].notna().any()]
     FIG.mkdir(parents=True, exist_ok=True)
     head = subprocess.run(["git", "rev-parse", "--short", "HEAD"], capture_output=True, text=True, cwd=ROOT).stdout.strip()

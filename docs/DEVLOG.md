@@ -152,3 +152,19 @@ Frozen (PREREG "Frozen values", this commit): t* 0.18 for forecasts 5 and 6, 0.0
 ## 2026-10-24 04:10 PDT: held-out run started
 
 Full desk (v4, frozen at 4b766f1) on the held-out period, started 04:10 PDT at commit 8bc82db (the only change since the freeze is making `--i-am-sure` a real argument; the first attempt was rejected by argparse). 102 valid nights between 1 July and 21 October 2026. Memory for the run is seeded with every verified night through 21 October, each stamped with its publication time, so the as-of query gives each issue exactly the nights a desk running since 2025 would have remembered. The no-review variant follows as soon as its dev v3 run finishes and its v4 derivation is recorded.
+
+## 2026-10-24 04:30 PDT: development period, final (frozen desk v4), all seven forecasts
+
+175 valid nights, 33 events, base rate 0.189. `scripts/evaluate.py --split dev --tag v4`.
+
+| forecast | Brier | BSS vs clim | BSS vs persist | AUC | t* | hits | misses | FA | POD | FAR | CSI |
+|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 climatology 0.059 | 0.170 | 0.000 | 0.354 | 0.500 | | | | | | | |
+| 2 persistence | 0.263 | −0.548 | 0.000 | | 1 | 9 | 24 | 22 | 0.27 | 0.71 | 0.164 |
+| 3 episode rule | 0.274 | −0.615 | −0.043 | | 1 | 0 | 33 | 15 | 0.00 | 1.00 | 0.000 |
+| 4 model only | 0.175 | −0.032 | 0.333 | 0.536 | 0.02 | 33 | 0 | 139 | 1.00 | 0.81 | 0.192 |
+| 5 desk, no review (v4) | 0.146 | +0.141 | 0.445 | 0.685 | 0.18 | 17 | 16 | 31 | 0.52 | 0.65 | 0.266 |
+| 6 full desk (v4) | 0.147 | +0.141 | 0.433 | 0.687 | 0.18 | 17 | 16 | 32 | 0.52 | 0.65 | 0.262 |
+| 7 recent rate | 0.154 | +0.092 | 0.414 | 0.564 | 0.15 | 21 | 12 | 70 | 0.64 | 0.77 | 0.204 |
+
+Paired Brier differences, 7-day block bootstrap 90% intervals: full desk minus model −0.0296 [−0.0521, −0.0099]; full desk minus recent rate −0.0083 [−0.0158, −0.0013]; no-review minus model −0.0294; no-review minus recent rate −0.0083. Handovers: full desk 0, no-review 3 (Ultra chose them; counted separately). Reading, plainly: on dev the desk's value is the memory model; the review loop changed the numbers on almost no nights (the gated adjustments were 6 of 174 for the full desk and 10 of 175 for the no-review variant), so forecasts 5 and 6 are near twins. The review's worth, if any, has to show in the held-out period or in handover accuracy; it is not claimed from dev. The dev period was used for tuning, so these numbers are tuning numbers; the held-out period is the test.
