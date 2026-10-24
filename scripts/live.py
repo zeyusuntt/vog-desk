@@ -59,6 +59,11 @@ def refresh(issue: pd.Timestamp) -> dict:
     except subprocess.CalledProcessError as e:
         status["raob"] = f"failed: {e}"
     try:
+        run([PY, "scripts/load_minio.py"])  # Zetaris reads the S3 copies; refresh them after every rebuild
+        status["s3"] = "ok"
+    except subprocess.CalledProcessError as e:
+        status["s3"] = f"failed: {e}"
+    try:
         run([PY, "scripts/fetch_hans.py", "2024-12-01"])
         run([PY, "-m", "vogdesk.ingest.hans", "data/raw/hans/hi3_notices.json", "data/derived"])
         run(["curl", "-sfL", "-A", "vog-desk/0.1 (research)", "-o", "data/raw/usgs/eruption-information.html",

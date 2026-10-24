@@ -19,3 +19,4 @@ memory-service/vendor/
 !models/
 models/*.joblib
 memory-service/data/
+data/memory/
