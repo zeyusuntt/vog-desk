@@ -128,4 +128,10 @@ def review_flags(evidence: list[EvidenceItem], p_model: float, analogs: AnalogRe
     if outside:
         flags.append(Flag(code="regime_unseen", detail=f"model inputs outside the 2025 training range: {', '.join(outside)}"))
     flags.extend(data_gap_flags(evidence))
-    return flags
+    # A re-query adds a second copy of an item; the same flag from both copies is reported once.
+    seen, unique = set(), []
+    for fl in flags:
+        key = (fl.code, fl.detail)
+        if key not in seen:
+            seen.add(key); unique.append(fl)
+    return unique

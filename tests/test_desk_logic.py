@@ -568,3 +568,16 @@ def test_gate_adjustment_only_honours_adjustments_when_a_flag_was_raised():
     assert gate_adjustment(-0.1, [flag]) == pytest.approx(-0.1)
     assert gate_adjustment(-0.5, [flag]) == pytest.approx(-MAX_ADJUSTMENT)
     assert gate_adjustment(0.4, [flag]) == pytest.approx(MAX_ADJUSTMENT)
+
+
+
+def test_review_flags_reports_the_same_gap_once_after_a_requery():
+    from vogdesk.analogs import AnalogResult
+    from vogdesk.desk.forecaster import review_flags
+    from datetime import datetime, timezone
+    a = AnalogResult(p=0.3, lo=0.1, hi=0.5, n=10, n_events=3, analog_ids=[], analog_nights=[], max_ppb_seen=None, tags_used=[],
+                     query_text="", as_of_utc=datetime(2026, 1, 1, tzinfo=timezone.utc), trace=[], split=False, fallback_level=0)
+    e1 = ev("E7", "sounding", summary="no sounding", n=0)
+    e2 = ev("E9", "sounding", summary="no sounding", n=0)  # the re-query copy
+    flags = review_flags([e1, e2], 0.2, a, [], p_memory=0.25)
+    assert [f.code for f in flags].count("data_gap") == 1

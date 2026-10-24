@@ -101,3 +101,4 @@ Chosen on the development period by the procedure above; see DEVLOG.md for the n
 
 - Persistence now uses only the hours published by issue (it used the 24 hours ending at 18:00 HST in DAY0.md, which includes an hour not yet posted at issue). DAY0.md numbers were computed with the old definition.
 - The model specification, availability table and action-threshold procedure were added on 23 October 2026, before any model was fit.
+2. **24 October 2026, 06:10 PDT, after the held-out scoring, display only.** Review flags raised twice for the same item (once from the original query and once from its re-query copy) are now reported once. This changes no probability, threshold or decision: the adjustment gate asks only whether any flag was raised. Logged because the freezing commit said nothing in the desk changes.
