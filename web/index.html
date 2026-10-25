@@ -12,39 +12,41 @@
 <style>
 :root {
   color-scheme: light;
-  --page: #eef2f3;            /* vog haze */
-  --paper: #fafbfb;           /* chart and panel surface */
-  --ink: #1c2227;             /* basalt */
-  --ink-2: #46525b;
-  --ink-3: #5c6870;
-  --rule: #d3d9dd;
-  --slot: #e1e6e8;
-  --accent: #1d5c78;          /* ocean off Kaʻū */
-  --lv-green: #3f9a74;        /* the schools plan's levels, softened and checked for colour-vision separation */
-  --lv-yellow: #d9a93a;
-  --lv-orange: #d2672f;
-  --lv-red: #93325a;
+  /* Basalt: a quiet stone ground, deep ink, one slate accent. Colour is kept for meaning: the plan's levels and SO2. */
+  --page: #f2f3f1;            /* pale stone */
+  --paper: #fbfbfa;           /* chart and panel surface */
+  --ink: #14181b;             /* basalt */
+  --ink-2: #464d52;
+  --ink-3: #676f74;
+  --rule: #dcdfdd;
+  --slot: #e6e8e5;
+  --accent: #2c4a5e;          /* slate */
+  --card: #15191c; --card-ink: #f1f2f1; --card-ink-2: #b6bcbf;   /* the dark decision card, in both themes */
+  --lv-green: #2f8a64;        /* the schools plan's levels, checked for colour-vision separation */
+  --lv-yellow: #c9a03a;
+  --lv-orange: #c25f30;
+  --lv-red: #8a3352;
   /* Hourly SO2 as one warm sequential ramp, light to dark: 0, 25, 50, 75, 110, 210, 1010 ppb */
-  --seq0: #e3e9eb; --seq1: #ecdcb4; --seq2: #e9bd72; --seq3: #dd9145; --seq4: #c96a33; --seq5: #a4452f; --seq6: #6e2238;
+  --seq0: #e8e9e6; --seq1: #e6dcc5; --seq2: #dcbf8b; --seq3: #cf9757; --seq4: #bb6c3d; --seq5: #94462f; --seq6: #5d2427;
   --lv-handover: #5b4a8b;
   --wash: 26%;
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {
     color-scheme: dark;
-    --page: #121618; --paper: #1a2024; --ink: #e7ecee; --ink-2: #b9c3c9; --ink-3: #98a4ab;
-    --rule: #2c353b; --slot: #242c31; --accent: #6db3d1;
+    --page: #101315; --paper: #171b1e; --ink: #e8eae9; --ink-2: #b4babd; --ink-3: #8f979c;
+    --rule: #262c30; --slot: #20262a; --accent: #8fb3c8; --card: #1d2327; --card-ink: #f1f2f1; --card-ink-2: #aab1b5;
     --lv-green: #2f8e68; --lv-yellow: #b08e2b; --lv-orange: #bd4026; --lv-red: #a84d9c; --lv-handover: #9b8ad6;
-    --seq0: #26323a; --seq1: #3d4640; --seq2: #64603f; --seq3: #9a7a3d; --seq4: #c98c42; --seq5: #e8a650; --seq6: #ffd889;
+    --seq0: #222a2f; --seq1: #3b3d36; --seq2: #5f5641; --seq3: #8f7346; --seq4: #b98049; --seq5: #d9934f; --seq6: #f2c58a;
     --wash: 42%;
   }
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #121618; --paper: #1a2024; --ink: #e7ecee; --ink-2: #b9c3c9; --ink-3: #98a4ab;
-  --rule: #2c353b; --slot: #242c31; --accent: #6db3d1;
+  --page: #101315; --paper: #171b1e; --ink: #e8eae9; --ink-2: #b4babd; --ink-3: #8f979c;
+  --rule: #262c30; --slot: #20262a; --accent: #8fb3c8; --card: #1d2327; --card-ink: #f1f2f1; --card-ink-2: #aab1b5;
   --lv-green: #2f8e68; --lv-yellow: #b08e2b; --lv-orange: #bd4026; --lv-red: #a84d9c; --lv-handover: #9b8ad6;
-  --seq0: #26323a; --seq1: #3d4640; --seq2: #64603f; --seq3: #9a7a3d; --seq4: #c98c42; --seq5: #e8a650; --seq6: #ffd889;
+  --seq0: #222a2f; --seq1: #3b3d36; --seq2: #5f5641; --seq3: #8f7346; --seq4: #b98049; --seq5: #d9934f; --seq6: #f2c58a;
   --wash: 42%;
 }
 
@@ -82,9 +84,10 @@ a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-vi
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
 /* The decision first, in the plan's colour, then the number, then the same number as 100 nights. */
 .decision { margin-top: 6px; }
-.decision .band { border-left: 6px solid var(--lv); background: color-mix(in srgb, var(--lv) 16%, var(--paper)); border-radius: 0 8px 8px 0; padding: 14px 18px 14px 16px; }
-.decision .band strong { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
-.decision .band p { margin: 4px 0 0; color: var(--ink-2); font-size: 15.5px; max-width: 54ch; }
+.decision .band { background: var(--card); color: var(--card-ink); border-radius: 12px; padding: 18px 22px 18px 20px; box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset; }
+.decision .band strong { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; color: var(--card-ink); }
+.decision .band strong::before { content: ""; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--lv); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lv) 28%, transparent); }
+.decision .band p { margin: 6px 0 0 24px; color: var(--card-ink-2); font-size: 15.5px; max-width: 54ch; }
 .decision .odds { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; margin-top: 22px; }
 .decision .num .big { display: block; font-size: clamp(64px, 7.4vw, 96px); font-weight: 800; line-height: 0.95; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
 .decision .num .big small { font-size: 0.45em; font-weight: 700; letter-spacing: 0; margin-left: 4px; color: var(--ink-2); }
@@ -92,7 +95,7 @@ a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-vi
 .dots { margin: 0; width: 132px; }
 .dots svg { width: 132px; height: 132px; display: block; }
 .dots circle { fill: var(--slot); }
-.dots circle.on { fill: var(--lv); }
+.dots circle.on { fill: var(--ink); }
 .dots figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; text-align: center; }
 .band-rate { margin: 12px 0 0; font-size: 14px; color: var(--ink-3); max-width: 60ch; }
 @media (max-width: 420px) { .decision .odds { grid-template-columns: 1fr; } }
@@ -413,8 +416,7 @@ function drawScale(svg, p, guidance, animate = true) {
   const bands = [[0, T_STAR, "--lv-green", "Normal operations", "Normal"], [T_STAR, 2 * T_STAR, "--lv-yellow", "Prepare for yellow", "Yellow"], [2 * T_STAR, 1, "--lv-orange", "Prepare for orange", "Orange"]];
   for (const [a, b, c, long, short] of bands) {
     const x0 = x(a) + (a > 0 ? 1 : 0), x1 = x(b) - (b < 1 ? 1 : 0);
-    svg.append(svgEl("rect", { x: x0, y: bandY, width: x1 - x0, height: bandH, rx: 4, fill: `color-mix(in srgb, var(${c}) var(--wash), var(--paper))` }));
-    svg.append(svgEl("rect", { x: x0, y: bandY + bandH - 4, width: x1 - x0, height: 4, fill: `var(${c})` }));
+    svg.append(svgEl("rect", { x: x0, y: bandY + 22, width: x1 - x0, height: 8, rx: 4, fill: `var(${c})` }));
     // The band's name sits in the widest free stretch of the band, so tonight's marker never cuts through it.
     const xm = x(p), spans = xm > x0 && xm < x1 ? [[x0, xm - 8], [xm + 8, x1]] : [[x0, x1]];
     let placed = null;
@@ -422,7 +424,7 @@ function drawScale(svg, p, guidance, animate = true) {
       const span = spans.find(([s0, s1]) => text.length * 8.2 <= s1 - s0 - 16);
       if (span) { placed = [text, span[0] + 8]; break; }
     }
-    if (placed) svg.append(svgEl("text", { x: placed[1], y: bandY + 23, "font-size": 15, "font-weight": 700 }, placed[0]));
+    if (placed) svg.append(svgEl("text", { x: placed[1] - 8, y: bandY + 12, "font-size": 13.5, "font-weight": 600, class: "soft" }, placed[0]));
   }
   for (const v of [T_STAR, 2 * T_STAR]) {
     svg.append(svgEl("text", { x: x(v), y: bandY + bandH + 20, "text-anchor": "middle", "font-size": 13, class: "soft" }, pct(v)));
@@ -434,13 +436,20 @@ function drawScale(svg, p, guidance, animate = true) {
   const lane = 96, rows = W < 600 ? [14, 33, 52, 71] : [18, 44, 70];
   const items = (guidance || []).filter((g) => g.p != null).map((g) => ({ g, xv: x(g.p),
     label: W < 600 ? `${pct(g.p)} ${(STREAM_SHORT[g.stream] || g.stream).split(" ")[0]}` : `${STREAM_SHORT[g.stream] || g.stream} ${pct(g.p)}` })).sort((a, b) => a.xv - b.xv);
-  const ends = rows.map(() => -1e9);
+  // A row is free when no label in it overlaps, no leader line from a higher row crosses the label, and this
+  // item's own leader line does not cross a label already placed lower down.
+  // A label may slide sideways as long as its own dot stays under it.
+  const placed = [];
   for (const it of items) {
-    const w = it.label.length * 7.6 + 8;
-    let r = rows.findIndex((_, i) => it.xv - w / 2 > ends[i] + 6);
+    const w = it.label.length * 7.6 + 8, free = (i, a, b) => a >= 0 && b <= W && placed.every((q) =>
+      q.r === i ? b + 6 < q.a || a - 6 > q.b : q.r < i ? q.xv < a - 4 || q.xv > b + 4 : it.xv < q.a - 4 || it.xv > q.b + 4);
+    const shifts = [0]; for (let d = 4; d <= w / 2 - 10; d += 4) shifts.push(d, -d);
+    let r = -1, cx = Math.max(w / 2, Math.min(W - w / 2, it.xv));
+    search: for (let i = 0; i < rows.length; i++) for (const d of shifts) {
+      const c = it.xv + d; if (free(i, c - w / 2, c + w / 2)) { r = i; cx = c; break search; }
+    }
     if (r < 0) r = rows.length - 1;
-    const cx = Math.max(w / 2, Math.min(W - w / 2, it.xv));
-    ends[r] = cx + w / 2;
+    placed.push({ r, a: cx - w / 2, b: cx + w / 2, xv: it.xv });
     svg.append(svgEl("line", { x1: it.xv, y1: rows[r] + 6, x2: it.xv, y2: lane - 7, stroke: "var(--ink-3)", "stroke-width": 1 }));
     const t = svgEl("text", { x: cx, y: rows[r], "text-anchor": "middle", "font-size": 14, class: "soft" }, it.label);
     svg.append(t);

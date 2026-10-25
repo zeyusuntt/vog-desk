@@ -11,7 +11,7 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 const EXAG = 2.0;                  // vertical scale, shown on the panel
 const SECONDS_PER_HOUR = 1.25;     // playback speed
 // Hourly SO2 on the same warm ramp as the strip, in a luminous version for the night map.
-const BEAM = [[0, "#8fb3c2"], [25, "#d6cf9e"], [50, "#f0c070"], [75, "#f6a24c"], [110, "#f6803e"], [210, "#f0583c"], [1010, "#ff6f9a"]];
+const BEAM = [[0, "#8fb3c2"], [25, "#d2c9a2"], [50, "#e8bd78"], [75, "#efa058"], [110, "#ec8448"], [210, "#e2623f"], [1010, "#d8455c"]];
 const LEVEL = (v) => { let i = BEAM.findIndex(([a]) => v < a); if (i === -1) return BEAM[BEAM.length - 1][1]; if (i === 0) return BEAM[0][1];
   const [a0, c0] = BEAM[i - 1], [a1, c1] = BEAM[i], t = (v - a0) / (a1 - a0), h = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16)), x = h(c0), y = h(c1);
   return "#" + x.map((q, k) => Math.round(q + (y[k] - q) * t).toString(16).padStart(2, "0")).join(""); };
@@ -158,8 +158,9 @@ export async function mountNight(root, scene, opts = {}) {
     return { ...st, x, y, z, color, mat, beam, head, halo, mark, ring, hot: false, beamH: 0 };
   });
 
-  // Drift from the vent at the 925 hPa wind (illustration): soft additive puffs that spread and fade downwind, hug
-  // the terrain and stay under the inversion.
+  // Drift from the vent at the 925 hPa wind (illustration): soft puffs that spread and fade downwind, hug the terrain
+  // and stay under the inversion. Normal blending, so where many overlap in a weak wind they thicken to a pale haze
+  // instead of adding up to white.
   const N = 1600, pp = new Float32Array(N * 3), age = new Float32Array(N), life = 8, alpha = new Float32Array(N), psize = new Float32Array(N);
   const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
   const lidY = scene.inversion ? scene.inversion.base_m / 1000 * EXAG : Infinity;
@@ -167,9 +168,9 @@ export async function mountNight(root, scene, opts = {}) {
   for (let i = 0; i < N; i++) spawn(i);
   const pgeo = new THREE.BufferGeometry();
   pgeo.setAttribute("position", new THREE.BufferAttribute(pp, 3)); pgeo.setAttribute("alpha", new THREE.BufferAttribute(alpha, 1)); pgeo.setAttribute("psize", new THREE.BufferAttribute(psize, 1));
-  const pmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { size: { value: 5.0 * Math.min(devicePixelRatio, 2) }, fade: { value: 1 } },
+  const pmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.NormalBlending, uniforms: { size: { value: 5.0 * Math.min(devicePixelRatio, 2) }, fade: { value: 1 } },
     vertexShader: "attribute float alpha; attribute float psize; varying float va; uniform float size; void main(){ va=alpha; vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize=size*psize*(60.0/-mv.z); gl_Position=projectionMatrix*mv; }",
-    fragmentShader: "uniform float fade; varying float va; void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d); if(r>0.5) discard; float s=exp(-r*r*14.0); gl_FragColor=vec4(vec3(0.92,0.86,0.74)*0.6,va*s*fade); }" });
+    fragmentShader: "uniform float fade; varying float va; void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d); if(r>0.5) discard; float s=exp(-r*r*14.0); gl_FragColor=vec4(vec3(0.46,0.45,0.41),va*s*fade*0.6); }" });
   const drift = new THREE.Points(pgeo, pmat); s3.add(drift);
 
   // Wind lines across the whole map: short streaks that move with the 925 hPa wind at the summit point.
@@ -242,7 +243,7 @@ export async function mountNight(root, scene, opts = {}) {
   stations.forEach((st) => { const m = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 8), pickMat); m.position.set(st.x, st.y + 1.2, st.z); m.userData.st = st; s3.add(m); picks.push(m); });
   { const m = new THREE.Mesh(new THREE.SphereGeometry(2.6, 12, 8), pickMat); m.position.set(vx, vy + 1, vz); m.userData.vent = true; s3.add(m); picks.push(m); }
   const card = root.querySelector(".scene-card");
-  const RAMP = [[0, "#26323a"], [25, "#3d4640"], [50, "#64603f"], [75, "#9a7a3d"], [110, "#c98c42"], [210, "#e8a650"], [1010, "#ffd889"]];
+  const RAMP = [[0, "#222a2f"], [25, "#3b3d36"], [50, "#5f5641"], [75, "#8f7346"], [110, "#b98049"], [210, "#d9934f"], [1010, "#f2c58a"]];  // the page's dark --seq
   const rampAt = (v) => { let i = RAMP.findIndex(([a]) => v < a); if (i === -1) return RAMP[RAMP.length - 1][1]; if (i === 0) return RAMP[0][1];
     const [a0, c0] = RAMP[i - 1], [a1, c1] = RAMP[i], t = (v - a0) / (a1 - a0), h = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16)), x = h(c0), y = h(c1);
     return `rgb(${x.map((q, k) => Math.round(q + (y[k] - q) * t)).join(",")})`; };
