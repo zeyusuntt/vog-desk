@@ -228,6 +228,10 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
   .scene-label { font-size: 12px; } .readout { font-size: 13px; background: none; padding: 0; }
 }
 
+/* The tool that did each step of the trace. */
+.tool { display: inline-block; margin-left: 6px; font-size: 12px; font-weight: 600; padding: 0 7px; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-3); vertical-align: 1px; }
+.tool.z, .tool.n, .tool.m { border-color: var(--accent); color: var(--accent); }
+
 /* Present mode (?present=1), for recording: the map fills the screen. */
 body.present .scene { position: fixed; inset: 0; z-index: 20; margin: 0; border-radius: 0; border: 0; }
 body.present .scene-label { font-size: 17px; padding: 6px 11px; }
@@ -705,7 +709,7 @@ function renderWhy(fc) {
       <td>${esc((c.provider_model || "unknown").replace("nvidia/", ""))}</td><td class="num">${(c.latency_ms / 1000).toFixed(1)} s</td></tr>`).join("");
 }
 
-function renderTrace(lines) {
+function renderTrace(lines, backend = "zetaris") {
   const evSec = document.getElementById("evidence-section"), runSec = document.getElementById("run-section");
   if (!lines || !lines.length) { evSec.hidden = true; runSec.hidden = true; return; }
   evSec.hidden = false; runSec.hidden = false;
@@ -735,9 +739,17 @@ function renderTrace(lines) {
     return "";
   };
   const agent = (a) => ({ EvidenceAgent: "Evidence", ForecasterAgent: "Forecaster", DutyLead: "Duty lead" }[a] || a);
+  // Which piece of the stack did each step: the sponsors' tools where they did the work, plain code elsewhere.
+  const tool = (l) => {
+    if (/^(query|requery):/.test(l.step)) return backend === "zetaris" ? ["Zetaris", "z"] : ["local Parquet", ""];
+    if (l.llm_call) return [`${l.llm_call.cached ? "recorded " : ""}Nemotron via Nightshift`, "n"];
+    if (l.step === "guidance") return ["Meterless H-MEM", "m"];
+    return ["code", ""];
+  };
   document.getElementById("steps").innerHTML = lines.map((l) => {
     const cls = l.step.startsWith("requery") || l.step === "requery_done" ? "loop" : l.step === "decide" ? "decide" : "";
-    return `<li class="${cls}"><span><span class="who">${esc(agent(l.agent))}</span> ${esc(label(l))}</span><span class="ms">${l.duration_ms ? (l.duration_ms >= 1000 ? (l.duration_ms / 1000).toFixed(1) + " s" : l.duration_ms + " ms") : ""}</span><span class="what">${esc(detail(l))}</span></li>`;
+    const [tname, tcls] = tool(l);
+    return `<li class="${cls}"><span><span class="who">${esc(agent(l.agent))}</span> ${esc(label(l))} <span class="tool ${tcls}">${esc(tname)}</span></span><span class="ms">${l.duration_ms ? (l.duration_ms >= 1000 ? (l.duration_ms / 1000).toFixed(1) + " s" : l.duration_ms + " ms") : ""}</span><span class="what">${esc(detail(l))}</span></li>`;
   }).join("");
 }
 
@@ -858,7 +870,7 @@ async function show(date, dates) {
     const fc = await getJSON(`../live/${date}/forecast.json`);
     renderCall(fc); renderWhy(fc);
     const trace = await getText(`../live/${date}/trace.jsonl`).then((t) => t.split("\n").filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean)).catch(() => []);
-    renderTrace(trace); renderAgents(fc, trace);
+    renderTrace(trace, fc.desk && fc.desk.data_backend ? fc.desk.data_backend : "zetaris"); renderAgents(fc, trace);
   } catch (e) {
     document.getElementById("call").innerHTML = `<p class="empty">The forecast for ${esc(date)} is not available. Choose another night above.</p>`;
     document.getElementById("why").hidden = true;
