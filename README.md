@@ -4,6 +4,10 @@ A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every eveni
 
 Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3, Reasoning Architecture, by a team of one. Work in this repository started inside the build window (22 October 2026, 00:00 UTC). Every decision and every number along the way is in [docs/DEVLOG.md](docs/DEVLOG.md); the held-out results, scored once at the end, are in [docs/RESULTS.md](docs/RESULTS.md).
 
+![The page for 23 October 2026: prepare for yellow, a 28% chance shown as a number and as 28 of 100 dots, and the night over Kaʻū with each monitor's measured hour as a beam](docs/figures/page.jpg)
+
+The page a school's designated person reads at 18:00 ([web/](web/README.md)). It leads with the decision in the schools plan's colour, then the probability as a number and as 100 nights, with how often nights in that band reached 75 ppb on the held-out season. Beside it is the night over Kaʻū: the summit vent, the three monitors, the forecast wind and the inversion from the Hilo sounding, and after the night is verified each measured hour rises as a beam with a ring at 75 ppb. Drag to turn it, pick a viewpoint, click a monitor for its night, or play the eighteen hours. Below are the five roles of the desk and what each did that night, the discussion with every number tied to its evidence, the trace step by step, and the held-out record. `?replay=2025-09-02` replays the night Pāhala reached 317 ppb.
+
 ## Why it is a desk
 
 Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Each one sends gas down the southwest flank into Kaʻū. In 2025 the Department of Health logged 25 one-hour SO2 exceedances at Pāhala, most between 02:00 and 09:00 HST, while families sleep with the windows shut and children get ready for school. The schools plan reacts after thirty minutes of elevated readings. No one issues a warning the evening before.
@@ -95,6 +99,12 @@ Without Docker:
 uv venv --python 3.12 && uv pip install -e ".[dev,model,agents]"
 SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07
 .venv/bin/python -m pytest -q tests        # Zetaris, sidecar and full-data tests skip when those are absent
+```
+
+The page needs nothing but a static server at the repository root:
+
+```bash
+python3 -m http.server 8765        # then open http://127.0.0.1:8765/web/
 ```
 
 Live (needs `.env` from `.env.example`, the local data layer, Zetaris and Nightshift):
