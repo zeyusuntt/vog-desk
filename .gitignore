@@ -23,5 +23,3 @@ data/memory/
 !samples/data/
 !samples/data/*.parquet
 .claude/launch.json
-
-the desk design
