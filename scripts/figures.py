@@ -24,8 +24,8 @@ ROOT = Path(__file__).resolve().parents[1]
 FIG = ROOT / "docs" / "figures"
 FONTS = ROOT / "assets" / "fonts"
 
-SURFACE, INK, INK2, MUTED, GRID, AXIS = "#fcfcfb", "#1c2227", "#46525b", "#6f7a82", "#e3e7e9", "#c3cacf"
-DESK, MODEL, RECENT, NOREVIEW = "#2a78d6", "#eb6834", "#1baf7a", "#8c98a0"
+SURFACE, INK, INK2, MUTED, GRID, AXIS = "#fbfbfa", "#14181b", "#464d52", "#676f74", "#e6e8e5", "#c8ccca"
+DESK, MODEL, RECENT, NOREVIEW = "#2463a0", "#b65f30", "#1f8a6e", "#8a9196"  # validated together on SURFACE
 T_STAR = 0.18
 EDGES = np.array([0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.7, 1.0001])
 
@@ -115,7 +115,7 @@ def brier_bars(ax, full: pd.DataFrame, nr: pd.DataFrame) -> None:
 
 def nights_dots(ax, full: pd.DataFrame) -> None:
     d = full.reset_index(drop=True); x = np.arange(len(d)); p = d["p"].to_numpy(float); ev = d["y"].to_numpy() == 1
-    ax.axhline(T_STAR, color="#d6a90e", lw=2, zorder=1)
+    ax.axhline(T_STAR, color="#c9a03a", lw=2, zorder=1)
     ax.text(0, T_STAR - 0.035, f"action threshold {T_STAR:.0%}", fontsize=9, color=INK2, va="top")
     ax.scatter(x[~ev], p[~ev], s=34, facecolor=SURFACE, edgecolor=MUTED, linewidth=1.3, zorder=2, label="stayed below 75 ppb")
     ax.scatter(x[ev], p[ev], s=40, facecolor=INK, edgecolor=SURFACE, linewidth=1.5, zorder=3, label="reached 75 ppb")

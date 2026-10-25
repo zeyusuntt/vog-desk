@@ -85,8 +85,8 @@ a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-vi
 /* The decision first, in the plan's colour, then the number, then the same number as 100 nights. */
 .decision { margin-top: 6px; }
 .decision .band { background: var(--card); color: var(--card-ink); border-radius: 12px; padding: 18px 22px 18px 20px; box-shadow: 0 1px 0 rgba(255, 255, 255, .04) inset; }
-.decision .band strong { display: flex; align-items: center; gap: 12px; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; color: var(--card-ink); }
-.decision .band strong::before { content: ""; flex: none; width: 12px; height: 12px; border-radius: 50%; background: var(--lv); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lv) 28%, transparent); }
+.decision .band strong { display: flex; align-items: flex-start; gap: 12px; font-size: 24px; line-height: 1.25; font-weight: 800; letter-spacing: -0.01em; color: var(--card-ink); }
+.decision .band strong::before { content: ""; flex: none; margin-top: 9px; width: 12px; height: 12px; border-radius: 50%; background: var(--lv); box-shadow: 0 0 0 4px color-mix(in srgb, var(--lv) 28%, transparent); }
 .decision .band p { margin: 6px 0 0 24px; color: var(--card-ink-2); font-size: 15.5px; max-width: 54ch; }
 .decision .odds { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; margin-top: 22px; }
 .decision .num .big { display: block; font-size: clamp(64px, 7.4vw, 96px); font-weight: 800; line-height: 0.95; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
