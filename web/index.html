@@ -21,6 +21,7 @@
   --rule: #dcdfdd;
   --slot: #e6e8e5;
   --accent: #2c4a5e;          /* slate */
+  --measure: 42rem;           /* one width for running text, so section intros, the discussion and the footer share a right edge */
   --card: #15191c; --card-ink: #f1f2f1; --card-ink-2: #b6bcbf;   /* the dark decision card, in both themes */
   --lv-green: #2f8a64;        /* the schools plan's levels, checked for colour-vision separation */
   --lv-yellow: #c9a03a;
@@ -106,7 +107,7 @@ a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-vi
 .figure { margin: 40px 0 0; }
 .scale-fig { margin-top: 48px; }
 .figure h2, .section h2 { font-size: 20px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.005em; }
-.figure .sub, .section .sub { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; max-width: 72ch; }
+.figure .sub, .section .sub { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; max-width: var(--measure); }
 svg text { font-family: inherit; fill: var(--ink); }
 svg .muted { fill: var(--ink-3); }
 svg .soft { fill: var(--ink-2); }
@@ -116,13 +117,12 @@ svg .soft { fill: var(--ink-2); }
 .section { padding: 44px 0 4px; border-top: 1px solid var(--rule); margin-top: 48px; }
 .cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 40px; }
 @media (max-width: 860px) { .cols { grid-template-columns: 1fr; gap: 28px; } }
-.prose { max-width: 68ch; }
+.prose { max-width: var(--measure); }
 .prose p { margin: 0 0 14px; }
-/* Wide running text is set flush on both sides on wide screens; hyphenation keeps the word spacing even. Narrow
-   columns stay ragged right, where justified lines open wide gaps. */
-@media (min-width: 720px) {
-  .prose p, .sub, .scene-note, footer p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
-}
+/* Running text is set flush on both sides; hyphenation keeps the word spacing even in the narrow columns. */
+.prose p, .sub, .scene-note, footer p, .decision .band p, .decision .num .lab, .band-rate, .notice, .glance .small,
+.streams .note, .flags .state, .evidence li > span:nth-child(2), .evidence .meta, .steps .what, .agents .did, .action p,
+.scene-card p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
 .cite { display: inline-block; font-size: 12px; font-weight: 700; line-height: 1; padding: 3px 5px 2px; margin: 0 1px; border-radius: 4px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); text-decoration: none; vertical-align: 2px; }
 .cite:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
@@ -178,11 +178,11 @@ svg .soft { fill: var(--ink-2); }
 .tip.on { opacity: 1; }
 .empty { color: var(--ink-2); font-style: italic; }
 footer { margin: 56px 0 0; padding: 26px 0 44px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 14px; }
-footer p { margin: 0 0 8px; max-width: 80ch; }
+footer p { margin: 0 0 8px; max-width: var(--measure); }
 
 
 /* The night over Kaʻū (3D). A dark figure: it is a night map, and the only dark surface on the page. */
-.night3d .sub { max-width: 68ch; }
+.night3d .sub { max-width: none; }
 .scene { position: relative; background: #0b1418; border-radius: 8px; overflow: hidden; margin-top: 12px; color: #e7ecee; border: 1px solid rgba(231, 236, 238, .1); }
 .scene canvas { display: block; width: 100%; }
 .scene-labels { position: absolute; inset: 0; pointer-events: none; }
