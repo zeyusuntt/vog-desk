@@ -1,0 +1,283 @@
+{
+ "kind": "full_desk",
+ "note": "Full desk forecast: evidence through Zetaris, model and memory guidance, DutyLead review on Nemotron Ultra. The model-only probability is kept alongside for comparison (forecast 4 versus 6).",
+ "issue_date_hst": "2026-10-24",
+ "issue_utc": "2026-10-25T04:00:00+00:00",
+ "generated_utc": "2026-10-25T03:57:07+00:00",
+ "generated_before_issue": true,
+ "question": "Any hourly SO2 >= 75 ppb at Pahala (AQS 15-001-2016) between 18:00 HST tonight and 12:00 HST tomorrow",
+ "probability": 0.0339,
+ "probability_raw_uncalibrated": 0.0602,
+ "reference": {
+  "climatology_2025": 0.059,
+  "persistence": 1.0,
+  "episode_rule": 0.0
+ },
+ "recommendation": "withheld: the action threshold t* is not frozen yet (docs/PREREG.md, Frozen values)",
+ "features": {
+  "episode_active": 0.0,
+  "log_hours_since_end": 5.1812,
+  "log_pahala_max_24h": 5.1417,
+  "log_pahala_mean_6h": 1.8971,
+  "log_hvnp_max_6h": 0.5878,
+  "gfs925_along_summit": 1.0351,
+  "gfs925_speed_summit": 1.2354,
+  "gfs850_along_summit": 1.4927,
+  "gfs925_sector_frac": 0.3333,
+  "gfs10m_speed_pahala": 0.5447,
+  "log_hpbl_pahala_night": 4.0936,
+  "raob_inversion_base_m": null
+ },
+ "features_outside_training_range": [],
+ "data_basis": {
+  "issue_utc": "2026-10-25T04:00:00+00:00",
+  "pahala_last_hour_utc": "2026-10-25T02:00:00+00:00",
+  "pahala_last_hour_hst": "2026-10-24T16:00:00",
+  "pahala_last_value_ppb": 2.0,
+  "pahala_source_last": "airnow",
+  "gfs_run_init_utc": "2026-10-24T18:00:00+00:00",
+  "gfs_rows_seen": 105,
+  "raob_latest_launch_utc": "2026-10-17T12:00:00+00:00",
+  "last_known_episode": 55,
+  "last_known_episode_end_utc": "2026-10-17T19:06:00+00:00",
+  "max_available_utc_used": "2026-10-25T04:00:00+00:00"
+ },
+ "refresh_status": {
+  "airnow": "ok",
+  "gfs": "ok",
+  "raob": "failed: Command '['~/dev/vog-desk/.venv/bin/python', 'scripts/fetch_raob.py', '2026-10-04', '2026-10-26']' returned non-zero exit status 1.",
+  "s3": "ok",
+  "episodes": "ok"
+ },
+ "model": {
+  "file": "lr_2025.json",
+  "sha256": "9f62812acd4348bd",
+  "fitted_on": "2025-01-01..2025-12-31",
+  "C": 0.1,
+  "n_train": 356,
+  "n_events": 21,
+  "git_head_at_training": "8649b40c3aeac62936c144c9d0681642e6daded6"
+ },
+ "verification": null,
+ "desk": {
+  "case_id": "live-2026-10-24",
+  "decision": {
+   "kind": "issue_with_caveat",
+   "p": 0.2456,
+   "level": "prepare_yellow",
+   "recommendation": "Prepare for yellow: have the plan's yellow-level actions ready for the morning (sensitive students, outdoor activity). An hourly mean of 75 ppb does not by itself show a 15-minute average at the yellow level.",
+   "discussion": "The frozen 2025 model gives 0.03 [G1]. The model refit on the verified nights in memory gives 0.25 [G2]. The event rate over recent verified nights is 0.33 [G3]. The analog nights give 0.31 [G4]. The desk's base probability is the memory model stream, 0.25, with no adjustment. Review flags: analog_split; data_gap. Prepare for yellow: have the plan's yellow-level actions ready for the morning (sensitive students, outdoor activity). An hourly mean of 75 ppb does not by itself show a 15-minute average at the yellow level. This discussion was produced by the desk's template because the language model's reply did not pass validation.",
+   "cites": [
+    "G1",
+    "G2",
+    "G3",
+    "G4"
+   ],
+   "handover_reason": null,
+   "weights": {
+    "memory_model": 1.0
+   },
+   "base_p": 0.2456,
+   "adjustment": 0.0,
+   "adjustment_reason": null
+  },
+  "guidance": [
+   {
+    "id": "G1",
+    "stream": "lr",
+    "p": 0.0339,
+    "interval": null,
+    "inputs": [
+     "E1",
+     "E2",
+     "E3",
+     "E4",
+     "E5",
+     "E6",
+     "E7",
+     "E8",
+     "E9",
+     "E10",
+     "E11"
+    ],
+    "analog_ids": [],
+    "note": "logistic regression fit on 2025 with isotonic calibration; raw 0.060"
+   },
+   {
+    "id": "G2",
+    "stream": "memory_model",
+    "p": 0.2456,
+    "interval": null,
+    "inputs": [],
+    "analog_ids": [
+     "mem-634",
+     "mem-633",
+     "mem-632",
+     "mem-631",
+     "mem-630",
+     "mem-629",
+     "mem-628",
+     "mem-627",
+     "mem-626",
+     "mem-625",
+     "mem-624",
+     "mem-623",
+     "mem-622",
+     "mem-621",
+     "mem-620",
+     "mem-619",
+     "mem-618",
+     "mem-617",
+     "mem-616",
+     "mem-615",
+     "mem-614",
+     "mem-613",
+     "mem-612",
+     "mem-611",
+     "mem-610",
+     "mem-609",
+     "mem-608",
+     "mem-607",
+     "mem-606",
+     "mem-605",
+     "mem-604",
+     "mem-603",
+     "mem-602",
+     "mem-601",
+     "mem-600",
+     "mem-599",
+     "mem-598",
+     "mem-597",
+     "mem-596",
+     "mem-595",
+     "mem-594",
+     "mem-593",
+     "mem-592",
+     "mem-591",
+     "mem-590",
+     "mem-589",
+     "mem-588",
+     "mem-587",
+     "mem-586",
+     "mem-585"
+    ],
+    "note": "logistic regression refit on 108 verified nights in memory (last 120 days, 41 events, nights 2026-06-26 to 2026-10-23)"
+   },
+   {
+    "id": "G3",
+    "stream": "recent_rate",
+    "p": 0.3333,
+    "interval": null,
+    "inputs": [],
+    "analog_ids": [],
+    "note": "event rate over the last 30 verified nights"
+   },
+   {
+    "id": "G4",
+    "stream": "analog",
+    "p": 0.3111,
+    "interval": [
+     0.1639,
+     0.4838
+    ],
+    "inputs": [],
+    "analog_ids": [
+     "mem-634",
+     "mem-321",
+     "mem-593",
+     "mem-431",
+     "mem-406",
+     "mem-479",
+     "mem-388",
+     "mem-625",
+     "mem-294",
+     "mem-380",
+     "mem-325",
+     "mem-322",
+     "mem-520",
+     "mem-376",
+     "mem-594",
+     "mem-389",
+     "mem-326",
+     "mem-408",
+     "mem-596",
+     "mem-413"
+    ],
+    "note": "6 of 20 analog nights had an event (raw rate 0.30); tags episode:pause, regime:light, sector:part, station:pahala; shrunk toward the recent rate 0.33 with weight 10; fallback level 1; highest analog max 170 ppb"
+   }
+  ],
+  "flags": [
+   {
+    "code": "analog_split",
+    "detail": "6 events and 14 quiet nights among 20 analogs",
+    "evidence_ids": [
+     "mem-634",
+     "mem-321",
+     "mem-593",
+     "mem-431",
+     "mem-406",
+     "mem-479",
+     "mem-388",
+     "mem-625",
+     "mem-294",
+     "mem-380",
+     "mem-325",
+     "mem-322",
+     "mem-520",
+     "mem-376",
+     "mem-594",
+     "mem-389",
+     "mem-326",
+     "mem-408",
+     "mem-596",
+     "mem-413"
+    ],
+    "resolved": true,
+    "resolution": "re-query returned the same rows (E8, E9); the disagreement is real, not a data error"
+   },
+   {
+    "code": "data_gap",
+    "detail": "no Hilo sounding in the last 18 hours",
+    "evidence_ids": [
+     "E7"
+    ],
+    "resolved": true,
+    "resolution": "gap filled on re-query: E8, E11"
+   }
+  ],
+  "review_round": 1,
+  "llm_calls": [
+   {
+    "agent": "EvidenceAgent",
+    "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "latency_ms": 3136,
+    "prompt_tokens": 4374,
+    "completion_tokens": 298,
+    "cached": false,
+    "validation": "ok",
+    "problems": [],
+    "reply_preview": "The emission state is a pause; episode 55 ended 7.4 days ago [E5]. At Pahala, the last 24 usable hours show a maximum of 170.0 ppb and a mean of 45.1 ppb, with the latest reading of 2.0 ppb at 16:00 HST [E1]. The upwind Volcanoes NP station reports a maximum of 0.8 ppb and a mean of 0.4 ppb over the last 6 hours, with the latest value of 0.0 ppb at 16:00 HST [E3]. Forecast transport indicates that 1 of 3 leads at 925 hPa have a component toward Pahala, with a mean 925 hPa toward component of 1.0 m/s [E6]; 850 hPa winds are from 36 deg at 2.1 m/s at 18:00 HST and from 353 deg at 1.6 m/s at 00:0"
+   },
+   {
+    "agent": "DutyLead",
+    "model_requested": "nvidia/nemotron-3-ultra-550b-a55b",
+    "provider_model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "latency_ms": 41519,
+    "prompt_tokens": null,
+    "completion_tokens": null,
+    "cached": false,
+    "validation": "fallback_template",
+    "problems": [
+     "attempt 1: reply is not the required JSON with adjustment (a number) and discussion",
+     "attempt 2: number 14 is not in the evidence",
+     "attempt 2: sentence uses an evidence number without its [E#] or [G#] id: The review found a real analog_split flag with 6 events and 14 quiet nights amon"
+    ],
+    "reply_preview": "{\n  \"kind\": \"issue\",\n  \"adjustment\": 0.06,\n  \"adjustment_reason\": \"analog_split flag and analog nights with much higher maxima (170 ppb [G4] matching 24h max 170 ppb [E1])\",\n  \"discussion\": \"Base probability is 0.25 from the memory model [G2]. The frozen model [G1] gives 0.03, much lower, while the recent rate [G3] is 0.33 and the analog stream [G4] is 0.31, both higher than the base. The review found a real analog_split flag with 6 events and 14 quiet nights among 20 analogs, and a data_gap flag for the Hilo sounding that was resolved on re-query. The analog nights show a highest maximum of 1"
+   }
+  ],
+  "data_backend": "zetaris",
+  "regime_summary": "The emission state is a pause; episode 55 ended 7.4 days ago [E5]. At Pahala, the last 24 usable hours show a maximum of 170.0 ppb and a mean of 45.1 ppb, with the latest reading of 2.0 ppb at 16:00 HST [E1]. The upwind Volcanoes NP station reports a maximum of 0.8 ppb and a mean of 0.4 ppb over the last 6 hours, with the latest value of 0.0 ppb at 16:00 HST [E3]. Forecast transport indicates that 1 of 3 leads at 925 hPa have a component toward Pahala, with a mean 925 hPa toward component of 1.0 m/s [E6]; 850 hPa winds are from 36 deg at 2.1 m/s at 18:00 HST and from 353 deg at 1.6 m/s at 00:00 HST [E6]. Stability is characterized by a boundary layer of 186 m at 18:00 HST that collapses to 60 m by 06:00 HST [E6], while the inversion base is not available [E7].",
+  "trace": "trace.jsonl"
+ }
+}
