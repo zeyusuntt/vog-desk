@@ -84,7 +84,7 @@ These rules are enforced in code (`src/vogdesk/asof.py`) and tested (`tests/`).
 
 On the held-out period, the full desk has a lower Brier score than the model-only forecast. The paired difference and its block-bootstrap 90% interval are reported whatever the sign.
 
-## Frozen values (filled in before the held-out run, 24 October 2026, commit 4b766f1 at 03:55 PDT)
+## Frozen values (filled in before the held-out run, 24 October 2026, 03:55 PDT, git tag freeze-v4)
 
 Chosen on the development period by the procedure above; see DEVLOG.md for the numbers behind each.
 

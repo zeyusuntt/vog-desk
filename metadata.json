@@ -110,7 +110,7 @@
    "status": "working",
    "integration_working": true,
    "in_use_case": true,
-   "use_case_note": "Cursor built the Nightshift provider block in src/vogdesk/llm.py from the meterless.ai POWER recipe (commit f559fa7); the main build used Claude Code and Codex. All code was read and tested by the author.",
+   "use_case_note": "Cursor built the Nightshift provider block in src/vogdesk/llm.py from the meterless.ai POWER recipe (git tag cursor-provider); the main build used Claude Code and Codex. All code was read and tested by the author.",
    "how": "Cursor free tier, one bounded piece; reviewed before merge.",
    "where": [
     "src/vogdesk/llm.py"

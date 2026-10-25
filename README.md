@@ -46,7 +46,7 @@ LangGraph `StateGraph`, Pydantic state, JSONL trace per case under `logs/`, Worl
 
 ## Results
 
-Pre-registered before the first fit ([docs/PREREG.md](docs/PREREG.md), commit `8649b40`); thresholds frozen before the held-out run (`4b766f1`); the held-out period was scored once ([docs/RESULTS.md](docs/RESULTS.md)).
+Pre-registered before the first fit ([docs/PREREG.md](docs/PREREG.md), git tag `prereg`); thresholds frozen before the held-out run (tag `freeze-v4`); the held-out period was scored once ([docs/RESULTS.md](docs/RESULTS.md)).
 
 Held-out, 1 July to 21 October 2026, 102 valid nights, 39 events (base rate 0.38):
 
@@ -114,7 +114,7 @@ The full dataset is rebuilt by `scripts/fetch_*.py` and the ingest modules (sour
 - The Meterless H-MEM and World Model reference implementations run unchanged in `memory-service/` (conformance 13 of 13 and 8 of 8, `docs/evidence/conformance-*.txt`). The sidecar adds one rule: a night can be retrieved only after its verification time. The desk uses memory as the training set for its memory model, for similar-night retrieval with a trace, for the verifier's write-back with source and confidence, for trust-ledger feedback, and for night-level conflict detection with the engine's 0.70 gate.
 - Meterless Nightshift is the primary model provider (`src/vogdesk/llm.py`), with explicit model ids so every trace line names the model that answered: `nvidia/nemotron-3.5-lightning-30b-a3b` for evidence narration (thinking off) and `nvidia/nemotron-3-ultra-550b-a55b` for the DutyLead. Provider grade: [docs/evidence/provider-grade.md](docs/evidence/provider-grade.md).
 - NVIDIA Nemotron supplies the two models above, through NVIDIA's free endpoint registered in Nightshift. `meterless.provider_model` is logged on every call.
-- Cursor built the Nightshift provider block in `llm.py` (commit `f559fa7`, review in [docs/cursor/B-review.md](docs/cursor/B-review.md)). Everything else was built with Claude Code and Codex; all code was read and tested by the author.
+- Cursor built the Nightshift provider block in `llm.py` (git tag `cursor-provider`, review in [docs/cursor/B-review.md](docs/cursor/B-review.md)). Everything else was built with Claude Code and Codex; all code was read and tested by the author.
 
 ## Pre-existing components
 

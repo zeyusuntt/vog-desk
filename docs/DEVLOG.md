@@ -2,9 +2,11 @@
 
 Every tuning decision on the development split, with the score before and after, as docs/PREREG.md requires. Dates are PDT.
 
+The key commits carry git tags: `prereg` (pre-registration frozen before the first fit), `freeze-v4` (desk rules frozen before the held-out run), `heldout-scored` (the held-out period scored once) and `cursor-provider` (the Nightshift provider block built in Cursor). Other short commit ids in this log come from the working repository. The public history was rewritten once, before publication, to drop planning notes and a local path; that kept every commit's date but changed its id, so `git log --before` and the tags are the way to find a commit named here. `scripts/prove.py` checks the timeline through the tags.
+
 ## 2026-10-23: pre-registration frozen, first fit, dev evaluation
 
-- 15:28 PDT, commit `8649b40`: PREREG frozen (availability table, 12 model inputs, action-threshold procedure). No model had been fit.
+- 15:28 PDT, git tag `prereg`: PREREG frozen (availability table, 12 model inputs, action-threshold procedure). No model had been fit.
 - 15:34 PDT: first fit, `scripts/train.py`. 356 training nights, 21 events, base rate 0.059.
 
 ### Training fit (2025, out of fold over 5 contiguous blocks)
@@ -151,7 +153,7 @@ Frozen (PREREG "Frozen values", this commit): t* 0.18 for forecasts 5 and 6, 0.0
 
 ## 2026-10-24 04:10 PDT: held-out run started
 
-Full desk (v4, frozen at 4b766f1) on the held-out period, started 04:10 PDT at commit 8bc82db (the only change since the freeze is making `--i-am-sure` a real argument; the first attempt was rejected by argparse). 102 valid nights between 1 July and 21 October 2026. Memory for the run is seeded with every verified night through 21 October, each stamped with its publication time, so the as-of query gives each issue exactly the nights a desk running since 2025 would have remembered. The no-review variant follows as soon as its dev v3 run finishes and its v4 derivation is recorded.
+Full desk (v4, frozen at tag freeze-v4) on the held-out period, started 04:10 PDT at commit 8bc82db (the only change since the freeze is making `--i-am-sure` a real argument; the first attempt was rejected by argparse). 102 valid nights between 1 July and 21 October 2026. Memory for the run is seeded with every verified night through 21 October, each stamped with its publication time, so the as-of query gives each issue exactly the nights a desk running since 2025 would have remembered. The no-review variant follows as soon as its dev v3 run finishes and its v4 derivation is recorded.
 
 ## 2026-10-24 04:30 PDT: development period, final (frozen desk v4), all seven forecasts
 
@@ -171,7 +173,7 @@ Paired Brier differences, 7-day block bootstrap 90% intervals: full desk minus m
 
 ## 2026-10-24 05:40 PDT: held-out period, scored once (docs/RESULTS.md)
 
-Run at frozen commit 4b766f1 (code), scored with `scripts/results.py --split heldout --i-am-sure --t-star 0.18 --tag v4` at 3ff6d78. 102 valid nights, 39 events, base rate 0.382.
+Run at the frozen code (tag freeze-v4), scored with `scripts/results.py --split heldout --i-am-sure --t-star 0.18 --tag v4` at 3ff6d78. 102 valid nights, 39 events, base rate 0.382.
 
 | forecast | Brier | BSS vs clim | AUC | at t* | POD | FAR | CSI |
 |---|---|---|---|---|---|---|---|

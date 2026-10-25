@@ -1,6 +1,6 @@
 # Per-night forecasts behind docs/RESULTS.md and docs/DEVLOG.md
 
-One row per issue night, frozen desk (version 4, commit 4b766f1), produced by `scripts/backtest.py`.
+One row per issue night, frozen desk (version 4, git tag freeze-v4), produced by `scripts/backtest.py`.
 
 - `heldout_full_v4.csv`, `heldout_noreview_v4.csv`: the held-out period (1 July to 21 October 2026), run once after the freeze. Forecast 6 and forecast 5.
 - `dev_full_v4.csv`, `dev_noreview_v4.csv`: the development period (January to June 2026), used for tuning. Version 4 on dev is derived from the version-3 run by applying the flag gate to the recorded adjustments (`scripts/derive_v4.py`; column `derived_from`).
