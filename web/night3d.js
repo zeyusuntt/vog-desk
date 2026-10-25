@@ -316,11 +316,12 @@ export async function mountNight(root, scene, opts = {}) {
   };
 
   const resize = () => {
-    const w = root.clientWidth, narrow = w < 560, h = narrow ? Math.round(w * 0.9) : Math.round(Math.min(600, Math.max(340, w * (w < 900 ? 0.66 : 0.58))));
+    const present = root.classList.contains("present");
+    const w = root.clientWidth, narrow = w < 560, h = present ? innerHeight : narrow ? Math.round(w * 0.9) : Math.round(Math.min(600, Math.max(340, w * (w < 900 ? 0.66 : 0.58))));
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(w, h, false);
     composer.setPixelRatio(Math.min(devicePixelRatio, 2)); composer.setSize(w, h); bloom.setSize(w, h);
     canvas.style.width = `${w}px`; canvas.style.height = `${h}px`; camera.aspect = w / h;
-    const far = narrow ? 1.12 : Math.min(1.45, Math.max(0.92, 1.62 / camera.aspect));
+    const far = present ? 0.95 : narrow ? 1.12 : Math.min(1.45, Math.max(0.92, 1.62 / camera.aspect));
     if (narrow) home.pos.set(6, 60, 50); else home.pos.set(10 * far, 48 * far, 70 * far);
     if (!userMoved && !fly) { camera.position.copy(home.pos); controls.target.copy(home.target); }
     camera.updateProjectionMatrix(); controls.update();
