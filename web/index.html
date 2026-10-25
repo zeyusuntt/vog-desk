@@ -118,6 +118,11 @@ svg .soft { fill: var(--ink-2); }
 @media (max-width: 860px) { .cols { grid-template-columns: 1fr; gap: 28px; } }
 .prose { max-width: 68ch; }
 .prose p { margin: 0 0 14px; }
+/* Wide running text is set flush on both sides on wide screens; hyphenation keeps the word spacing even. Narrow
+   columns stay ragged right, where justified lines open wide gaps. */
+@media (min-width: 720px) {
+  .prose p, .sub, .scene-note, footer p { text-align: justify; hyphens: auto; -webkit-hyphens: auto; }
+}
 .cite { display: inline-block; font-size: 12px; font-weight: 700; line-height: 1; padding: 3px 5px 2px; margin: 0 1px; border-radius: 4px; color: var(--accent); background: color-mix(in srgb, var(--accent) 12%, transparent); text-decoration: none; vertical-align: 2px; }
 .cite:hover { background: color-mix(in srgb, var(--accent) 22%, transparent); }
 
