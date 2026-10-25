@@ -14,7 +14,7 @@ Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Eac
 
 A statistical model fit on 2025 learned that bad nights come with fountaining and light winds. In 2026 the eruption changed. Episodes got shorter and pauses longer, and the gas now reaches Pāhala between episodes on trade-wind nights, three times as often as in 2025. On the development period (January to June 2026) the frozen model scored below climatology.
 
-So the desk keeps a memory of every verified night and refits the same model on the recent ones each evening. It checks that against the frozen model, the recent event rate and the most similar past nights. When they disagree it re-queries the data, and it hands the night to a person when the conflict will not resolve. The test is whether this beats the frozen model and a plain adaptive baseline, the event rate of the last 30 verified nights. [docs/PREREG.md](docs/PREREG.md) has what was fixed before any model was fit and the four changes logged since.
+So the desk keeps a memory of every verified night and refits the same model on the recent ones each evening. It checks that against the frozen model, the recent event rate and the most similar past nights. When they disagree it re-queries the data, and it hands the night to a person when the conflict will not resolve. The test is whether this beats the frozen model and a plain adaptive baseline, the event rate of the last 30 verified nights. [docs/PREREG.md](docs/PREREG.md) has what was fixed before any model was fit and the six changes logged since.
 
 ## What a forecast may see
 

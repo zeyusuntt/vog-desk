@@ -224,3 +224,9 @@ Following the G3 defect: the Node sidecar clamped `k` to 100 in `/hmem/query`. T
 - Streams: frozen model 0.03, memory model 0.25, recent rate 0.33, analogs 0.31 (6 of 20 analog nights had an event). The review flagged analog_split and data_gap and re-queried four tables in one round. The desk issued the memory model's 0.25 unchanged, prepare for yellow, with a caveat.
 - Nemotron Ultra's reply failed validation twice (the first was not the required JSON; the second cited 14, the number of quiet analog nights, which the validator did not accept), so the code's template wrote the discussion. Lightning's summary passed.
 - Two defects found reading the trace, both in the frozen rules, both affecting how the night is described: (1) the data_gap flag is marked "gap filled on re-query" when any re-queried table returned rows, even though the sounding re-query (E10) was still empty; the same happened on 23 October. (2) The validator does not accept numbers that appear in the review's own flag details, so a reply that cites the analog split is rejected. Neither changed the probability tonight: the base is the memory model and no adjustment was made. Fixes follow, with tests, for the live desk only.
+
+## 2026-10-24 22:10 PDT: the two defects fixed for the live desk (PREREG changes 5 and 6)
+
+- `duty_lead.resolve_flag`: a data gap closes only when the re-query of the missing source returns rows; otherwise the flag stays open as "still missing on re-query" and the review may use its second round. Disagreement flags are settled as before.
+- `duty_lead.decision_numbers`: numbers in the review's flag details and resolutions may be cited by the duty lead.
+- Tests: `tests/test_review_resolution.py` (four cases, including the sounding gap of 24 October). The recorded sample nights have no flags, so their replays are unchanged; 190 tests pass. Held-out results are not re-run, and the 23 and 24 October live forecasts stand as issued.

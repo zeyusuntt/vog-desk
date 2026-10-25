@@ -156,6 +156,51 @@ def must_handover(guidance: list[Guidance], flags: list[Flag], round_: int) -> s
     return None
 
 
+def _empty(it: EvidenceItem) -> bool:
+    v = it.values
+    return v.get("rows", 1) == 0 or v.get("n", 1) == 0 or v.get("n_hours", 24) < 14
+
+
+def resolve_flag(fl: Flag, prior_by_id: dict[str, EvidenceItem], requeried: list[EvidenceItem]) -> tuple[bool, str]:
+    """Whether a re-query settles a flag, with a resolution text that names the evidence it rests on.
+
+    A data gap closes only when the re-query of the source that was missing returns rows; rows from other
+    tables do not fill it (fixed 24 Oct 2026, DEVLOG). Any other flag is settled by the re-query: the same rows
+    as before mean the disagreement is real, different rows mean the first answer was stale.
+    """
+    checked = [it for it in requeried if it.values.get("query") in REQUERY_FOR.get(fl.code, [])]
+    if not checked:
+        return False, ""
+    ids = lambda items: ", ".join(it.id for it in items)
+    if fl.code == "data_gap":
+        sources = {prior_by_id[e].values.get("query") for e in fl.evidence_ids if e in prior_by_id}
+        same_source = [it for it in checked if it.values.get("query") in sources] if sources else checked
+        filled = [it for it in same_source if not _empty(it)]
+        if filled:
+            return True, "gap filled on re-query: " + ids(filled)
+        return False, ("still missing on re-query: " + ids(same_source)) if same_source else ""
+    prior_by_query = {e.values.get("query"): e for e in prior_by_id.values()}
+    same = [it for it in checked if (prior := prior_by_query.get(it.values.get("query"))) is not None and prior.rows_hash == it.rows_hash]
+    return True, ("re-query returned the same rows (" + ids(same) + "); the disagreement is real, not a data error"
+                  if same else "re-query returned different rows: " + ids(checked))
+
+
+def decision_numbers(guidance: list[Guidance], flags: list[Flag], t_star: float, base: float, analog_max: float | None) -> set[float]:
+    """Numbers the duty lead may write besides the evidence: the streams, the thresholds, the adjustment range,
+    analog counts and maxima, and the numbers in the review's own flags (added 24 Oct 2026, DEVLOG)."""
+    allowed = {round(g.p, 2) for g in guidance if g.p is not None} | {round(g.p, 4) for g in guidance if g.p is not None} | {round(t_star, 2), round(2 * t_star, 2)}
+    allowed |= {round(base, 2), round(base, 4), MAX_ADJUSTMENT, round(max(0.0, base - MAX_ADJUSTMENT), 2), round(min(1.0, base + MAX_ADJUSTMENT), 2)}
+    for g in guidance:
+        if g.interval:
+            allowed |= {round(g.interval[0], 2), round(g.interval[1], 2)}
+        allowed |= numbers_in(g.note)  # analog counts and maxima named in the guidance notes
+    for f in flags:
+        allowed |= numbers_in(f.detail) | numbers_in(f.resolution)
+    if analog_max is not None:
+        allowed |= {float(analog_max), round(float(analog_max))}
+    return allowed
+
+
 def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: list[EvidenceItem], guidance: list[Guidance],
            flags: list[Flag], t_star: float, round_: int, analog_max: float | None) -> tuple[Decision, LLMCall]:
     forced = must_handover(guidance, flags, round_)
@@ -168,14 +213,7 @@ def decide(chat: ChatClient, issue_date: str, regime_summary: str, evidence: lis
     if forced:
         user += f"\n\nThe code has determined this case must be handed to a human: {forced}. Set kind to handover and explain in the discussion."
     messages = [Message(role="system", content=DUTY_LEAD_SYSTEM), Message(role="user", content=user)]
-    allowed = {round(g.p, 2) for g in guidance if g.p is not None} | {round(g.p, 4) for g in guidance if g.p is not None} | {round(t_star, 2), round(2 * t_star, 2)}
-    allowed |= {round(base, 2), round(base, 4), MAX_ADJUSTMENT, round(max(0.0, base - MAX_ADJUSTMENT), 2), round(min(1.0, base + MAX_ADJUSTMENT), 2)}
-    for g in guidance:
-        if g.interval:
-            allowed |= {round(g.interval[0], 2), round(g.interval[1], 2)}
-        allowed |= numbers_in(g.note)  # analog counts and maxima named in the guidance notes
-    if analog_max is not None:
-        allowed |= {float(analog_max), round(float(analog_max))}
+    allowed = decision_numbers(guidance, flags, t_star, base, analog_max)
     validation = "ok"
     last = None
     all_problems: list[str] = []

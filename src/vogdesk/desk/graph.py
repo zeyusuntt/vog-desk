@@ -113,22 +113,13 @@ def build_graph(ctx: DeskContext):
         # A re-query resolves a flag when the fresh rows say the same thing as the first query (same rows hash) or
         # when the gap it was raised for is now filled. The resolution text names the evidence ids used.
         flags = [Flag.model_validate(f) for f in state["flags"]]
-        by_query = {e["values"].get("query"): e for e in state["evidence"]}
+        prior = {e["id"]: EvidenceItem.model_validate(e) for e in state["evidence"]}
         for fl in flags:
             if fl.resolved:
                 continue
-            checked = [it for it in items if it.values.get("query") in duty_lead.REQUERY_FOR.get(fl.code, [])]
-            if not checked:
-                continue
-            if fl.code == "data_gap":
-                filled = [it for it in checked if not (it.values.get("rows", 1) == 0 or it.values.get("n", 1) == 0 or it.values.get("n_hours", 24) < 14)]
-                if filled:
-                    fl.resolved, fl.resolution = True, "gap filled on re-query: " + ", ".join(it.id for it in filled)
-            else:
-                same = [it for it in checked if by_query.get(it.values.get("query"), {}).get("rows_hash") == it.rows_hash]
-                fl.resolved = True
-                fl.resolution = ("re-query returned the same rows (" + ", ".join(it.id for it in same) + "); the disagreement is real, not a data error"
-                                 if same else "re-query returned different rows: " + ", ".join(it.id for it in checked))
+            ok, text = duty_lead.resolve_flag(fl, prior, items)
+            if text:
+                fl.resolved, fl.resolution = ok, text
         ctx.trace.write("DutyLead", "requery_done", output={"new_evidence": [i.id for i in items], "resolved": [f.code for f in flags if f.resolved]},
                         duration_ms=int((time.perf_counter() - t0) * 1000))
         ctx.wm(state, "requery", "DutyLead", targets=targets, new_evidence=[i.id for i in items])
