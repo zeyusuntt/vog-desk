@@ -1,5 +1,9 @@
 # vog-desk
 
+- Live page, with every night the desk has issued: https://zeyusuntt.github.io/vog-desk/web/
+- Replay of 2 September 2025, the night Pāhala reached 317 ppb: https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02
+- Slide deck: [docs/vog-desk-deck.pdf](docs/vog-desk-deck.pdf)
+
 A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every evening at 18:00 HST it answers one question: **between now and noon tomorrow, will any hour at the Pāhala monitor reach 75 ppb of sulfur dioxide?** It gives a calibrated probability, a recommendation that follows the 2018 Hawaiʻi Schools SO2 Action Plan, and a discussion in which every number points at the evidence it came from. The next day it checks itself against the monitor, remembers the night, and tells its memory which analogs helped.
 
 Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3, Reasoning Architecture, by a team of one. Work in this repository started inside the build window (22 October 2026, 00:00 UTC). Every decision and every number along the way is in [docs/DEVLOG.md](docs/DEVLOG.md); the held-out results, scored once at the end, are in [docs/RESULTS.md](docs/RESULTS.md).
