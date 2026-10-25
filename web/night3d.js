@@ -10,8 +10,11 @@ import { OrbitControls } from "three/addons/controls/OrbitControls.js";
 
 const EXAG = 2.0;                  // vertical scale, shown on the panel
 const SECONDS_PER_HOUR = 1.25;     // playback speed
-// The schools plan's bands, lifted in lightness so they read as light at night (green, yellow, orange, red).
-const LEVEL = (ppb) => ppb >= 1010 ? "#ff6f9a" : ppb >= 210 ? "#ff8d4a" : ppb >= 110 ? "#ffd35a" : "#5fd894";
+// Hourly SO2 on the same warm ramp as the strip, in a luminous version for the night map.
+const BEAM = [[0, "#8fb3c2"], [25, "#d6cf9e"], [50, "#f0c070"], [75, "#f6a24c"], [110, "#f6803e"], [210, "#f0583c"], [1010, "#ff6f9a"]];
+const LEVEL = (v) => { let i = BEAM.findIndex(([a]) => v < a); if (i === -1) return BEAM[BEAM.length - 1][1]; if (i === 0) return BEAM[0][1];
+  const [a0, c0] = BEAM[i - 1], [a1, c1] = BEAM[i], t = (v - a0) / (a1 - a0), h = (c) => [1, 3, 5].map((k) => parseInt(c.slice(k, k + 2), 16)), x = h(c0), y = h(c1);
+  return "#" + x.map((q, k) => Math.round(q + (y[k] - q) * t).toString(16).padStart(2, "0")).join(""); };
 
 async function loadTerrain(base) {
   const meta = await fetch(`${base}assets/kau-terrain.json`).then((r) => r.json());
@@ -86,7 +89,7 @@ export async function mountNight(root, scene, opts = {}) {
         if(vE<1.5) discard;
         vec3 n=normalize(vN);
         float key=max(dot(n,uKey),0.0), fill=max(dot(n,uFill),0.0), skyl=0.5+0.5*n.y, slope=1.0-n.y;
-        vec3 col=ramp(vE)*(0.30*skyl+(1.1+0.8*uDay)*key+0.34*fill)*(1.0-0.30*slope)*(1.0+0.6*uDay);
+        vec3 col=ramp(vE)*(0.30*skyl+(1.1+0.35*uDay)*key+0.34*fill)*(1.0-0.30*slope)*(1.0+0.25*uDay);
         float f=vE/250.0, w=fwidth(f);
         float line=1.0-smoothstep(0.0,w*1.1,abs(fract(f-0.5)-0.5));
         col+=lin(vec3(0.55,0.68,0.74))*0.035*line;
@@ -107,7 +110,7 @@ export async function mountNight(root, scene, opts = {}) {
     const yl = scene.inversion.base_m / 1000 * EXAG;
     const lid = new THREE.Mesh(new THREE.PlaneGeometry(KW, KH), new THREE.ShaderMaterial({ transparent: true, depthWrite: false, side: THREE.DoubleSide,
       vertexShader: "varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-      fragmentShader: "varying vec2 vUv; void main(){ float e=min(min(vUv.x,1.0-vUv.x),min(vUv.y,1.0-vUv.y)); gl_FragColor=vec4(0.30,0.55,0.66,0.10*smoothstep(0.0,0.25,e)); }" }));
+      fragmentShader: "varying vec2 vUv; void main(){ float e=min(min(vUv.x,1.0-vUv.x),min(vUv.y,1.0-vUv.y)); gl_FragColor=vec4(0.30,0.55,0.66,0.06*smoothstep(0.0,0.25,e)); }" }));
     lid.rotateX(-Math.PI / 2); lid.position.y = yl; s3.add(lid);
   }
 
@@ -147,7 +150,12 @@ export async function mountNight(root, scene, opts = {}) {
     const mat = beamMat(color);
     const beam = new THREE.Mesh(beamGeo, mat); beam.position.set(x, y, z); s3.add(beam);
     const head = new THREE.Sprite(additive(glowTex, color, 1.0)); s3.add(head);
-    return { ...st, x, y, z, color, mat, beam, head, halo, mark, hot: false, beamH: 0 };
+    const core = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: 0xf2f5f6, depthTest: false }));
+    core.rotateX(-Math.PI / 2); core.position.set(x, y + 0.25, z); core.renderOrder = 3; s3.add(core);
+    const t75 = 2.0 + 0.2;   // beam height at 75 ppb
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.045, 8, 32), new THREE.MeshBasicMaterial({ color: 0xf2f5f6, transparent: true, opacity: 0.8 }));
+    ring.rotateX(-Math.PI / 2); ring.position.set(x, y + t75, z); s3.add(ring);
+    return { ...st, x, y, z, color, mat, beam, head, halo, mark, ring, hot: false, beamH: 0 };
   });
 
   // Drift from the vent at the 925 hPa wind (illustration): soft additive puffs that spread and fade downwind, hug
@@ -159,9 +167,9 @@ export async function mountNight(root, scene, opts = {}) {
   for (let i = 0; i < N; i++) spawn(i);
   const pgeo = new THREE.BufferGeometry();
   pgeo.setAttribute("position", new THREE.BufferAttribute(pp, 3)); pgeo.setAttribute("alpha", new THREE.BufferAttribute(alpha, 1)); pgeo.setAttribute("psize", new THREE.BufferAttribute(psize, 1));
-  const pmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { size: { value: 5.0 * Math.min(devicePixelRatio, 2) } },
+  const pmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { size: { value: 5.0 * Math.min(devicePixelRatio, 2) }, fade: { value: 1 } },
     vertexShader: "attribute float alpha; attribute float psize; varying float va; uniform float size; void main(){ va=alpha; vec4 mv=modelViewMatrix*vec4(position,1.0); gl_PointSize=size*psize*(60.0/-mv.z); gl_Position=projectionMatrix*mv; }",
-    fragmentShader: "varying float va; void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d); if(r>0.5) discard; float s=exp(-r*r*14.0); gl_FragColor=vec4(vec3(0.92,0.86,0.74)*0.6,va*s); }" });
+    fragmentShader: "uniform float fade; varying float va; void main(){ vec2 d=gl_PointCoord-0.5; float r=length(d); if(r>0.5) discard; float s=exp(-r*r*14.0); gl_FragColor=vec4(vec3(0.92,0.86,0.74)*0.6,va*s*fade); }" });
   const drift = new THREE.Points(pgeo, pmat); s3.add(drift);
 
   // Wind lines across the whole map: short streaks that move with the 925 hPa wind at the summit point.
@@ -170,9 +178,9 @@ export async function mountNight(root, scene, opts = {}) {
   for (let i = 0; i < NW; i++) wspawn(i);
   const wgeo = new THREE.BufferGeometry();
   wgeo.setAttribute("position", new THREE.BufferAttribute(wpos, 3)); wgeo.setAttribute("alpha", new THREE.BufferAttribute(walpha, 1));
-  const wmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending,
+  const wmat = new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, uniforms: { fade: { value: 1 } },
     vertexShader: "attribute float alpha; varying float va; void main(){ va=alpha; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
-    fragmentShader: "varying float va; void main(){ gl_FragColor=vec4(vec3(0.62,0.80,0.90)*0.55, va); }" });
+    fragmentShader: "uniform float fade; varying float va; void main(){ gl_FragColor=vec4(vec3(0.62,0.80,0.90)*0.55, va*fade); }" });
   const windLines = new THREE.LineSegments(wgeo, wmat); s3.add(windLines);
 
   // Bloom on the bright parts only (vent, beams, plume, town lights); the terrain stays below the threshold.
@@ -185,7 +193,8 @@ export async function mountNight(root, scene, opts = {}) {
   // screens the map takes gestures only after "Explore the map". Viewpoints fly the camera; the first view flies in once.
   const controls = new OrbitControls(camera, canvas);
   Object.assign(controls, { enableDamping: true, dampingFactor: 0.08, enableZoom: false, rotateSpeed: 0.55, panSpeed: 0.7,
-    screenSpacePanning: false, minDistance: 26, maxDistance: 200, minPolarAngle: 0.18, maxPolarAngle: 1.3 });
+    screenSpacePanning: false, minDistance: 26, maxDistance: 200, minPolarAngle: 0.0, maxPolarAngle: 1.22,
+    minAzimuthAngle: -0.75, maxAzimuthAngle: 1.05 });  // the map is always seen from the sea, never from behind the mountains
   controls.target.copy(target);
   const coarse = matchMedia("(pointer: coarse)").matches;
   controls.enabled = !coarse;
@@ -205,6 +214,7 @@ export async function mountNight(root, scene, opts = {}) {
   const views = {
     overview: () => [home.pos, home.target],
     summit: () => { const t = new THREE.Vector3((vx + toX(-155.4802)) / 2, 0.6, (vz + toZ(19.2039)) / 2); return [t.clone().add(new THREE.Vector3(22, 26, 40)), t]; },
+    top: () => [new THREE.Vector3(0.5, 150, 0.6), new THREE.Vector3(0, 0, 0)],
     oceanview: () => { const t = new THREE.Vector3(toX(-155.7781), 0.8, toZ(19.1176)); return [t.clone().add(new THREE.Vector3(16, 22, 32)), t]; },
   };
 
@@ -290,11 +300,11 @@ export async function mountNight(root, scene, opts = {}) {
       const v = hours ? hours[st.id]?.[Math.floor(hour)] : null;
       const span = st.label.querySelector(".v");
       const on = v != null;
-      st.beam.visible = st.head.visible = st.halo.visible = on; st.mark.visible = !on;
+      st.beam.visible = st.head.visible = st.halo.visible = st.ring.visible = on; st.mark.visible = !on;
       if (!on) { st.beamH = 0; span.textContent = hours ? "no value" : "not measured yet"; st.label.classList.remove("hot"); st.label._w = st.label._h = undefined; return; }
       const hk = 2.0 * Math.sqrt(Math.max(v, 0) / 75) + 0.2;   // square root of SO2: 75 ppb stands 2.2 km, 1,200 ppb 8.2 km
       st.beamH = hk; st.hot = v >= 75;
-      st.color.set(LEVEL(v));
+      st.color.set(LEVEL(v)); st.halo.material.color.copy(st.color); st.head.material.color.copy(st.color);
       st.beam.scale.set(1, hk, 1);
       st.head.position.set(st.x, st.y + hk, st.z); st.head.scale.setScalar(st.hot ? 1.5 : 1.0);
       const r = 1.4 + 1.1 * Math.sqrt(Math.max(v, 0) / 75); st.halo.scale.set(r * 2, r * 2, 1); st.halo.userData.r = r * 2;
@@ -340,7 +350,7 @@ export async function mountNight(root, scene, opts = {}) {
 
   // The sky and the light follow the hour: dusk at 18:00, night, first light near 06:00, morning by 09:00.
   const C = (h) => new THREE.Color(h);
-  const SKY = { dusk: [C(0x1c2232), C(0x7a5246)], night: [C(0x070d10), C(0x142229)], dawn: [C(0x2a3848), C(0xb98868)], day: [C(0x5a7a90), C(0xb4c5cc)] };
+  const SKY = { dusk: [C(0x161b36), C(0x6e4c4a)], night: [C(0x0b1026), C(0x222a48)], dawn: [C(0x26304e), C(0xa9806a)], day: [C(0x48627a), C(0x8fa4b0)] };
   const lerpSky = (a, b, t) => [a[0].clone().lerp(b[0], t), a[1].clone().lerp(b[1], t)];
   const light = (k) => {
     let sky, day;
@@ -349,8 +359,10 @@ export async function mountNight(root, scene, opts = {}) {
     else if (k < 13) { const t = (k - 11.5) / 1.5; sky = lerpSky(SKY.night, SKY.dawn, t); day = 0.3 * t; }
     else if (k < 15) { const t = (k - 13) / 2; sky = lerpSky(SKY.dawn, SKY.day, t); day = 0.3 + 0.6 * t; }
     else { sky = SKY.day; day = 0.9; }
-    skyMat.uniforms.uTop.value.copy(sky[0]); skyMat.uniforms.uBottom.value.copy(sky[1]); FOG.copy(sky[1]).lerp(C(0x16252c), 0.35);
-    terrainMat.uniforms.uDay.value = day; renderer.toneMappingExposure = 1.35 + 0.2 * day;
+    skyMat.uniforms.uTop.value.copy(sky[0]); skyMat.uniforms.uBottom.value.copy(sky[1]); FOG.copy(sky[1]).lerp(C(0x161b2c), 0.35);
+    terrainMat.uniforms.uDay.value = day; renderer.toneMappingExposure = 1.35 - 0.15 * day;
+    bloom.threshold = 0.5 + 0.35 * day; bloom.strength = 0.6 * (1 - 0.55 * day);
+    pmat.uniforms.fade.value = wmat.uniforms.fade.value = 1 - 0.6 * day;
   };
 
   const step = (now) => {

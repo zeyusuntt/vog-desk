@@ -79,6 +79,23 @@ a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-vi
 .headline { margin: 0; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.14; font-weight: 750; letter-spacing: -0.02em; max-width: 20ch; text-wrap: balance; }
 .action { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; margin: 24px 0 0; max-width: 60ch; }
 .swatch { width: 18px; height: 18px; border-radius: 4px; margin-top: 4px; }
+.sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+/* The decision first, in the plan's colour, then the number, then the same number as 100 nights. */
+.decision { margin-top: 6px; }
+.decision .band { border-left: 6px solid var(--lv); background: color-mix(in srgb, var(--lv) 16%, var(--paper)); border-radius: 0 8px 8px 0; padding: 14px 18px 14px 16px; }
+.decision .band strong { display: block; font-size: 24px; font-weight: 800; letter-spacing: -0.01em; }
+.decision .band p { margin: 4px 0 0; color: var(--ink-2); font-size: 15.5px; max-width: 54ch; }
+.decision .odds { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 24px; align-items: center; margin-top: 22px; }
+.decision .num .big { display: block; font-size: clamp(64px, 7.4vw, 96px); font-weight: 800; line-height: 0.95; letter-spacing: -0.035em; font-variant-numeric: tabular-nums; }
+.decision .num .big small { font-size: 0.45em; font-weight: 700; letter-spacing: 0; margin-left: 4px; color: var(--ink-2); }
+.decision .num .lab { display: block; margin-top: 8px; font-size: 16px; line-height: 1.4; color: var(--ink-2); max-width: 30ch; }
+.dots { margin: 0; width: 132px; }
+.dots svg { width: 132px; height: 132px; display: block; }
+.dots circle { fill: var(--slot); }
+.dots circle.on { fill: var(--lv); }
+.dots figcaption { font-size: 12.5px; color: var(--ink-3); margin-top: 6px; text-align: center; }
+.band-rate { margin: 12px 0 0; font-size: 14px; color: var(--ink-3); max-width: 60ch; }
+@media (max-width: 420px) { .decision .odds { grid-template-columns: 1fr; } }
 .action strong { font-size: 20px; }
 .action p { grid-column: 2; margin: 0; color: var(--ink-2); }
 .notice { margin: 20px 0 0; padding: 10px 14px; border-left: 3px solid var(--ink-3); background: var(--paper); color: var(--ink-2); max-width: 60ch; font-size: 15px; }
@@ -218,6 +235,7 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
 .glance dt { font-size: 13px; color: var(--ink-3); margin: 0 0 2px; }
 .glance dd { margin: 0; }
 .glance .big { display: block; font-size: 19px; font-weight: 750; letter-spacing: -0.01em; line-height: 1.25; }
+#g-live .big { font-size: 16px; font-weight: 650; }
 .glance .small { display: block; font-size: 14px; color: var(--ink-2); line-height: 1.45; margin-top: 2px; }
 .glance a { color: inherit; text-decoration: none; }
 .glance a:hover .big { text-decoration: underline; text-underline-offset: 4px; }
@@ -495,11 +513,17 @@ function renderCall(fc) {
     outcome = ver.event ? `It did. The highest hour reached ${Math.round(ver.observed_max_ppb)} ppb.` : `It did not. The highest hour was ${Math.round(ver.observed_max_ppb)} ppb.`;
   }
   box.innerHTML = `<div class="hero"><div class="hero-text">
-    <p class="dateline">Night of ${esc(longDate(fc.issue_date_hst))}, issued at 18:00 HST (${issued.toISOString().slice(11, 16)} UTC)</p>
-    <h1 class="headline">A ${pct(p)} chance that any hour at Pāhala reaches 75 ppb of sulfur dioxide before noon${ver && ver.event != null ? "." : " tomorrow."}</h1>
-    <div class="action"><span class="swatch" style="background:var(${L.color})" aria-hidden="true"></span>
-      <strong>${esc(L.label)}</strong>
-      <p>${esc(dec ? (dec.kind === "handover" ? `The desk handed this night to a person: ${dec.handover_reason || "the guidance conflicted."}` : stripLabel(dec.recommendation, L.label)) : modelOnlyText(p, lv))}</p>
+    <p class="dateline">${esc(longDate(fc.issue_date_hst))}, issued at 18:00 HST</p>
+    <h1 class="sr-only">A ${pct(p)} chance that any hour at Pāhala reaches 75 ppb of sulfur dioxide before noon${ver && ver.event != null ? "." : " tomorrow."} ${esc(L.label)}.</h1>
+    <div class="decision" style="--lv: var(${L.color})">
+      <div class="band"><strong>${esc(L.label)}</strong>
+        <p>${esc(dec ? (dec.kind === "handover" ? `The desk handed this night to a person: ${dec.handover_reason || "the guidance conflicted."}` : stripLabel(dec.recommendation, L.label)) : modelOnlyText(p, lv))}</p></div>
+      <div class="odds" aria-hidden="true">
+        <div class="num"><span class="big">${Math.round(p * 100)}<small>%</small></span><span class="lab">chance that any hour at Pāhala reaches 75 ppb of sulfur dioxide before noon${ver && ver.event != null ? "" : " tomorrow"}</span></div>
+        <figure class="dots"><svg viewBox="0 0 100 100">${Array.from({ length: 100 }, (_, i) => `<circle cx="${(i % 10) * 10 + 5}" cy="${Math.floor(i / 10) * 10 + 5}" r="3.6" class="${i < Math.round(p * 100) ? "on" : ""}"/>`).join("")}</svg>
+          <figcaption>${Math.round(p * 100)} of 100</figcaption></figure>
+      </div>
+      <p class="band-rate" id="band-rate" data-p="${p}"></p>
     </div>
     ${outcome ? `<p class="notice"><strong>Next day:</strong> ${esc(outcome)} Brier score for this night ${ver.brier != null ? ver.brier.toFixed(3) : "n/a"}.</p>` : ""}
     <dl class="glance" id="glance">
@@ -515,6 +539,7 @@ function renderCall(fc) {
   const guid = desk ? desk.guidance : [{ stream: "lr", p: fc.probability }];
   drawScale(document.getElementById("scale"), p, guid);
   mountScene(fc.issue_date_hst, ver, `../live/${fc.issue_date_hst}/scene.json`);
+  bandRate();
   redraw.call = () => { const s1 = document.getElementById("scale"); if (s1) drawScale(s1, p, guid, false); redraw.strip && redraw.strip(); };
 }
 
@@ -531,7 +556,7 @@ function sceneFigure(title, when = "tonight's") {
         <p class="scene-fallback">This view needs WebGL, which this browser has turned off. The hours are in the strip below.</p>
       </div>
       <svg class="chart" id="night-strip" role="img"></svg>
-      <p class="scene-note">Drift dots carry the GFS 925 hPa wind at the summit forward from the vent; they illustrate the wind, not a dispersion model. Beam height grows with the square root of SO2 and its colour follows the plan's bands; the label gives the measured value. Vertical scale ×2. Terrain: USGS 3DEP.</p>
+      <p class="scene-note">Drift dots carry the GFS 925 hPa wind at the summit forward from the vent; they illustrate the wind, not a dispersion model. Beam height grows with the square root of SO2 and its colour follows the same ramp as the strip; the ring on each beam marks 75 ppb, and the label gives the measured value. Vertical scale ×2. Terrain: USGS 3DEP.</p>
     </figure>`;
 }
 let scene3d = null;
@@ -576,11 +601,19 @@ async function showReplay(date) {
   const scene = await getJSON(`replay/${date}.json`);
   const hrs = scene.hours.pahala.map((v, i) => ({ hst: `${String((18 + i) % 24).padStart(2, "0")}:00`, ppb: v }));
   const peak = hrs.reduce((a, b) => (b.ppb ?? -1) > (a.ppb ?? -1) ? b : a);
-  document.getElementById("call").innerHTML = `
-    <p class="dateline replay-head">Replay of a past night. The desk did not run on this date; the hours are measured.</p>
-    <h1 class="headline">${esc(longDate(date))}: Pāhala reached ${Math.round(peak.ppb)} ppb at ${esc(peak.hst)} HST.</h1>
-    ${sceneFigure("The night over Kaʻū", "that night's")}`;
-  document.querySelector(".picker").hidden = true;
+  const ov = Math.max(...scene.hours.ocean_view.filter((v) => v != null));
+  document.getElementById("call").innerHTML = `<div class="hero"><div class="hero-text">
+    <p class="dateline">Replay of ${esc(longDate(date))}. The desk did not run on this date; every hour shown was measured.</p>
+    <h1 class="sr-only">${esc(longDate(date))}: Pāhala reached ${Math.round(peak.ppb)} ppb at ${esc(peak.hst)} HST.</h1>
+    <div class="decision" style="--lv: var(--lv-orange)">
+      <div class="band"><strong>The night the plan could not see coming</strong>
+        <p>${esc(stripLabel(scene.episode, "HVO"))}. The schools plan reacts after thirty minutes of high readings; no one had a forecast the evening before.</p></div>
+      <div class="odds"><div class="num"><span class="big">${Math.round(peak.ppb)}<small>ppb</small></span>
+        <span class="lab">Pāhala's highest hour, ${esc(peak.hst)} HST, ${Math.round(peak.ppb / 75)} times the 75 ppb one-hour standard. Ocean View reached ${Math.round(ov).toLocaleString("en-US")} ppb.</span></div></div>
+    </div>
+    <p class="notice">Press <strong>Play the night</strong> on the map to watch the hours from 18:00 to 11:00.</p>
+    </div><div class="hero-map">${sceneFigure("The night over Kaʻū", "that night's")}</div></div>`;
+  document.querySelector(".picker").style.display = "none";
   ["why", "evidence-section", "run-section"].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; });
   mountScene(date, null, `replay/${date}.json`, hrs);
 }
@@ -751,6 +784,15 @@ addEventListener("resize", () => {
   if (innerWidth === lastW) return;
   lastW = innerWidth; clearTimeout(resizeTimer); resizeTimer = setTimeout(() => Object.values(redraw).forEach((f) => f()), 150);
 });
+/* How often nights in tonight's band reached 75 ppb on the held-out season, for the line under the 100 dots. */
+let HELD = null;
+function bandRate() {
+  const cap = document.getElementById("band-rate"); if (!cap || !HELD) return;
+  const p = +cap.dataset.p, lo = p >= 2 * T_STAR ? 2 * T_STAR : p >= T_STAR ? T_STAR : 0, hi = lo === 2 * T_STAR ? 1.01 : lo === T_STAR ? 2 * T_STAR : T_STAR;
+  const inBand = HELD.filter((r) => +r.p >= lo && +r.p < hi), hit = inBand.filter((r) => r.event === "True").length;
+  if (inBand.length) cap.textContent = `How often that held up: on the held-out season, ${hit} of the ${inBand.length} nights the desk put in this band reached 75 ppb.`;
+}
+
 async function renderRecord() {
   try {
     const [full, nr] = await Promise.all([getText("../results/heldout_full_v4.csv"), getText("../results/heldout_noreview_v4.csv")]);
@@ -767,7 +809,8 @@ async function renderRecord() {
     ];
     document.getElementById("record-sub").textContent =
       `The held-out season, 1 July to 21 October 2026: ${a.length} nights, ${a.filter((r) => y(r)).length} reached 75 ppb. Scored once, after every rule was frozen. Lower Brier score is better; a constant at the season's own rate (${pct(base)}, known only afterwards) would score ${(base * (1 - base)).toFixed(3)}.`;
-    setGlance("g-held", `Brier ${rows[0].v.toFixed(3)} against ${rows[3].v.toFixed(3)}`, `The desk against the frozen 2025 model on ${a.length} nights it never saw, scored once. Lower is better.`);
+    setGlance("g-held", `${Math.round((1 - rows[0].v / rows[3].v) * 100)}% lower error than the frozen model`, `Brier ${rows[0].v.toFixed(3)} against ${rows[3].v.toFixed(3)} on ${a.length} nights the desk never saw, scored once.`);
+    HELD = a; bandRate();
     const sorted = a.sort((p, q) => p.issue_date_hst.localeCompare(q.issue_date_hst));
     const draw = () => { const b1 = document.getElementById("brier"), n1 = document.getElementById("nights");
       b1.replaceChildren(svgEl("title", {}, "Brier score by forecast on the held-out season")); drawBrier(b1, rows);
