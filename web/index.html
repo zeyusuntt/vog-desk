@@ -181,8 +181,8 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
 .scene-label { pointer-events: auto; cursor: pointer; }
 .scene-label:focus-visible { outline: 2px solid #6db3d1; outline-offset: 2px; }
 .scene:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
-.scene-views { position: absolute; right: 12px; top: 12px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; }
-.scene-views button { font: inherit; font-size: 13px; color: #e7ecee; background: rgba(10, 18, 22, .62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+.scene-views { position: absolute; right: 12px; top: 12px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 60%; }
+.scene-views button { font: inherit; font-size: 12.5px; white-space: nowrap; color: #e7ecee; background: rgba(10, 18, 22, .62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
   border: 1px solid rgba(231, 236, 238, .18); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
 .scene-views button:hover, .scene-views button.on { background: rgba(231, 236, 238, .16); }
 .scene-hint { position: absolute; left: 50%; top: 50%; translate: -50% -50%; margin: 0; padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #f2f5f6;
@@ -204,7 +204,7 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
 .scene-label.hot { border-color: #e0a15b; }
 .scene-label.hot span { color: #f6d7b0; }
 .scene-label.vent { border-color: rgba(255, 150, 80, .55); }
-.scene-legend { position: absolute; left: 14px; top: 12px; margin: 0; font-size: 13px; line-height: 1.5; color: #c3ccd1; max-width: min(46ch, 48%); pointer-events: none; }
+.scene-legend { position: absolute; left: 14px; top: 12px; margin: 0; font-size: 13px; line-height: 1.5; color: #c3ccd1; max-width: min(40ch, 38%); pointer-events: none; }
 .scene-legend b { color: #f2f5f6; font-weight: 700; }
 .scene-bar { position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
 .scene-bar button { font: inherit; font-size: 15px; font-weight: 700; color: #0f171b; background: #e7ecee; border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
@@ -572,8 +572,10 @@ async function mountScene(date, ver, url, replayHours = null) {
   redraw.strip();
   if (!scene) return;
   const legend = document.getElementById("scene-legend");
-  legend.innerHTML = [`<b>${esc(stripLabel(scene.episode, "HVO"))}</b>`,
-    scene.inversion ? `Inversion base ${scene.inversion.base_m.toLocaleString("en-US")} m, Hilo sounding ${esc(scene.inversion.launch_utc.slice(11))}` : "No Hilo sounding before 18:00, so no inversion is drawn",
+  const ep = stripLabel(scene.episode, "HVO"), mPause = ep.match(/pause; episode (\d+) ended .*?([\d.]+) days ago/i), mOn = ep.match(/episode (\d+) fountaining.*?([\d.]+) h ago/i);
+  const epShort = mPause ? `Pause: episode ${mPause[1]} ended ${mPause[2]} days ago` : mOn ? `Episode ${mOn[1]} fountaining for ${mOn[2]} h` : ep;
+  legend.innerHTML = [`<b>${esc(epShort)}</b>`,
+    scene.inversion ? `Inversion at ${scene.inversion.base_m.toLocaleString("en-US")} m (Hilo sounding)` : "No Hilo sounding at 18:00",
     scene.hours ? "" : "Monitor values appear after 12:00 HST tomorrow"].filter(Boolean).join("<br>");
   const readout = document.getElementById("readout"), play = document.getElementById("play");
   const onHour = (k, w) => {

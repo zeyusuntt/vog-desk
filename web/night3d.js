@@ -136,7 +136,7 @@ export async function mountNight(root, scene, opts = {}) {
 
   // The monitors: a ground halo and a beam that fades upward, topped by a bright point. Beam height grows with the
   // square root of SO2 and the colour follows the schools plan's bands; with no value only a small white mark shows.
-  const beamGeo = new THREE.CylinderGeometry(0.17, 0.17, 1, 16, 1, true); beamGeo.translate(0, 0.5, 0);
+  const beamGeo = new THREE.CylinderGeometry(0.24, 0.24, 1, 16, 1, true); beamGeo.translate(0, 0.5, 0);
   const beamMat = (color) => new THREE.ShaderMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
     uniforms: { uColor: { value: color } },
     vertexShader: "varying float vY; void main(){ vY=position.y; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }",
@@ -152,7 +152,7 @@ export async function mountNight(root, scene, opts = {}) {
     const head = new THREE.Sprite(additive(glowTex, color, 1.0)); s3.add(head);
     const core = new THREE.Mesh(new THREE.CircleGeometry(0.32, 20), new THREE.MeshBasicMaterial({ color: 0xf2f5f6, depthTest: false }));
     core.rotateX(-Math.PI / 2); core.position.set(x, y + 0.25, z); core.renderOrder = 3; s3.add(core);
-    const t75 = 2.0 + 0.2;   // beam height at 75 ppb
+    const t75 = 2.8 + 0.2;   // beam height at 75 ppb
     const ring = new THREE.Mesh(new THREE.TorusGeometry(0.42, 0.045, 8, 32), new THREE.MeshBasicMaterial({ color: 0xf2f5f6, transparent: true, opacity: 0.8 }));
     ring.rotateX(-Math.PI / 2); ring.position.set(x, y + t75, z); s3.add(ring);
     return { ...st, x, y, z, color, mat, beam, head, halo, mark, ring, hot: false, beamH: 0 };
@@ -302,12 +302,12 @@ export async function mountNight(root, scene, opts = {}) {
       const on = v != null;
       st.beam.visible = st.head.visible = st.halo.visible = st.ring.visible = on; st.mark.visible = !on;
       if (!on) { st.beamH = 0; span.textContent = hours ? "no value" : "not measured yet"; st.label.classList.remove("hot"); st.label._w = st.label._h = undefined; return; }
-      const hk = 2.0 * Math.sqrt(Math.max(v, 0) / 75) + 0.2;   // square root of SO2: 75 ppb stands 2.2 km, 1,200 ppb 8.2 km
+      const hk = 2.8 * Math.sqrt(Math.max(v, 0) / 75) + 0.2;   // square root of SO2: 75 ppb stands 3.0 km, 1,200 ppb 11.4 km
       st.beamH = hk; st.hot = v >= 75;
       st.color.set(LEVEL(v)); st.halo.material.color.copy(st.color); st.head.material.color.copy(st.color);
       st.beam.scale.set(1, hk, 1);
       st.head.position.set(st.x, st.y + hk, st.z); st.head.scale.setScalar(st.hot ? 1.5 : 1.0);
-      const r = 1.4 + 1.1 * Math.sqrt(Math.max(v, 0) / 75); st.halo.scale.set(r * 2, r * 2, 1); st.halo.userData.r = r * 2;
+      const r = 0.9 + 0.55 * Math.sqrt(Math.max(v, 0) / 75); st.halo.scale.set(r * 2, r * 2, 1); st.halo.userData.r = r * 2;
       span.textContent = `${Math.round(v)} ppb${st.hot ? ", above 75" : ""}`;
       st.label.classList.toggle("hot", st.hot); st.label._w = st.label._h = undefined;
     });
