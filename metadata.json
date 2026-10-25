@@ -79,7 +79,6 @@
     "tests/test_memory_service.py"
    ],
    "decisions": [
-    "the desk design",
     "docs/DEVLOG.md"
    ]
   },

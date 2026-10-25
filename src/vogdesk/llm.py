@@ -98,7 +98,7 @@ class SampleChat:
 
 
 # --- provider contract (Cursor) -----------------------------------------------------------------
-# Piece B: the Nightshift provider block, built in Cursor.
+# Meterless Runtime 1.4 provider contract v4 (POWER "Add Meterless
 # as a provider"), adapted for this desk. Contract:
 #   base URL METERLESS_BASE_URL (default http://127.0.0.1:8088/v1), bearer METERLESS_RUNTIME_TOKEN,
 #   headers `meterless-app: <METERLESS_APP>` and `meterless-scope: user`;

@@ -1,8 +1,7 @@
 """Shared state of one forecast case: what the desk saw, what it concluded, and why.
 
 Every number an agent reports must point back to an evidence item by id; the structured outputs
-below make that a type constraint rather than a prompt wish. Schema follows the desk design
-section 4.
+below make that a type constraint rather than a prompt wish.
 """
 from __future__ import annotations
 

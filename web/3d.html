@@ -437,7 +437,7 @@ function renderCall(fc) {
     <figure class="figure"><h2>Where tonight sits on the schools plan</h2>
       <p class="sub">The plan's levels are set for 15-minute averages at the school; the desk maps its probability onto them with thresholds fixed before the held-out test.</p>
       <svg class="chart" id="scale" role="img"></svg></figure>
-    ${sceneFigure("Tonight over Kaʻū")}`;
+    ${ver && ver.event != null ? sceneFigure("The night over Kaʻū", "that night's") : sceneFigure("Tonight over Kaʻū")}`;
   const guid = desk ? desk.guidance : [{ stream: "lr", p: fc.probability }];
   drawScale(document.getElementById("scale"), p, guid);
   mountScene(fc.issue_date_hst, ver, `../live/${fc.issue_date_hst}/scene.json`);

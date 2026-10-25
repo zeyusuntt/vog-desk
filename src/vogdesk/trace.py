@@ -1,6 +1,6 @@
 """JSONL trace of a case, one line per step, readable without LangGraph.
 
-Schema (the desk design): {case_id, ts, agent, step, inputs_hash, sql[], llm_call,
+Schema: {case_id, ts, agent, step, inputs_hash, sql[], llm_call,
 output, duration_ms}. Traces live under logs/<case_id>.jsonl; the live desk also copies the file next
 to its forecast. Nothing here prints secrets: SQL is logged after the as-of rewrite, never credentials.
 """
