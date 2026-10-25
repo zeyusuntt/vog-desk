@@ -27,6 +27,7 @@ from dotenv import load_dotenv  # noqa: E402
 load_dotenv(ROOT / ".env")
 
 from vogdesk import sources  # noqa: E402
+from vogdesk.desk.graph import DEFAULT_T_STAR  # noqa: E402
 from vogdesk.desk.state import Verification  # noqa: E402
 from vogdesk.desk.verifier import observe, outcome_of, verification_time  # noqa: E402
 from vogdesk.analogs import night_record  # noqa: E402
@@ -46,7 +47,7 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--issue", required=True)
     ap.add_argument("--no-fetch", action="store_true")
-    ap.add_argument("--t-star", type=float, default=float(os.environ.get("T_STAR", 0.19)))
+    ap.add_argument("--t-star", type=float, default=float(os.environ.get("T_STAR", DEFAULT_T_STAR)))
     args = ap.parse_args()
     issue = pd.Timestamp(args.issue)
     path = ROOT / "live" / issue.strftime("%Y-%m-%d") / "forecast.json"

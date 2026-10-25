@@ -52,7 +52,95 @@
   "n_events": 21,
   "git_head_at_training": "8649b40c3aeac62936c144c9d0681642e6daded6"
  },
- "verification": null,
+ "verification": {
+  "observed_max_ppb": 170.0,
+  "n_hours": 18,
+  "event": true,
+  "outcome": "hit",
+  "brier": 0.52215076,
+  "memory_record_id": "mem-634",
+  "ledger_entries": 0,
+  "verified_utc": "2026-10-25T01:07:24.146455Z",
+  "model_only_brier": 0.8521136100000001,
+  "memory": "sidecar",
+  "postgres": true,
+  "label_source": "airnow preliminary",
+  "t_star_used": 0.19,
+  "hours": [
+   {
+    "hst": "18:00",
+    "ppb": 1.0
+   },
+   {
+    "hst": "19:00",
+    "ppb": 18.0
+   },
+   {
+    "hst": "20:00",
+    "ppb": 45.0
+   },
+   {
+    "hst": "21:00",
+    "ppb": 31.0
+   },
+   {
+    "hst": "22:00",
+    "ppb": 16.0
+   },
+   {
+    "hst": "23:00",
+    "ppb": 15.0
+   },
+   {
+    "hst": "00:00",
+    "ppb": 30.0
+   },
+   {
+    "hst": "01:00",
+    "ppb": 44.0
+   },
+   {
+    "hst": "02:00",
+    "ppb": 76.0
+   },
+   {
+    "hst": "03:00",
+    "ppb": 85.0
+   },
+   {
+    "hst": "04:00",
+    "ppb": 99.0
+   },
+   {
+    "hst": "05:00",
+    "ppb": 170.0
+   },
+   {
+    "hst": "06:00",
+    "ppb": 112.0
+   },
+   {
+    "hst": "07:00",
+    "ppb": 93.0
+   },
+   {
+    "hst": "08:00",
+    "ppb": 136.0
+   },
+   {
+    "hst": "09:00",
+    "ppb": 58.0
+   },
+   {
+    "hst": "10:00",
+    "ppb": 18.0
+   },
+   {
+    "hst": "11:00",
+    "ppb": 11.0
+   }
+  ]
+ },
  "desk": {
   "case_id": "live-2026-10-23",
   "decision": {
