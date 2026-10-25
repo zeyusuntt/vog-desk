@@ -70,10 +70,10 @@ export async function mountNight(root, scene, opts = {}) {
   geo.setAttribute("elev", new THREE.BufferAttribute(elev, 1)); geo.computeVertexNormals();
   const terrainMat = new THREE.ShaderMaterial({
     uniforms: { uKey: { value: new THREE.Vector3(-0.66, 0.42, -0.62).normalize() }, uFill: { value: new THREE.Vector3(0.7, 0.55, -0.45).normalize() },
-      uFog: { value: FOG }, uVent: { value: new THREE.Vector2(vx, vz) }, uGlow: { value: active ? 1.0 : 0.35 }, uDay: { value: 0.0 } },
+      uFog: { value: FOG }, uVent: { value: new THREE.Vector2(vx, vz) }, uGlow: { value: active ? 1.0 : 0.35 }, uDay: { value: 0.0 }, uFogN: { value: 95 }, uFogF: { value: 210 } },
     vertexShader: `attribute float elev; varying float vE; varying vec3 vN; varying vec2 vXZ; varying float vD;
       void main(){ vE=elev; vN=normal; vXZ=position.xz; vec4 mv=modelViewMatrix*vec4(position,1.0); vD=-mv.z; gl_Position=projectionMatrix*mv; }`,
-    fragmentShader: `uniform vec3 uKey; uniform vec3 uFill; uniform vec3 uFog; uniform vec2 uVent; uniform float uGlow; uniform float uDay;
+    fragmentShader: `uniform vec3 uKey; uniform vec3 uFill; uniform vec3 uFog; uniform vec2 uVent; uniform float uGlow; uniform float uDay; uniform float uFogN; uniform float uFogF;
       varying float vE; varying vec3 vN; varying vec2 vXZ; varying float vD;
       vec3 lin(vec3 c){ return pow(c, vec3(2.2)); }
       vec3 ramp(float e){
@@ -93,13 +93,13 @@ export async function mountNight(root, scene, opts = {}) {
         col+=lin(vec3(0.45,0.70,0.80))*0.22*(1.0-smoothstep(1.5,18.0,vE));
         float d=distance(vXZ,uVent);
         col+=lin(vec3(1.0,0.42,0.12))*uGlow*0.55*(1.0-0.7*uDay)*exp(-d*d/8.0);
-        col=mix(col,uFog,smoothstep(95.0,210.0,vD)*0.9);
+        col=mix(col,uFog,smoothstep(uFogN,uFogF,vD)*0.9);
         gl_FragColor=vec4(col,1.0); }`,
   });
   s3.add(new THREE.Mesh(geo, terrainMat));
-  const sea = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShaderMaterial({ uniforms: { uFog: { value: FOG } },
+  const sea = new THREE.Mesh(new THREE.PlaneGeometry(600, 600), new THREE.ShaderMaterial({ uniforms: { uFog: { value: FOG }, uFogN: { value: 80 }, uFogF: { value: 230 } },
     vertexShader: "varying float vD; void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0); vD=-mv.z; gl_Position=projectionMatrix*mv; }",
-    fragmentShader: "uniform vec3 uFog; varying float vD; void main(){ vec3 c=pow(vec3(0.035,0.065,0.08),vec3(2.2)); gl_FragColor=vec4(mix(c,uFog,smoothstep(80.0,230.0,vD)*0.85),1.0); }" }));
+    fragmentShader: "uniform vec3 uFog; uniform float uFogN; uniform float uFogF; varying float vD; void main(){ vec3 c=pow(vec3(0.035,0.065,0.08),vec3(2.2)); gl_FragColor=vec4(mix(c,uFog,smoothstep(uFogN,uFogF,vD)*0.85),1.0); }" }));
   sea.rotateX(-Math.PI / 2); sea.position.y = -0.02; s3.add(sea);
 
   // The inversion from the Hilo sounding: a faint lid the gas stays under, faded toward its edges.
@@ -310,8 +310,8 @@ export async function mountNight(root, scene, opts = {}) {
     renderer.setPixelRatio(Math.min(devicePixelRatio, 2)); renderer.setSize(w, h, false);
     composer.setPixelRatio(Math.min(devicePixelRatio, 2)); composer.setSize(w, h); bloom.setSize(w, h);
     canvas.style.width = `${w}px`; canvas.style.height = `${h}px`; camera.aspect = w / h;
-    const far = Math.min(1.45, Math.max(0.92, 1.62 / camera.aspect));
-    home.pos.set(10 * far, 48 * far, 70 * far);
+    const far = narrow ? 1.12 : Math.min(1.45, Math.max(0.92, 1.62 / camera.aspect));
+    if (narrow) home.pos.set(6, 60, 50); else home.pos.set(10 * far, 48 * far, 70 * far);
     if (!userMoved && !fly) { camera.position.copy(home.pos); controls.target.copy(home.target); }
     camera.updateProjectionMatrix(); controls.update();
   };
@@ -376,6 +376,9 @@ export async function mountNight(root, scene, opts = {}) {
     if (fly) { const k = ease((now - fly.start) / fly.dur); camera.position.lerpVectors(fly.p0, fly.p1, k); controls.target.lerpVectors(fly.t0, fly.t1, k); if (k >= 1) fly = null; }
     else if (!userMoved && !reduce) { const off = home.pos.clone().sub(home.target), a = Math.sin(t * 0.11) * 0.16; off.applyAxisAngle(new THREE.Vector3(0, 1, 0), a); camera.position.copy(home.target).add(off); }
     controls.update();
+    const dist = camera.position.distanceTo(controls.target);
+    terrainMat.uniforms.uFogN.value = dist * 1.05; terrainMat.uniforms.uFogF.value = dist * 2.4;
+    sea.material.uniforms.uFogN.value = dist * 0.9; sea.material.uniforms.uFogF.value = dist * 2.6;
     light(hour);
     if (w && !reduce) {
       const sp = Math.hypot(w.v[0], w.v[1]) || 1, ux = w.v[0] / sp, uz = w.v[1] / sp, len = 1.0 + sp * 0.55, kps = 3.6 / SECONDS_PER_HOUR;
