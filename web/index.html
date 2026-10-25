@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>vog-desk, Pāhala</title>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.169.0/examples/jsm/"}}</script>
 <meta name="description" content="Each evening at 18:00 HST: the chance that sulfur dioxide at the Pāhala monitor reaches 75 ppb before noon, what the schools plan says to prepare, the evidence behind it, and how the desk has done.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -19,10 +20,12 @@
   --rule: #d3d9dd;
   --slot: #e1e6e8;
   --accent: #1d5c78;          /* ocean off Kaʻū */
-  --lv-green: #3b8c55;
-  --lv-yellow: #d6a90e;
-  --lv-orange: #c4561c;
-  --lv-red: #951c2b;
+  --lv-green: #3f9a74;        /* the schools plan's levels, softened and checked for colour-vision separation */
+  --lv-yellow: #d9a93a;
+  --lv-orange: #d2672f;
+  --lv-red: #93325a;
+  /* Hourly SO2 as one warm sequential ramp, light to dark: 0, 25, 50, 75, 110, 210, 1010 ppb */
+  --seq0: #e3e9eb; --seq1: #ecdcb4; --seq2: #e9bd72; --seq3: #dd9145; --seq4: #c96a33; --seq5: #a4452f; --seq6: #6e2238;
   --lv-handover: #5b4a8b;
   --wash: 26%;
 }
@@ -31,7 +34,8 @@
     color-scheme: dark;
     --page: #121618; --paper: #1a2024; --ink: #e7ecee; --ink-2: #b9c3c9; --ink-3: #98a4ab;
     --rule: #2c353b; --slot: #242c31; --accent: #6db3d1;
-    --lv-green: #1d7d3e; --lv-yellow: #a9912b; --lv-orange: #a34100; --lv-red: #cc4a7c; --lv-handover: #9b8ad6;
+    --lv-green: #2f8e68; --lv-yellow: #b08e2b; --lv-orange: #bd4026; --lv-red: #a84d9c; --lv-handover: #9b8ad6;
+    --seq0: #26323a; --seq1: #3d4640; --seq2: #64603f; --seq3: #9a7a3d; --seq4: #c98c42; --seq5: #e8a650; --seq6: #ffd889;
     --wash: 42%;
   }
 }
@@ -39,7 +43,8 @@
   color-scheme: dark;
   --page: #121618; --paper: #1a2024; --ink: #e7ecee; --ink-2: #b9c3c9; --ink-3: #98a4ab;
   --rule: #2c353b; --slot: #242c31; --accent: #6db3d1;
-  --lv-green: #1d7d3e; --lv-yellow: #a9912b; --lv-orange: #a34100; --lv-red: #cc4a7c; --lv-handover: #9b8ad6;
+  --lv-green: #2f8e68; --lv-yellow: #b08e2b; --lv-orange: #bd4026; --lv-red: #a84d9c; --lv-handover: #9b8ad6;
+  --seq0: #26323a; --seq1: #3d4640; --seq2: #64603f; --seq3: #9a7a3d; --seq4: #c98c42; --seq5: #e8a650; --seq6: #ffd889;
   --wash: 42%;
 }
 
@@ -52,7 +57,7 @@ body {
 }
 a { color: var(--accent); text-underline-offset: 3px; }
 a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; border-radius: 3px; }
-.wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+.wrap { max-width: 1200px; margin: 0 auto; padding: 0 28px; }
 @media (max-width: 560px) { .wrap { padding: 0 16px; } body { font-size: 16px; } }
 
 /* Masthead: the place, then the night picker */
@@ -64,16 +69,22 @@ a:focus-visible, select:focus-visible, button:focus-visible, [tabindex]:focus-vi
 .picker select { font: inherit; color: var(--ink); background: var(--paper); border: 1px solid var(--rule); border-radius: 6px; padding: 5px 8px; }
 
 /* Tonight's call */
-.call { padding: 44px 0 12px; }
+.call { padding: 40px 0 8px; }
+/* First screen: the call on the left, the night over Kaʻū on the right; one column below 1000 px. */
+.hero { display: grid; grid-template-columns: minmax(0, 5fr) minmax(0, 7fr); gap: 48px; align-items: start; }
+.hero-text { padding-top: 4px; }
+.hero-map .figure { margin: 0; }
+@media (max-width: 1000px) { .hero { grid-template-columns: 1fr; gap: 28px; } }
 .dateline { margin: 0 0 14px; color: var(--ink-2); font-size: 16px; }
-.headline { margin: 0; font-size: clamp(28px, 4.6vw, 46px); line-height: 1.12; font-weight: 700; letter-spacing: -0.02em; max-width: 22ch; }
-.action { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: start; margin: 26px 0 8px; max-width: 70ch; }
+.headline { margin: 0; font-size: clamp(28px, 3.2vw, 40px); line-height: 1.14; font-weight: 750; letter-spacing: -0.02em; max-width: 20ch; text-wrap: balance; }
+.action { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; align-items: start; margin: 24px 0 0; max-width: 60ch; }
 .swatch { width: 18px; height: 18px; border-radius: 4px; margin-top: 4px; }
 .action strong { font-size: 20px; }
 .action p { grid-column: 2; margin: 0; color: var(--ink-2); }
-.notice { margin: 18px 0 0; padding: 12px 14px; border-left: 4px solid var(--ink-3); background: var(--paper); color: var(--ink-2); max-width: 72ch; font-size: 15px; }
+.notice { margin: 20px 0 0; padding: 10px 14px; border-left: 3px solid var(--ink-3); background: var(--paper); color: var(--ink-2); max-width: 60ch; font-size: 15px; }
 
-.figure { margin: 28px 0 0; }
+.figure { margin: 40px 0 0; }
+.scale-fig { margin-top: 48px; }
 .figure h2, .section h2 { font-size: 20px; margin: 0 0 4px; font-weight: 700; letter-spacing: -0.005em; }
 .figure .sub, .section .sub { margin: 0 0 12px; color: var(--ink-2); font-size: 15px; max-width: 72ch; }
 svg text { font-family: inherit; fill: var(--ink); }
@@ -82,7 +93,7 @@ svg .soft { fill: var(--ink-2); }
 .chart { width: 100%; height: auto; display: block; overflow: visible; }
 
 /* Sections below the call */
-.section { padding: 40px 0 8px; border-top: 1px solid var(--rule); margin-top: 40px; }
+.section { padding: 44px 0 4px; border-top: 1px solid var(--rule); margin-top: 48px; }
 .cols { display: grid; grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr); gap: 40px; }
 @media (max-width: 860px) { .cols { grid-template-columns: 1fr; gap: 28px; } }
 .prose { max-width: 68ch; }
@@ -144,6 +155,85 @@ svg .soft { fill: var(--ink-2); }
 footer { margin: 56px 0 0; padding: 26px 0 44px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 14px; }
 footer p { margin: 0 0 8px; max-width: 80ch; }
 
+
+/* The night over Kaʻū (3D). A dark figure: it is a night map, and the only dark surface on the page. */
+.night3d .sub { max-width: 68ch; }
+.scene { position: relative; background: #0b1418; border-radius: 8px; overflow: hidden; margin-top: 12px; color: #e7ecee; border: 1px solid rgba(231, 236, 238, .1); }
+.scene canvas { display: block; width: 100%; }
+.scene-labels { position: absolute; inset: 0; pointer-events: none; }
+.scene-label { pointer-events: auto; cursor: pointer; }
+.scene-label:focus-visible { outline: 2px solid #6db3d1; outline-offset: 2px; }
+.scene:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.scene-views { position: absolute; right: 12px; top: 12px; display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; max-width: 50%; }
+.scene-views button { font: inherit; font-size: 13px; color: #e7ecee; background: rgba(10, 18, 22, .62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid rgba(231, 236, 238, .18); border-radius: 999px; padding: 5px 11px; cursor: pointer; }
+.scene-views button:hover, .scene-views button.on { background: rgba(231, 236, 238, .16); }
+.scene-hint { position: absolute; left: 50%; top: 50%; translate: -50% -50%; margin: 0; padding: 8px 14px; border-radius: 8px; font-size: 14px; color: #f2f5f6;
+  background: rgba(10, 18, 22, .78); opacity: 0; transition: opacity .25s; pointer-events: none; }
+.scene-hint.on { opacity: 1; }
+.scene-card { position: absolute; right: 12px; top: 56px; width: min(262px, 70%); padding: 12px 14px 10px; border-radius: 10px; color: #e7ecee;
+  background: rgba(10, 18, 22, .78); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1px solid rgba(231, 236, 238, .16); box-shadow: 0 10px 30px rgba(0, 0, 0, .4); }
+.scene-card b { display: block; font-size: 16px; }
+.scene-card .role { display: block; font-size: 12.5px; color: #9aa6ad; margin-bottom: 6px; }
+.scene-card p { margin: 6px 0 8px; font-size: 13.5px; line-height: 1.45; color: #c3ccd1; }
+.scene-card .now strong { color: #f2f5f6; font-size: 15px; }
+.scene-card svg { display: block; }
+.scene-card .x { position: absolute; right: 8px; top: 6px; font: inherit; font-size: 18px; line-height: 1; color: #9aa6ad; background: none; border: 0; cursor: pointer; padding: 4px; }
+.scene-label { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 13px; line-height: 1.3;
+  background: rgba(10, 18, 22, .62); -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  border: 1px solid rgba(231, 236, 238, .14); border-radius: 6px; padding: 4px 8px; box-shadow: 0 4px 18px rgba(0, 0, 0, .35); }
+.scene-label b { display: block; font-weight: 700; color: #f2f5f6; }
+.scene-label span { color: #c3ccd1; }
+.scene-label.hot { border-color: #e0a15b; }
+.scene-label.hot span { color: #f6d7b0; }
+.scene-label.vent { border-color: rgba(255, 150, 80, .55); }
+.scene-legend { position: absolute; left: 14px; top: 12px; margin: 0; font-size: 13px; line-height: 1.5; color: #c3ccd1; max-width: min(46ch, 48%); pointer-events: none; }
+.scene-legend b { color: #f2f5f6; font-weight: 700; }
+.scene-bar { position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.scene-bar button { font: inherit; font-size: 15px; font-weight: 700; color: #0f171b; background: #e7ecee; border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
+.scene-bar button:active { transform: translateY(1px); }
+.scene-bar button:focus-visible { outline: 3px solid #6db3d1; outline-offset: 2px; }
+.readout { margin: 0; font-size: 14px; color: #dfe6e9; background: rgba(15, 23, 27, .72); border-radius: 4px; padding: 4px 8px; }
+.scene-fallback { display: none; padding: 28px 18px; margin: 0; color: #c3ccd1; }
+.scene.no-webgl canvas, .scene.no-webgl .scene-labels, .scene.no-webgl .scene-bar, .scene.no-webgl .scene-legend { display: none; }
+.scene.no-webgl .scene-fallback { display: block; }
+.scene-note { font-size: 14px; color: var(--ink-3); margin: 8px 0 0; max-width: 80ch; }
+#night-strip .sel { fill: none; stroke: var(--ink); stroke-width: 2; }
+#night-strip rect.slot { cursor: pointer; }
+.replay-head { padding: 34px 0 6px; }
+@media (max-width: 560px) {
+  .scene { display: flex; flex-direction: column; }
+  .scene-legend { position: static; order: 0; padding: 12px 12px 0; max-width: none; font-size: 13px; }
+  .scene canvas { order: 1; }
+  .scene-bar { position: static; order: 3; padding: 10px 12px 12px; }
+  .scene-views { position: static; order: 2; max-width: none; justify-content: flex-start; padding: 10px 12px 0; }
+  .scene-card { top: auto; bottom: 120px; right: 10px; }
+  .scene-label { font-size: 12px; } .readout { font-size: 13px; background: none; padding: 0; }
+}
+
+/* At a glance: three figures under the headline, each linking to where it is explained. */
+.glance { display: grid; grid-template-columns: 1fr; gap: 0; margin: 28px 0 0; max-width: 60ch; }
+.glance > div { border-top: 1px solid var(--rule); padding: 12px 0; display: grid; grid-template-columns: 13ch 1fr; gap: 16px; align-items: baseline; }
+.glance > div:first-child { border-top: 2px solid var(--ink); }
+.glance dt { font-size: 13px; color: var(--ink-3); margin: 0 0 2px; }
+.glance dd { margin: 0; }
+.glance .big { display: block; font-size: 19px; font-weight: 750; letter-spacing: -0.01em; line-height: 1.25; }
+.glance .small { display: block; font-size: 14px; color: var(--ink-2); line-height: 1.45; margin-top: 2px; }
+.glance a { color: inherit; text-decoration: none; }
+.glance a:hover .big { text-decoration: underline; text-underline-offset: 4px; }
+@media (max-width: 560px) { .glance > div { grid-template-columns: 1fr; gap: 2px; } }
+/* Who did what tonight: the five roles as a pipeline, left to right; stacked on narrow screens. */
+.agents { list-style: none; margin: 18px 0 0; padding: 0; counter-reset: role; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0; }
+.agents li { counter-increment: role; position: relative; padding: 18px 18px 18px 0; border-top: 2px solid var(--rule); }
+.agents li + li { padding-left: 18px; border-left: 1px solid var(--rule); }
+.agents li::before { content: counter(role); position: absolute; top: -13px; left: 0; width: 24px; height: 24px; border-radius: 50%; background: var(--page); border: 2px solid var(--accent); color: var(--accent); font-size: 13px; font-weight: 800; display: grid; place-items: center; }
+.agents li + li::before { left: 18px; }
+.agents .who b { display: block; font-size: 16px; margin-top: 8px; }
+.agents .who span { display: inline-block; margin-top: 6px; font-size: 12.5px; padding: 1px 8px; border-radius: 999px; border: 1px solid var(--rule); color: var(--ink-2); }
+.agents .who span.model { border-color: var(--accent); color: var(--accent); }
+.agents .did { font-size: 14.5px; line-height: 1.5; color: var(--ink-2); margin: 10px 0 0; }
+.agents .did a { font-size: 13.5px; }
+@media (max-width: 1000px) { .agents { grid-template-columns: 1fr; } .agents li, .agents li + li { padding: 16px 0 16px 40px; border-left: 0; border-top: 1px solid var(--rule); } .agents li::before, .agents li + li::before { top: 16px; left: 0; } .agents .who b { margin-top: 0; } }
 </style>
 </head>
 <body>
@@ -156,6 +246,12 @@ footer p { margin: 0 0 8px; max-width: 80ch; }
 
 <main class="wrap">
   <section class="call" id="call" aria-live="polite"><p class="empty">Loading tonight's forecast.</p></section>
+
+  <section class="section" id="agents-section" hidden>
+    <h2>Who did what tonight</h2>
+    <p class="sub">Five roles run every evening. Two of them are Nemotron models called through Nightshift; the rest is code. Every line below is read from tonight's trace.</p>
+    <ol class="agents" id="agents"></ol>
+  </section>
 
   <section class="section" id="why" hidden>
     <div class="cols">
@@ -338,8 +434,16 @@ function drawScale(svg, p, guidance, animate = true) {
 }
 
 /* The night window: 18 hourly slots, empty at issue, the measured hours after verification. */
-function bandOfPpb(v) { return v >= 1010 ? "--lv-red" : v >= 210 ? "--lv-orange" : v >= 110 ? "--lv-yellow" : "--lv-green"; }
-function drawNight(svg, ver, issueIso) {
+/* Hourly SO2 on the sequential ramp: linear between the stops, read from the theme's tokens. */
+const SEQ_AT = [0, 25, 50, 75, 110, 210, 1010];
+function seqColor(v) {
+  const cs = getComputedStyle(document.documentElement), hex = SEQ_AT.map((_, i) => cs.getPropertyValue(`--seq${i}`).trim());
+  const rgb = (h) => [1, 3, 5].map((k) => parseInt(h.slice(k, k + 2), 16));
+  let i = SEQ_AT.findIndex((a) => v < a); if (i === -1) return hex[hex.length - 1]; if (i === 0) return hex[0];
+  const t = (v - SEQ_AT[i - 1]) / (SEQ_AT[i] - SEQ_AT[i - 1]), a = rgb(hex[i - 1]), b = rgb(hex[i]);
+  return `rgb(${a.map((x, k) => Math.round(x + (b[k] - x) * t)).join(",")})`;
+}
+function drawNight(svg, ver, issueIso, sel = null, onPick = null) {
   svg.replaceChildren(svgEl("title", {}, "The forecast window, 18:00 to 12:00 HST"));
   const W = Math.max(300, Math.round(svg.parentElement.clientWidth || 1000)), H = 98, n = 18, gap = W < 600 ? 2 : 3, cw = (W - gap * (n - 1)) / n, top = 26, ch = 42;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -349,8 +453,9 @@ function drawNight(svg, ver, issueIso) {
   for (let i = 0; i < n; i++) {
     const hr = (18 + i) % 24, x0 = i * (cw + gap);
     const h = hours ? hours[i] : null;
-    const fill = h && h.ppb != null ? `var(${bandOfPpb(h.ppb)})` : "var(--slot)";
-    const r = svgEl("rect", { x: x0, y: top, width: cw, height: ch, rx: 4, fill });
+    const fill = h && h.ppb != null ? seqColor(h.ppb) : "var(--slot)";
+    const r = svgEl("rect", { x: x0, y: top, width: cw, height: ch, rx: 4, fill, class: onPick ? "slot" : "" });
+    if (onPick) r.addEventListener("click", () => onPick(i));
     const hhmm = `${String(hr).padStart(2, "0")}:00`;
     r.addEventListener("mousemove", (e) => showTip(e, h && h.ppb != null ? `${hhmm} HST: ${h.ppb.toFixed(0)} ppb` : `${hhmm} HST: ${hours ? "no value" : "not measured yet"}`));
     r.addEventListener("mouseleave", hideTip);
@@ -358,6 +463,7 @@ function drawNight(svg, ver, issueIso) {
     if (h && h.ppb != null && h.ppb >= 75) svg.append(svgEl("rect", { x: x0 + cw / 2 - 3, y: top + ch - 11, width: 6, height: 6, rx: 1, fill: "var(--paper)" }));
     if (hr % (W < 600 ? 6 : 3) === 0) svg.append(svgEl("text", { x: x0 + cw / 2, y: top + ch + 20, "text-anchor": "middle", "font-size": 13, class: "muted" }, hhmm));
   }
+  if (sel != null) svg.append(svgEl("rect", { x: sel * (cw + gap) - 1.5, y: top - 1.5, width: cw + 3, height: ch + 3, rx: 5, class: "sel" }));
   if (maxI >= 0) svg.append(svgEl("text", { x: maxI * (cw + gap) + cw / 2, y: top - 8, "text-anchor": "middle", "font-size": 14, "font-weight": 700 }, `${maxV.toFixed(0)} ppb`));
   else svg.append(svgEl("text", { x: 0, y: top - 8, "font-size": 14, class: "soft" }, W < 600 ? "Filled in after noon tomorrow." : "Measured hours appear here after 12:00 HST the next day."));
 }
@@ -388,7 +494,7 @@ function renderCall(fc) {
   if (ver && ver.event != null) {
     outcome = ver.event ? `It did. The highest hour reached ${Math.round(ver.observed_max_ppb)} ppb.` : `It did not. The highest hour was ${Math.round(ver.observed_max_ppb)} ppb.`;
   }
-  box.innerHTML = `
+  box.innerHTML = `<div class="hero"><div class="hero-text">
     <p class="dateline">Night of ${esc(longDate(fc.issue_date_hst))}, issued at 18:00 HST (${issued.toISOString().slice(11, 16)} UTC)</p>
     <h1 class="headline">A ${pct(p)} chance that any hour at Pāhala reaches 75 ppb of sulfur dioxide before noon${ver && ver.event != null ? "." : " tomorrow."}</h1>
     <div class="action"><span class="swatch" style="background:var(${L.color})" aria-hidden="true"></span>
@@ -396,18 +502,127 @@ function renderCall(fc) {
       <p>${esc(dec ? (dec.kind === "handover" ? `The desk handed this night to a person: ${dec.handover_reason || "the guidance conflicted."}` : stripLabel(dec.recommendation, L.label)) : modelOnlyText(p, lv))}</p>
     </div>
     ${outcome ? `<p class="notice"><strong>Next day:</strong> ${esc(outcome)} Brier score for this night ${ver.brier != null ? ver.brier.toFixed(3) : "n/a"}.</p>` : ""}
+    <dl class="glance" id="glance">
+      <div><dt>Tonight's run</dt><dd><a href="#agents-section" id="g-how"><span class="big">Reading the trace</span></a></dd></div>
+      <div><dt>Live record</dt><dd><a href="#log" id="g-live"><span class="big">Loading</span></a></dd></div>
+      <div><dt>Held-out test</dt><dd><a href="#record" id="g-held"><span class="big">Loading</span></a></dd></div>
+    </dl>
     ${!desk ? `<p class="notice">This night shows the model alone: the desk's agents did not run${fc.desk && fc.desk.error ? ` (${esc(fc.desk.error.split(":")[0])})` : ""}.</p>` : ""}
-    <figure class="figure"><h2>Where tonight sits on the schools plan</h2>
+    </div><div class="hero-map">${ver && ver.event != null ? sceneFigure("The night over Kaʻū", "that night's") : sceneFigure("Tonight over Kaʻū")}</div></div>
+    <figure class="figure scale-fig"><h2>Where tonight sits on the schools plan</h2>
       <p class="sub">The plan's levels are set for 15-minute averages at the school; the desk maps its probability onto them with thresholds fixed before the held-out test.</p>
-      <svg class="chart" id="scale" role="img"></svg></figure>
-    <figure class="figure"><h2>The night in question</h2>
-      <p class="sub">Eighteen hours from 18:00 to 11:00 HST, coloured by the plan's bands once measured. A light square marks an hour at or above 75 ppb.</p>
-      <svg class="chart" id="night-strip" role="img"></svg></figure>`;
+      <svg class="chart" id="scale" role="img"></svg></figure>`;
   const guid = desk ? desk.guidance : [{ stream: "lr", p: fc.probability }];
   drawScale(document.getElementById("scale"), p, guid);
-  drawNight(document.getElementById("night-strip"), ver, fc.issue_date_hst);
-  redraw.call = () => { const s1 = document.getElementById("scale"), n1 = document.getElementById("night-strip");
-    if (s1) drawScale(s1, p, guid, false); if (n1) drawNight(n1, ver, fc.issue_date_hst); };
+  mountScene(fc.issue_date_hst, ver, `../live/${fc.issue_date_hst}/scene.json`);
+  redraw.call = () => { const s1 = document.getElementById("scale"); if (s1) drawScale(s1, p, guid, false); redraw.strip && redraw.strip(); };
+}
+
+function sceneFigure(title, when = "tonight's") {
+  return `<figure class="figure night3d"><h2>${esc(title)}</h2>
+      <p class="sub">Where the gas starts, where ${when} forecast wind takes it, and what each monitor measured, hour by hour from 18:00 to 11:00 HST. Choose an hour below or play the night.</p>
+      <div class="scene" id="scene" tabindex="0" role="application" aria-roledescription="map" aria-label="Map of Kaʻū with the Kīlauea summit vent, the Pāhala, Volcanoes National Park and Ocean View monitors, tonight's forecast wind and the measured sulfur dioxide at each monitor">
+        <canvas></canvas><div class="scene-labels"></div>
+        <p class="scene-legend" id="scene-legend"></p>
+        <div class="scene-views" role="group" aria-label="Viewpoints"><button type="button" data-view="overview">Overview</button><button type="button" data-view="summit">Vent to Pāhala</button><button type="button" data-view="oceanview">Ocean View</button><button type="button" id="explore" hidden>Explore the map</button></div>
+        <p class="scene-hint" aria-live="polite"></p>
+        <div class="scene-card" hidden></div>
+        <div class="scene-bar"><button type="button" id="play">Play the night</button><p class="readout" id="readout" aria-live="polite"></p></div>
+        <p class="scene-fallback">This view needs WebGL, which this browser has turned off. The hours are in the strip below.</p>
+      </div>
+      <svg class="chart" id="night-strip" role="img"></svg>
+      <p class="scene-note">Drift dots carry the GFS 925 hPa wind at the summit forward from the vent; they illustrate the wind, not a dispersion model. Beam height grows with the square root of SO2 and its colour follows the plan's bands; the label gives the measured value. Vertical scale ×2. Terrain: USGS 3DEP.</p>
+    </figure>`;
+}
+let scene3d = null;
+async function mountScene(date, ver, url, replayHours = null) {
+  const root = document.getElementById("scene"); if (!root) return;
+  let scene;
+  try { scene = await getJSON(url); } catch { root.classList.add("no-webgl"); root.querySelector(".scene-fallback").textContent = "No scene was recorded for this night. The hours are in the strip below."; scene = null; }
+  const stripVer = replayHours ? { hours: replayHours } : ver;
+  const strip = document.getElementById("night-strip");
+  let sel = 0;
+  const pick = (i) => { sel = i; drawNight(strip, stripVer, date, sel, pick); if (scene3d) scene3d.setHour(i); };
+  redraw.strip = () => drawNight(strip, stripVer, date, scene3d ? sel : null, scene3d ? pick : null);
+  redraw.strip();
+  if (!scene) return;
+  const legend = document.getElementById("scene-legend");
+  legend.innerHTML = [`<b>${esc(stripLabel(scene.episode, "HVO"))}</b>`,
+    scene.inversion ? `Inversion base ${scene.inversion.base_m.toLocaleString("en-US")} m, Hilo sounding ${esc(scene.inversion.launch_utc.slice(11))}` : "No Hilo sounding before 18:00, so no inversion is drawn",
+    scene.hours ? "" : "Monitor values appear after 12:00 HST tomorrow"].filter(Boolean).join("<br>");
+  const readout = document.getElementById("readout"), play = document.getElementById("play");
+  const onHour = (k, w) => {
+    if (k !== sel) { sel = k; redraw.strip(); }
+    const hhmm = `${String((18 + k) % 24).padStart(2, "0")}:00`;
+    const pv = scene.hours ? scene.hours.pahala[k] : null;
+    readout.textContent = `${hhmm} HST. ` + (w ? `Wind at the summit from ${w.lead.from_deg}° at ${w.lead.speed_ms} m/s (GFS, ${w.lead.hst} lead). ` : "No GFS wind. ")
+      + (scene.hours ? `Pāhala ${pv == null ? "no value" : Math.round(pv) + " ppb"}.` : "");
+  };
+  try {
+    const m = await import("./night3d.js");
+    const h0 = Number(new URLSearchParams(location.search).get("hour")); sel = Number.isInteger(h0) && h0 >= 0 && h0 < 18 ? h0 : 0;
+    scene3d = await m.mountNight(root, scene, { base: "./", hour: sel, onHour, onPlay: (on) => { play.textContent = on ? "Pause" : "Play the night"; } });
+  } catch (e) { console.warn("scene", e); root.classList.add("no-webgl"); scene3d = null; }
+  if (!scene3d) { redraw.strip(); return; }
+  redraw.strip();
+  play.addEventListener("click", () => scene3d.playing ? scene3d.pause() : scene3d.play());
+  root.querySelectorAll("[data-view]").forEach((b) => b.addEventListener("click", () => scene3d.view(b.dataset.view)));
+  const ex = document.getElementById("explore");
+  if (scene3d.coarse) { ex.hidden = false; let on = false; ex.addEventListener("click", () => { on = !on; scene3d.explore(on); ex.textContent = on ? "Done exploring" : "Explore the map"; ex.classList.toggle("on", on); }); }
+  if (new URLSearchParams(location.search).get("autoplay") === "1") scene3d.play();
+}
+
+async function showReplay(date) {
+  const scene = await getJSON(`replay/${date}.json`);
+  const hrs = scene.hours.pahala.map((v, i) => ({ hst: `${String((18 + i) % 24).padStart(2, "0")}:00`, ppb: v }));
+  const peak = hrs.reduce((a, b) => (b.ppb ?? -1) > (a.ppb ?? -1) ? b : a);
+  document.getElementById("call").innerHTML = `
+    <p class="dateline replay-head">Replay of a past night. The desk did not run on this date; the hours are measured.</p>
+    <h1 class="headline">${esc(longDate(date))}: Pāhala reached ${Math.round(peak.ppb)} ppb at ${esc(peak.hst)} HST.</h1>
+    ${sceneFigure("The night over Kaʻū", "that night's")}`;
+  document.querySelector(".picker").hidden = true;
+  ["why", "evidence-section", "run-section"].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; });
+  mountScene(date, null, `replay/${date}.json`, hrs);
+}
+
+function setGlance(id, big, small) {
+  const el = document.getElementById(id); if (!el) return;
+  el.innerHTML = `<span class="big">${esc(big)}</span>${small ? `<span class="small">${esc(small)}</span>` : ""}`;
+}
+
+/* The five roles, from the forecast file and its trace. */
+function renderAgents(fc, lines) {
+  const sec = document.getElementById("agents-section"), ol = document.getElementById("agents");
+  const desk = fc.desk && !fc.desk.error ? fc.desk : null;
+  if (!desk || !lines.length) { sec.hidden = true; setGlance("g-how", desk ? "Trace not recorded" : "Model alone", desk ? "" : "The agents did not run on this night."); return; }
+  const queries = lines.filter((l) => /^query:/.test(l.step)), requeries = lines.filter((l) => /^requery:/.test(l.step) && l.output && l.output.id);
+  const calls = desk.llm_calls || [], callOf = (a) => calls.find((c) => c.agent === a);
+  const secs = (c) => c && c.latency_ms ? `${(c.latency_ms / 1000).toFixed(1)} s` : "";
+  const valid = (c) => !c ? "" : c.validation === "ok" ? "every number in it passed the check against the evidence" : c.validation === "retried" ? "it passed the evidence check after one retry" : "the reply failed the check, so the code's template was used";
+  const g = Object.fromEntries((desk.guidance || []).map((x) => [x.stream, x]));
+  const streams = ["lr", "memory_model", "recent_rate", "analog"].filter((k) => g[k] && g[k].p != null).map((k) => `${STREAM_SHORT[k]} ${pct(g[k].p)}`).join(", ");
+  const flags = (desk.flags || []).filter((f, i, a) => a.findIndex((x) => x.code === f.code && x.detail === f.detail) === i);
+  const TABLE = { gfs: "the GFS forecast", sounding: "the Hilo sounding", pahala_24h: "Pāhala's last 24 hours", pahala_6h: "Pāhala's last 6 hours",
+    hvnp_6h: "the summit monitor", ocean_view_6h: "Ocean View", episode: "the HVO episode table" };
+  const tables = [...new Set(requeries.map((l) => { const k = l.step.replace("requery:", ""); return TABLE[k] || k.replace(/_/g, " "); }))];
+  const dec = desk.decision, L = LEVEL[levelOf(dec)] || LEVEL.normal;
+  const ev = callOf("EvidenceAgent"), dl = callOf("DutyLead");
+  const v = fc.verification;
+  const decided = dec.kind === "handover" ? `handed the night to a person: ${dec.handover_reason || "the guidance conflicted"}`
+    : dec.adjustment != null && dec.base_p != null
+      ? (Math.abs(dec.adjustment) > 0.0005 ? `took the memory model's ${pct(dec.base_p)} as the base and moved it by ${dec.adjustment > 0 ? "+" : ""}${Math.round(dec.adjustment * 100)} points, citing ${dec.adjustment_reason || "a review flag"}` : `kept the memory model's ${pct(dec.base_p)} as the base`)
+      : "weighed the four streams itself (this night ran before the rules were frozen on 24 October)";
+  const items = [
+    ["Evidence agent", "Nemotron 3.5 Lightning", true, `Ran ${queries.length} queries through the Zetaris semantic layer, each cut at 18:00 HST, and wrote the summary of the evening${ev ? ` in ${secs(ev)}; ${valid(ev)}` : ""}.`],
+    ["Forecaster", "code and memory", false, `Gave four probabilities for the same question: ${streams}. The memory model is refit each evening on the nights the desk has verified.`],
+    ["Review", "code", false, flags.length ? `Raised ${flags.length === 1 ? "a flag" : `${flags.length} flags`}: ${flags.map((f) => f.detail).join("; ")}. ${tables.length ? `Re-queried ${tables.join(", ")}; ` : ""}${flags.every((f) => f.resolved) ? "resolved" : "still open after the re-query"}.` : "Raised no flags: the streams agreed with each other and with the last 24 hours."],
+    ["Duty lead", "Nemotron 3 Ultra", true, `${decided[0].toUpperCase()}${decided.slice(1)}. Issued ${pct(dec.p)}, ${L.label.toLowerCase()}, and wrote the discussion${dl ? ` (${secs(dl)}; ${dl.validation === "ok" ? "passed the evidence check" : dl.validation === "retried" ? "passed after a retry" : "template used"})` : ""}.`],
+    ["Verifier", "code and H-MEM memory", false, v && v.event != null ? `Next afternoon: the highest hour was ${Math.round(v.observed_max_ppb)} ppb, so the night ${v.event ? "reached" : "stayed below"} 75 ppb; the call was a ${String(v.outcome).replace(/_/g, " ")}. Wrote the night into memory${v.memory_record_id ? ` as ${v.memory_record_id}` : ""}, where tomorrow's memory model will learn from it.` : "Runs after 12:00 HST tomorrow: scores the night against the monitor and writes it into memory with its source and a confidence."],
+  ];
+  ol.innerHTML = items.map(([who, eng, model, did]) => `<li><div class="who"><b>${esc(who)}</b><span class="${model ? "model" : ""}">${esc(eng)}</span></div><p class="did">${esc(did)} <a href="#run-section">Steps</a></p></li>`).join("");
+  sec.hidden = false;
+  const nModel = calls.length;
+  setGlance("g-how", `5 roles, ${nModel} Nemotron call${nModel === 1 ? "" : "s"}`, `${queries.length} queries through Zetaris${desk.review_round ? `, ${desk.review_round} re-query round${desk.review_round > 1 ? "s" : ""}` : ", no re-query needed"}, numbers checked against the evidence.`);
 }
 
 function renderWhy(fc) {
@@ -552,6 +767,7 @@ async function renderRecord() {
     ];
     document.getElementById("record-sub").textContent =
       `The held-out season, 1 July to 21 October 2026: ${a.length} nights, ${a.filter((r) => y(r)).length} reached 75 ppb. Scored once, after every rule was frozen. Lower Brier score is better; a constant at the season's own rate (${pct(base)}, known only afterwards) would score ${(base * (1 - base)).toFixed(3)}.`;
+    setGlance("g-held", `Brier ${rows[0].v.toFixed(3)} against ${rows[3].v.toFixed(3)}`, `The desk against the frozen 2025 model on ${a.length} nights it never saw, scored once. Lower is better.`);
     const sorted = a.sort((p, q) => p.issue_date_hst.localeCompare(q.issue_date_hst));
     const draw = () => { const b1 = document.getElementById("brier"), n1 = document.getElementById("nights");
       b1.replaceChildren(svgEl("title", {}, "Brier score by forecast on the held-out season")); drawBrier(b1, rows);
@@ -565,6 +781,11 @@ async function renderRecord() {
 async function renderLog(dates, current) {
   const t = document.getElementById("log");
   const fcs = await Promise.all(dates.map((d) => getJSON(`../live/${d}/forecast.json`).catch(() => null)));
+  const checked = fcs.filter((fc) => fc && fc.verification && fc.verification.event != null);
+  const right = checked.filter((fc) => ["hit", "correct_negative"].includes(fc.verification.outcome)).length;
+  const waiting = fcs.filter((fc) => fc && !(fc.verification && fc.verification.event != null)).length;
+  setGlance("g-live", checked.length ? `${right} of ${checked.length} nights called right` : "First night pending",
+    `${checked.length ? "A warning before an event night, or none before a quiet one. " : ""}${waiting ? `${waiting} night${waiting > 1 ? "s" : ""} waiting for the next afternoon's check.` : "Every forecast was committed before its outcome."}`);
   t.innerHTML = `<tr><th>Night</th><th>Probability</th><th>Call</th><th>What happened</th></tr>` + fcs.map((fc, i) => {
     if (!fc) return `<tr><td>${esc(dates[i])}</td><td colspan="3">could not load</td></tr>`;
     const dec = fc.desk && !fc.desk.error ? fc.desk.decision : null;
@@ -582,7 +803,7 @@ async function show(date, dates) {
     const fc = await getJSON(`../live/${date}/forecast.json`);
     renderCall(fc); renderWhy(fc);
     const trace = await getText(`../live/${date}/trace.jsonl`).then((t) => t.split("\n").filter(Boolean).map((l) => { try { return JSON.parse(l); } catch { return null; } }).filter(Boolean)).catch(() => []);
-    renderTrace(trace);
+    renderTrace(trace); renderAgents(fc, trace);
   } catch (e) {
     document.getElementById("call").innerHTML = `<p class="empty">The forecast for ${esc(date)} is not available. Choose another night above.</p>`;
     document.getElementById("why").hidden = true;
@@ -596,6 +817,8 @@ async function show(date, dates) {
   try { dates = await getJSON("../live/index.json"); } catch { dates = ["2026-10-23"]; }
   const sel = document.getElementById("night");
   sel.innerHTML = dates.map((d) => `<option value="${d}">${d}</option>`).join("");
+  const replay = new URLSearchParams(location.search).get("replay");
+  if (replay && /^\d{4}-\d{2}-\d{2}$/.test(replay)) { showReplay(replay).catch(() => { document.getElementById("call").innerHTML = `<p class="empty">No replay is recorded for ${esc(replay)}.</p>`; }); renderRecord(); return; }
   const want = new URLSearchParams(location.search).get("night");
   const start = dates.includes(want) ? want : dates[0];
   sel.value = start;

@@ -1,20 +1,27 @@
 # web/
 
-One static page, no build step. Serve the repository root and open `web/`:
+The page a school's designated person reads at 18:00, and the place judges see the desk work. One static page, no build step. Serve the repository root and open `web/`:
 
 ```bash
 python3 -m http.server 8765    # then http://127.0.0.1:8765/web/
 ```
 
-It reads `live/index.json`, `live/<date>/forecast.json` and `trace.jsonl`, and `results/heldout_*_v4.csv`. Add a night by running `scripts/live.py --issue <date> --desk`; `scripts/verify_live.py` fills in the measured hours the next afternoon and refreshes `live/index.json`.
+It reads `live/index.json`, `live/<date>/forecast.json`, `trace.jsonl` and `scene.json`, and `results/heldout_*_v4.csv`. A night is added by `scripts/live.py --issue <date> --desk`; `scripts/verify_live.py` fills in the measured hours the next afternoon and refreshes `live/index.json`.
 
-Design notes: the hero is the probability scale painted in the schools SO2 plan's own bands, with tonight's desk marker and the four guidance streams on the same axis; the second figure is the night window itself, 18 hourly slots filled once measured. One typeface (Public Sans), basalt ink on a vog-haze ground, one ocean-blue accent; the plan's colours are reserved for action levels and always carry a text label. The level palette was checked with a colour-vision validator in both light and dark mode. Charts draw at the container's pixel width so their text keeps its size on a phone.
+What is on it, top to bottom:
 
-## 3d.html, a second version for comparison
+- The call: tonight's probability as a sentence, the schools plan's recommendation, and once verified, what happened.
+- At a glance: how the desk decided (roles, queries, re-query rounds, Nemotron calls), the live record since 23 October, and the held-out score.
+- Where tonight sits on the plan's bands, with the four guidance streams on the same scale.
+- The night over Kaʻū: a three.js map with the Kīlauea summit vent, the Pāhala, Volcanoes NP and Ocean View monitors, the GFS 925 hPa wind at the summit and the inversion from the Hilo sounding, as available at 18:00. After verification each monitor's measured hour is a beam whose height grows with the square root of SO2 and whose colour follows the plan's bands, with a halo that pulses above 75 ppb. The 18-hour strip below is the timeline, and "Play the night" steps through it. The drift from the vent only carries the forecast wind forward and is labelled as an illustration, not a dispersion model.
+- Who did what tonight: the five roles (evidence agent, forecaster, review, duty lead, verifier), what each did, read from the trace.
+- Why the desk said this: the discussion with every number tagged by its evidence or stream; the review's findings; the model calls.
+- The evidence, the run step by step, the held-out record and the live log.
 
-`3d.html` is the same page with one change: the night section is a map of Kaʻū drawn with three.js (loaded from jsDelivr, version 0.169.0). It shows the Kīlauea summit vent, the Pāhala, Volcanoes NP and Ocean View monitors, the GFS 925 hPa wind at the summit and the inversion from the Hilo sounding, as available at 18:00, and after verification each monitor's measured hour as a column. The 18-hour strip below it is the timeline; "Play the night" steps through it. The drift dots only carry the forecast wind forward from the vent and are labelled as an illustration, not a dispersion model. With reduced motion the dots are drawn as still lines; without WebGL the strip stays and the map is replaced by a note.
+Details:
 
-- Data: `live/<date>/scene.json`, written by `scripts/live.py` at issue and refreshed by `scripts/verify_live.py`; `scripts/scene.py --issue <date>` writes one by hand.
-- Replay of a past night: `3d.html?replay=2025-09-02` reads `web/replay/2025-09-02.json` (`scripts/scene.py --issue 2025-09-02 --replay`). `&hour=11` opens at 05:00 HST and `&autoplay=1` plays the night, for recording.
-- Terrain: `assets/kau-terrain.png`, cut from USGS 3DEP elevation by `scripts/terrain.py` (public domain). It is drawn with hillshade, an elevation tint and 250 m contours; vertical scale ×2.
-
+- Replay of a past night: `?replay=2025-09-02` reads `web/replay/2025-09-02.json` (`scripts/scene.py --issue 2025-09-02 --replay`). `&hour=11` opens at 05:00 HST and `&autoplay=1` plays the night, for recording. `?night=<date>` opens a live night.
+- three.js 0.169.0 and its post-processing add-ons load from jsDelivr. With reduced motion the drift is drawn as still lines; without WebGL the strip stays and the map is replaced by a note.
+- Terrain: `assets/kau-terrain.png`, cut from USGS 3DEP elevation by `scripts/terrain.py` (public domain), drawn with a two-light hillshade, an elevation tint, 250 m contours and a coast line; vertical scale ×2.
+- Type and colour: Public Sans, basalt ink on a vog-haze ground, one ocean-blue accent; the plan's colours are reserved for action levels and always carry a text label, checked with a colour-vision validator in light and dark mode.
+- `2d.html` is the earlier version without the map, kept for comparison.

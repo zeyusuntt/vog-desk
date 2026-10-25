@@ -4,7 +4,6 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>vog-desk, Pāhala</title>
-<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.169.0/build/three.module.js"}}</script>
 <meta name="description" content="Each evening at 18:00 HST: the chance that sulfur dioxide at the Pāhala monitor reaches 75 ppb before noon, what the schools plan says to prepare, the evidence behind it, and how the desk has done.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -145,40 +144,6 @@ svg .soft { fill: var(--ink-2); }
 footer { margin: 56px 0 0; padding: 26px 0 44px; border-top: 1px solid var(--rule); color: var(--ink-2); font-size: 14px; }
 footer p { margin: 0 0 8px; max-width: 80ch; }
 
-
-/* The night over Kaʻū (3D). A dark figure: it is a night map, and the only dark surface on the page. */
-.night3d .sub { max-width: 68ch; }
-.scene { position: relative; background: #0f171b; border-radius: 8px; overflow: hidden; margin-top: 12px; color: #e7ecee; border: 1px solid rgba(231, 236, 238, .1); }
-.scene canvas { display: block; width: 100%; }
-.scene-labels { position: absolute; inset: 0; pointer-events: none; }
-.scene-label { position: absolute; left: 0; top: 0; white-space: nowrap; font-size: 13px; line-height: 1.3;
-  background: rgba(15, 23, 27, .8); border: 1px solid rgba(231, 236, 238, .2); border-radius: 4px; padding: 3px 7px; }
-.scene-label b { display: block; font-weight: 700; color: #f2f5f6; }
-.scene-label span { color: #c3ccd1; }
-.scene-label.hot { border-color: #e0a15b; }
-.scene-label.hot span { color: #f6d7b0; }
-.scene-label.vent { border-color: rgba(255, 150, 80, .55); }
-.scene-legend { position: absolute; left: 14px; top: 12px; margin: 0; font-size: 13px; line-height: 1.5; color: #c3ccd1; max-width: 64ch; pointer-events: none; }
-.scene-legend b { color: #f2f5f6; font-weight: 700; }
-.scene-bar { position: absolute; left: 14px; right: 14px; bottom: 12px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-.scene-bar button { font: inherit; font-size: 15px; font-weight: 700; color: #0f171b; background: #e7ecee; border: 0; border-radius: 6px; padding: 7px 14px; cursor: pointer; }
-.scene-bar button:active { transform: translateY(1px); }
-.scene-bar button:focus-visible { outline: 3px solid #6db3d1; outline-offset: 2px; }
-.readout { margin: 0; font-size: 14px; color: #dfe6e9; background: rgba(15, 23, 27, .72); border-radius: 4px; padding: 4px 8px; }
-.scene-fallback { display: none; padding: 28px 18px; margin: 0; color: #c3ccd1; }
-.scene.no-webgl canvas, .scene.no-webgl .scene-labels, .scene.no-webgl .scene-bar, .scene.no-webgl .scene-legend { display: none; }
-.scene.no-webgl .scene-fallback { display: block; }
-.scene-note { font-size: 14px; color: var(--ink-3); margin: 8px 0 0; max-width: 80ch; }
-#night-strip .sel { fill: none; stroke: var(--ink); stroke-width: 2; }
-#night-strip rect.slot { cursor: pointer; }
-.replay-head { padding: 34px 0 6px; }
-@media (max-width: 560px) {
-  .scene { display: flex; flex-direction: column; }
-  .scene-legend { position: static; order: 0; padding: 12px 12px 0; max-width: none; font-size: 13px; }
-  .scene canvas { order: 1; }
-  .scene-bar { position: static; order: 2; padding: 10px 12px 12px; }
-  .scene-label { font-size: 12px; } .readout { font-size: 13px; background: none; padding: 0; }
-}
 </style>
 </head>
 <body>
@@ -374,7 +339,7 @@ function drawScale(svg, p, guidance, animate = true) {
 
 /* The night window: 18 hourly slots, empty at issue, the measured hours after verification. */
 function bandOfPpb(v) { return v >= 1010 ? "--lv-red" : v >= 210 ? "--lv-orange" : v >= 110 ? "--lv-yellow" : "--lv-green"; }
-function drawNight(svg, ver, issueIso, sel = null, onPick = null) {
+function drawNight(svg, ver, issueIso) {
   svg.replaceChildren(svgEl("title", {}, "The forecast window, 18:00 to 12:00 HST"));
   const W = Math.max(300, Math.round(svg.parentElement.clientWidth || 1000)), H = 98, n = 18, gap = W < 600 ? 2 : 3, cw = (W - gap * (n - 1)) / n, top = 26, ch = 42;
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
@@ -385,8 +350,7 @@ function drawNight(svg, ver, issueIso, sel = null, onPick = null) {
     const hr = (18 + i) % 24, x0 = i * (cw + gap);
     const h = hours ? hours[i] : null;
     const fill = h && h.ppb != null ? `var(${bandOfPpb(h.ppb)})` : "var(--slot)";
-    const r = svgEl("rect", { x: x0, y: top, width: cw, height: ch, rx: 4, fill, class: onPick ? "slot" : "" });
-    if (onPick) r.addEventListener("click", () => onPick(i));
+    const r = svgEl("rect", { x: x0, y: top, width: cw, height: ch, rx: 4, fill });
     const hhmm = `${String(hr).padStart(2, "0")}:00`;
     r.addEventListener("mousemove", (e) => showTip(e, h && h.ppb != null ? `${hhmm} HST: ${h.ppb.toFixed(0)} ppb` : `${hhmm} HST: ${hours ? "no value" : "not measured yet"}`));
     r.addEventListener("mouseleave", hideTip);
@@ -394,7 +358,6 @@ function drawNight(svg, ver, issueIso, sel = null, onPick = null) {
     if (h && h.ppb != null && h.ppb >= 75) svg.append(svgEl("rect", { x: x0 + cw / 2 - 3, y: top + ch - 11, width: 6, height: 6, rx: 1, fill: "var(--paper)" }));
     if (hr % (W < 600 ? 6 : 3) === 0) svg.append(svgEl("text", { x: x0 + cw / 2, y: top + ch + 20, "text-anchor": "middle", "font-size": 13, class: "muted" }, hhmm));
   }
-  if (sel != null) svg.append(svgEl("rect", { x: sel * (cw + gap) - 1.5, y: top - 1.5, width: cw + 3, height: ch + 3, rx: 5, class: "sel" }));
   if (maxI >= 0) svg.append(svgEl("text", { x: maxI * (cw + gap) + cw / 2, y: top - 8, "text-anchor": "middle", "font-size": 14, "font-weight": 700 }, `${maxV.toFixed(0)} ppb`));
   else svg.append(svgEl("text", { x: 0, y: top - 8, "font-size": 14, class: "soft" }, W < 600 ? "Filled in after noon tomorrow." : "Measured hours appear here after 12:00 HST the next day."));
 }
@@ -437,72 +400,14 @@ function renderCall(fc) {
     <figure class="figure"><h2>Where tonight sits on the schools plan</h2>
       <p class="sub">The plan's levels are set for 15-minute averages at the school; the desk maps its probability onto them with thresholds fixed before the held-out test.</p>
       <svg class="chart" id="scale" role="img"></svg></figure>
-    ${ver && ver.event != null ? sceneFigure("The night over Kaʻū", "that night's") : sceneFigure("Tonight over Kaʻū")}`;
+    <figure class="figure"><h2>The night in question</h2>
+      <p class="sub">Eighteen hours from 18:00 to 11:00 HST, coloured by the plan's bands once measured. A light square marks an hour at or above 75 ppb.</p>
+      <svg class="chart" id="night-strip" role="img"></svg></figure>`;
   const guid = desk ? desk.guidance : [{ stream: "lr", p: fc.probability }];
   drawScale(document.getElementById("scale"), p, guid);
-  mountScene(fc.issue_date_hst, ver, `../live/${fc.issue_date_hst}/scene.json`);
-  redraw.call = () => { const s1 = document.getElementById("scale"); if (s1) drawScale(s1, p, guid, false); redraw.strip && redraw.strip(); };
-}
-
-function sceneFigure(title, when = "tonight's") {
-  return `<figure class="figure night3d"><h2>${esc(title)}</h2>
-      <p class="sub">Where the gas starts, where ${when} forecast wind takes it, and what each monitor measured, hour by hour from 18:00 to 11:00 HST. Choose an hour below or play the night.</p>
-      <div class="scene" id="scene" role="img" aria-label="Map of Kaʻū with the Kīlauea summit vent, the Pāhala, Volcanoes National Park and Ocean View monitors, tonight's forecast wind and the measured sulfur dioxide at each monitor">
-        <canvas></canvas><div class="scene-labels"></div>
-        <p class="scene-legend" id="scene-legend"></p>
-        <div class="scene-bar"><button type="button" id="play">Play the night</button><p class="readout" id="readout" aria-live="polite"></p></div>
-        <p class="scene-fallback">This view needs WebGL, which this browser has turned off. The hours are in the strip below.</p>
-      </div>
-      <svg class="chart" id="night-strip" role="img"></svg>
-      <p class="scene-note">Drift dots carry the GFS 925 hPa wind at the summit forward from the vent; they illustrate the wind, not a dispersion model. Column height grows with the square root of SO2, and the label gives the measured value. Vertical scale ×2. Terrain: USGS 3DEP.</p>
-    </figure>`;
-}
-let scene3d = null;
-async function mountScene(date, ver, url, replayHours = null) {
-  const root = document.getElementById("scene"); if (!root) return;
-  let scene;
-  try { scene = await getJSON(url); } catch { root.classList.add("no-webgl"); root.querySelector(".scene-fallback").textContent = "No scene was recorded for this night. The hours are in the strip below."; scene = null; }
-  const stripVer = replayHours ? { hours: replayHours } : ver;
-  const strip = document.getElementById("night-strip");
-  let sel = 0;
-  const pick = (i) => { sel = i; drawNight(strip, stripVer, date, sel, pick); if (scene3d) scene3d.setHour(i); };
-  redraw.strip = () => drawNight(strip, stripVer, date, scene3d ? sel : null, scene3d ? pick : null);
-  redraw.strip();
-  if (!scene) return;
-  const legend = document.getElementById("scene-legend");
-  legend.innerHTML = [`<b>${esc(stripLabel(scene.episode, "HVO"))}</b>`,
-    scene.inversion ? `Inversion base ${scene.inversion.base_m.toLocaleString("en-US")} m, Hilo sounding ${esc(scene.inversion.launch_utc.slice(11))}` : "No Hilo sounding before 18:00, so no inversion is drawn",
-    scene.hours ? "" : "Monitor values appear after 12:00 HST tomorrow"].filter(Boolean).join("<br>");
-  const readout = document.getElementById("readout"), play = document.getElementById("play");
-  const onHour = (k, w) => {
-    if (k !== sel) { sel = k; redraw.strip(); }
-    const hhmm = `${String((18 + k) % 24).padStart(2, "0")}:00`;
-    const pv = scene.hours ? scene.hours.pahala[k] : null;
-    readout.textContent = `${hhmm} HST. ` + (w ? `Wind at the summit from ${w.lead.from_deg}° at ${w.lead.speed_ms} m/s (GFS, ${w.lead.hst} lead). ` : "No GFS wind. ")
-      + (scene.hours ? `Pāhala ${pv == null ? "no value" : Math.round(pv) + " ppb"}.` : "");
-  };
-  try {
-    const m = await import("./night3d.js");
-    const h0 = Number(new URLSearchParams(location.search).get("hour")); sel = Number.isInteger(h0) && h0 >= 0 && h0 < 18 ? h0 : 0;
-    scene3d = await m.mountNight(root, scene, { base: "./", hour: sel, onHour, onPlay: (on) => { play.textContent = on ? "Pause" : "Play the night"; } });
-  } catch (e) { console.warn("scene", e); root.classList.add("no-webgl"); scene3d = null; }
-  if (!scene3d) { redraw.strip(); return; }
-  redraw.strip();
-  play.addEventListener("click", () => scene3d.playing ? scene3d.pause() : scene3d.play());
-  if (new URLSearchParams(location.search).get("autoplay") === "1") scene3d.play();
-}
-
-async function showReplay(date) {
-  const scene = await getJSON(`replay/${date}.json`);
-  const hrs = scene.hours.pahala.map((v, i) => ({ hst: `${String((18 + i) % 24).padStart(2, "0")}:00`, ppb: v }));
-  const peak = hrs.reduce((a, b) => (b.ppb ?? -1) > (a.ppb ?? -1) ? b : a);
-  document.getElementById("call").innerHTML = `
-    <p class="dateline replay-head">Replay of a past night. The desk did not run on this date; the hours are measured.</p>
-    <h1 class="headline">${esc(longDate(date))}: Pāhala reached ${Math.round(peak.ppb)} ppb at ${esc(peak.hst)} HST.</h1>
-    ${sceneFigure("The night over Kaʻū", "that night's")}`;
-  document.querySelector(".picker").hidden = true;
-  ["why", "evidence-section", "run-section"].forEach((id) => { const el = document.getElementById(id); if (el) el.hidden = true; });
-  mountScene(date, null, `replay/${date}.json`, hrs);
+  drawNight(document.getElementById("night-strip"), ver, fc.issue_date_hst);
+  redraw.call = () => { const s1 = document.getElementById("scale"), n1 = document.getElementById("night-strip");
+    if (s1) drawScale(s1, p, guid, false); if (n1) drawNight(n1, ver, fc.issue_date_hst); };
 }
 
 function renderWhy(fc) {
@@ -691,8 +596,6 @@ async function show(date, dates) {
   try { dates = await getJSON("../live/index.json"); } catch { dates = ["2026-10-23"]; }
   const sel = document.getElementById("night");
   sel.innerHTML = dates.map((d) => `<option value="${d}">${d}</option>`).join("");
-  const replay = new URLSearchParams(location.search).get("replay");
-  if (replay && /^\d{4}-\d{2}-\d{2}$/.test(replay)) { showReplay(replay).catch(() => { document.getElementById("call").innerHTML = `<p class="empty">No replay is recorded for ${esc(replay)}.</p>`; }); renderRecord(); return; }
   const want = new URLSearchParams(location.search).get("night");
   const start = dates.includes(want) ? want : dates[0];
   sel.value = start;

@@ -1,4 +1,4 @@
-"""Write the night scene for web/3d.html: live/<D>/scene.json, or web/replay/<D>.json with --replay.
+"""Write the night scene for the map on web/: live/<D>/scene.json, or web/replay/<D>.json with --replay.
 
 Usage: .venv/bin/python scripts/scene.py --issue 2026-10-23 [--replay]
 """

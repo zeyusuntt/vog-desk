@@ -1,4 +1,4 @@
-"""Data for the night scene on web/3d.html: where the monitors are, tonight's forecast wind and inversion, and
+"""Data for the night scene on the map on web/: where the monitors are, tonight's forecast wind and inversion, and
 the measured hours once the window has closed.
 
 The forecast part uses the same evidence functions and the same as-of cutoff as the desk, so the scene shows

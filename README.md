@@ -118,7 +118,7 @@ The full dataset is rebuilt by `scripts/fetch_*.py` and the ingest modules (sour
 
 ## Pre-existing components
 
-Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memory-service/engines/UPSTREAM.txt`), and the Kaʻū elevation grid behind `web/3d.html`, cut by `scripts/terrain.py` from the island heightmap in the author's earlier project Windward (github.com/zeyusuntt/windward; USGS 3DEP, public domain). The 3D page's code is new. three.js (MIT) loads from jsDelivr. All data is public (EPA, AirNow, USGS, DOH, IEM, NOAA).
+Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memory-service/engines/UPSTREAM.txt`), and the Kaʻū elevation grid behind the map on `web/`, cut by `scripts/terrain.py` from the island heightmap in the author's earlier project Windward (github.com/zeyusuntt/windward; USGS 3DEP, public domain). The map's code is new. three.js (MIT) loads from jsDelivr. All data is public (EPA, AirNow, USGS, DOH, IEM, NOAA).
 
 ## Limits
 

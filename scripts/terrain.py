@@ -1,4 +1,4 @@
-"""Cut the Kaʻū terrain used by web/3d.html out of the Windward island heightmap.
+"""Cut the Kaʻū terrain used by the map on web/ out of the Windward island heightmap.
 
 Source: Windward's `public/assets/terrain-height.png` (USGS 3DEP, public domain), 4096 x 3862, elevation packed
 as value16 = R*256 + G and metres = value16 / 65535 * elevMax. This script crops the box that holds the
