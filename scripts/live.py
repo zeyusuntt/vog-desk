@@ -185,6 +185,9 @@ def main() -> None:
         (out_dir / "scene.json").write_text(json.dumps(build_scene(src, issue), indent=1, ensure_ascii=False))
     except Exception as e:  # the forecast stands without the scene
         print("scene:", type(e).__name__, str(e)[:120])
+    # The page lists nights from live/index.json, so tonight's forecast shows as soon as it is written.
+    dates = sorted({d.name for d in out_dir.parent.iterdir() if d.is_dir() and (d / "forecast.json").exists()}, reverse=True)
+    (out_dir.parent / "index.json").write_text(json.dumps(dates))
     print(json.dumps({k: out[k] for k in ("issue_date_hst", "probability", "probability_raw_uncalibrated", "reference",
                                            "features_outside_training_range", "refresh_status")}, indent=1, default=str))
     print("data basis:", json.dumps(out["data_basis"], indent=1, default=str))
