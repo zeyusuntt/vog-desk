@@ -9,7 +9,7 @@ Eight sources that never meet in one database: EPA AQS validated hourly SO2 (Par
 ## Where it sped us up
 
 - One query language over Parquet and Postgres meant the agents' evidence code is a single module. We kept a Python fallback for judges without Zetaris, and a test checks that the two return identical rows on the same night. They do.
-- The USL turned our pre-registration into something a machine enforces. The no-lookahead rule used to be a paragraph in a document. Now it is a column on every table and a rewrite in one function, and the integration tests run against Zetaris itself.
+- The USL turned our pre-registration into something a machine enforces. The no-lookahead rule used to be a paragraph in a document. Now it is a publication time on every time-stamped table and a rewrite in one function, and the integration tests run against Zetaris itself.
 - Data quality rules caught something we had not written down. `analyzer_upper_range` flagged exactly two hours, Ocean View at 01:00 and 02:00 HST on 3 September 2025 (1,206 and 1,166 ppb), the same night the Department of Health marks with an asterisk in its own list. The first version of the rule also flagged 4,468 small negative readings. We looked, decided they are zero noise from validated analyzers (mostly at the Volcanoes NP station), split the rule in two, and documented that the features clip them at zero.
 - The duty lead's re-query step is a Zetaris query with a different as-of filter or station, so "check the upwind station again" is one line of SQL.
 

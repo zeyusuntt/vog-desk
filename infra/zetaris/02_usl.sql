@@ -1,5 +1,7 @@
 -- Layer 2: the Unified Semantic Layer `pahala_exposure`. One governed table per concept the desk
--- reasons about, each carrying `available_utc`, the time its rows became public (rules frozen in
+-- reasons about. The time-stamped ones carry `available_utc`, the time their rows became public, and the
+-- eruption episodes carry when each start and end was published; stations, plan levels and the desk's own
+-- forecasts are reference tables (rules frozen in
 -- docs/PREREG.md and mirrored in src/vogdesk/asof.py). Agents query these tables only, through
 -- run_sql, which adds `available_utc <= as_of` for every table that has the column.
 --
@@ -88,7 +90,7 @@ CREATE TABLE forecast_verification (
 );
 -- END USL
 
-UPDATE USL lightning.metastore.vog.pahala_exposure SET DESCRIPTION 'vog-desk semantic layer for Pahala SO2 exposure forecasts. Every table carries available_utc, the moment its rows became public, so a forecast issued at time T can be reproduced with available_utc <= T. Sources, S3 Parquet from EPA AQS, AirNow, USGS HVO and NOAA GFS, Hilo soundings, plus Postgres institutional tables.';
+UPDATE USL lightning.metastore.vog.pahala_exposure SET DESCRIPTION 'vog-desk semantic layer for Pahala SO2 exposure forecasts. Every time-stamped table carries the moment its rows became public (available_utc, or the published start and end of each eruption episode), so a forecast issued at time T can be reproduced from what was public at T. Sources, S3 Parquet from EPA AQS, AirNow, USGS HVO and NOAA GFS, Hilo soundings, plus Postgres institutional tables.';
 
 -- One hourly SO2 series per station: AQS validated where AQS has the hour, AirNow preliminary otherwise.
 ACTIVATE USL TABLE lightning.metastore.vog.pahala_exposure.so2_hourly AS

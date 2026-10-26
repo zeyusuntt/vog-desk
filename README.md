@@ -15,7 +15,7 @@ The page a school's designated person reads at 18:00 ([web/](web/README.md)). It
 
 ## Why it is a desk
 
-Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Each one sends gas down the southwest flank into Kaʻū. In 2025 the Department of Health logged 25 one-hour SO2 exceedances at Pāhala, most between 02:00 and 09:00 HST, while families sleep with the windows shut and children get ready for school. The schools plan reacts after thirty minutes of elevated readings. No one issues a warning the evening before.
+Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Each one sends gas down the southwest flank into Kaʻū. In 2025 the Pāhala monitor reached the 75 ppb one-hour standard in 63 hours on 25 days (the Department of Health's list has the same 25 days), 60 of those hours between 18:00 and noon, most between 02:00 and 09:00 HST, while families sleep with the windows shut and children get ready for school. The [schools plan](https://www.hawaiipublicschools.org/DOE%20Forms/Safety/SchoolActionPlan-SO2.pdf) acts when elevated levels last more than 30 minutes. The University of Hawaiʻi's VMAP model publishes statewide SO2 forecasts; vog-desk gives this one monitor a probability and a call in the plan's levels the evening before, with its evidence.
 
 A statistical model fit on 2025 learned that bad nights come with fountaining and light winds. In 2026 the eruption changed. Episodes got shorter and pauses longer, and the gas now reaches Pāhala between episodes on trade-wind nights, three times as often as in 2025. On the development period (January to June 2026) the frozen model scored below climatology.
 
@@ -33,13 +33,13 @@ Every input carries the time it became public, and the forecast is cut at 18:00 
 | Hilo soundings | launch + 3 h; latest usable is 00Z |
 | Memory (H-MEM) | a night only after its window closed and was verified |
 
-The rules live in `src/vogdesk/asof.py`, in the Zetaris semantic layer as an `available_utc` column on every table, and in the tests, which run against Zetaris itself.
+The rules live in `src/vogdesk/asof.py`, in the Zetaris semantic layer as a publication time on every time-stamped table (`available_utc`, or when each eruption episode's start and end were published), and in the tests, which run against Zetaris itself.
 
 ## How the desk works
 
 ```
 run.py / POST /run
-  EvidenceAgent   seven fixed as-of queries through Zetaris (run_sql rewrites every table with available_utc <= issue)
+  EvidenceAgent   seven fixed as-of queries through Zetaris (run_sql cuts every time-stamped table at the issue time)
                   Nemotron Lightning writes the regime summary; a validator checks every number against the evidence
   ForecasterAgent G1 frozen 2025 model   G2 memory model (same model refit on the last 120 days of verified nights in H-MEM)
                   G3 recent event rate   G4 similar remembered nights (as of issue, shrunk toward G3)
@@ -125,7 +125,7 @@ The full dataset is rebuilt by `scripts/fetch_*.py` and the ingest modules (sour
 
 ## Sponsor technology
 
-- Zetaris is the data layer. Eight sources (Parquet on a local S3 store, Postgres over JDBC) behind one Unified Semantic Layer, `pahala_exposure`, eight governed tables each with `available_utc`, eleven data quality rules (one of them flags exactly the two censored Ocean View hours of 3 Sep 2025 that DOH marks with an asterisk). Agents read only through `run_sql`. Scripts: `infra/zetaris/`; reflection for the judges: [docs/ZETARIS_REFLECTION.md](docs/ZETARIS_REFLECTION.md); evidence: `docs/evidence/zetaris-dq.txt`.
+- Zetaris is the data layer. Eight sources (Parquet on a local S3 store, Postgres over JDBC) behind one Unified Semantic Layer, `pahala_exposure`, eight governed tables, five of them time-stamped and cut at the issue time (four by `available_utc`, the eruption episodes by when each start and end was published) and three reference tables (stations, plan levels, the desk's own forecasts and verifications), eleven data quality rules (one of them flags exactly the two censored Ocean View hours of 3 Sep 2025 that DOH marks with an asterisk). Agents read only through `run_sql`. Scripts: `infra/zetaris/`; reflection for the judges: [docs/ZETARIS_REFLECTION.md](docs/ZETARIS_REFLECTION.md); evidence: `docs/evidence/zetaris-dq.txt`.
 - The Meterless H-MEM and World Model reference implementations run unchanged in `memory-service/` (conformance 13 of 13 and 8 of 8, `docs/evidence/conformance-*.txt`). The sidecar adds one rule: a night can be retrieved only after its verification time. The desk uses memory as the training set for its memory model, for similar-night retrieval with a trace, for the verifier's write-back with source and confidence, for trust-ledger feedback, and for night-level conflict detection with the engine's 0.70 gate.
 - Meterless Nightshift is the primary model provider (`src/vogdesk/llm.py`), with explicit model ids so every trace line names the model that answered: `nvidia/nemotron-3.5-lightning-30b-a3b` for evidence narration (thinking off) and `nvidia/nemotron-3-ultra-550b-a55b` for the DutyLead. Provider grade: [docs/evidence/provider-grade.md](docs/evidence/provider-grade.md).
 - NVIDIA Nemotron supplies the two models above, through NVIDIA's free endpoint registered in Nightshift. `meterless.provider_model` is logged on every call.

@@ -28,7 +28,7 @@
    "integration_working": true,
    "in_use_case": true,
    "use_case_note": "Every evidence item an agent cites is a run_sql query over the pahala_exposure Unified Semantic Layer, rewritten with available_utc <= issue time; the Python fallback exists for judges without Zetaris and a test checks the two agree.",
-   "how": "Eight sources (EPA AQS, AirNow, USGS HVO episodes with notice publication times, Hilo soundings, NOAA GFS points as Parquet on a local S3 store; stations, action-plan levels, forecasts and verifications in Postgres over JDBC) behind one USL with eight governed tables, each carrying available_utc, and eleven data quality rules. The desk's own forecasts and verifications are written to Postgres and read back through Zetaris.",
+   "how": "Eight sources (EPA AQS, AirNow, USGS HVO episodes with notice publication times, Hilo soundings, NOAA GFS points as Parquet on a local S3 store; stations, action-plan levels, forecasts and verifications in Postgres over JDBC) behind one USL with eight governed tables, the five time-stamped ones cut at the issue time (available_utc, or when each eruption episode's start and end were published), and eleven data quality rules. The desk's own forecasts and verifications are written to Postgres and read back through Zetaris.",
    "interface": "rest",
    "deployment": "local-docker",
    "data_sources": [

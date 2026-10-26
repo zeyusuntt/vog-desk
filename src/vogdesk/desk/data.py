@@ -1,7 +1,7 @@
 """The desk's data access: fixed, as-of queries against the pahala_exposure semantic layer.
 
 Two backends answer the same five questions with the same column names. `ZetarisBackend` sends SQL
-through `run_sql`, which rewrites every table reference with `available_utc <= as_of` (the only way an
+through `run_sql`, which cuts every time-stamped table at the issue time (the only way an
 agent reads data in the judged configuration). `LocalBackend` answers from the Parquet files through
 the same as-of rules in Python, for SAMPLE_MODE and for tests without Zetaris. A test checks that the
 two agree on the same night.
