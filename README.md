@@ -5,13 +5,29 @@
 - Replay of 2 September 2025, the night Pāhala reached 317 ppb: https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02
 - Slide deck: [docs/vog-desk-deck.pdf](docs/vog-desk-deck.pdf)
 
-A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every evening at 18:00 HST it answers one question: **between now and noon tomorrow, will any hour at the Pāhala monitor reach 75 ppb of sulfur dioxide?** It gives a calibrated probability, a recommendation that follows the 2018 Hawaiʻi Schools SO2 Action Plan, and a discussion in which every number points at the evidence it came from. The next day it checks itself against the monitor, remembers the night, and tells its memory which analogs helped.
+Results in one paragraph: on the held-out season (1 July to 21 October 2026, 102 nights, pre-registered and scored once) the desk's Brier score was 0.215, against 0.332 for the model frozen on 2025, 0.246 for the recent-rate baseline and 0.236 for a constant at the season's own rate, which nobody knew in advance. It has run live every evening since 23 October 2026, each forecast committed before its outcome. `scripts/prove.py` re-checks every one of these numbers, and the commit times, from the committed files.
+
+A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every evening at 18:00 HST it answers one question: **between now and noon tomorrow, will any hour at the Pāhala monitor reach 75 ppb of sulfur dioxide?** It gives a calibrated probability, a recommendation that follows the 2018 Hawaiʻi Schools SO2 Action Plan, and a discussion in which every number points at the evidence it came from. The next day it checks itself against the monitor and remembers the night.
 
 Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3, Reasoning Architecture, by a team of one. Work in this repository started inside the build window (22 October 2026, 00:00 UTC). Every decision and every number along the way is in [docs/DEVLOG.md](docs/DEVLOG.md); the held-out results, scored once at the end, are in [docs/RESULTS.md](docs/RESULTS.md).
 
 ![The page for 23 October 2026: prepare for yellow, a 28% chance shown as a number and as 28 of 100 dots, and the night over Kaʻū with each monitor's measured hour as a beam](docs/figures/page.jpg)
 
 The page a school's designated person reads at 18:00 ([web/](web/README.md)). It leads with the decision in the schools plan's colour, then the probability as a number and as 100 nights, with how often nights in that band reached 75 ppb on the held-out season. Beside it is the night over Kaʻū: the summit vent, the three monitors, the forecast wind and the inversion from the Hilo sounding, and after the night is verified each measured hour rises as a beam with a ring at 75 ppb. Drag to turn it, pick a viewpoint, click a monitor for its night, or play the eighteen hours. Below are the five roles of the desk and what each did that night, the discussion with every number tied to its evidence, the trace step by step, and the held-out record. `?replay=2025-09-02` replays the night Pāhala reached 317 ppb.
+
+![The replay of 2 September 2025 on the map: each monitor's hour rises as a beam, with a ring at 75 ppb, as the night plays](docs/figures/replay.gif)
+
+## Two minutes for judges
+
+| Open | What you should see | Criterion |
+|---|---|---|
+| [Live page, first live night](https://zeyusuntt.github.io/vog-desk/web/?night=2026-10-23) | 28%, prepare for yellow; the next day Pāhala reached 170 ppb at 05:00 | Impact, Product and UX |
+| [Replay of 2 September 2025](https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02) | the night Pāhala reached 317 ppb, hour by hour on the map | Demo |
+| `.venv/bin/python scripts/prove.py` | PASS for every headline number and the commit timeline | Technical |
+| `SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07` | the full desk on a recorded night, no keys or services | Technical |
+| [live/2026-10-25/trace.jsonl](live/2026-10-25/trace.jsonl) | each step: Zetaris queries, the review's re-queries, the model that answered each call, validation | Technical, Sponsor |
+| [docs/RESULTS.md](docs/RESULTS.md) | held-out scores with intervals, reliability, value | Innovation, Technical |
+| [Sponsor technology](#sponsor-technology) and [AI and Model Usage](#ai-and-model-usage) | the cutoff in Zetaris and memory, H-MEM as the training set, conformance tests, the two Nemotron models | Sponsor |
 
 ## Why it is a desk
 
@@ -74,7 +90,13 @@ run.py / POST /run
                   records forecast and verification in Postgres (read back through Zetaris)
 ```
 
-LangGraph `StateGraph`, Pydantic state, JSONL trace per case under `logs/`, World Model case record in the memory sidecar. `--no-review` is the ablation (forecast 5).
+LangGraph `StateGraph` over a TypedDict state holding Pydantic records, JSONL trace per case under `logs/`, World Model case record in the memory sidecar. `--no-review` is the ablation (forecast 5).
+
+Who decides what:
+
+| Code alone | Nemotron Ultra, within limits | A person |
+|---|---|---|
+| which queries run and their cutoff, the four streams, the review's flags and re-queries (at most two rounds), the base probability, the plan level from the pre-registered thresholds, and the validation of every model reply | moving the base by at most 0.15, only when the review raised a flag, and writing the discussion, which is rejected if it cites a number that is not in the evidence | what the school does; and any case handed over (tonight's GFS run still missing after two rounds, or Ultra's own choice) |
 
 ## Results
 
@@ -206,6 +228,18 @@ Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memo
 - Node: tsx (MIT), which runs the memory sidecar
 - Terrain: USGS 3DEP elevation (public domain), cut from the author's Windward heightmap
 
-## Limits
+## Limits: what this submission does not claim
 
-One station, one threshold, one training year with 21 events. An hourly mean of 75 ppb does not show that a 15-minute average reached the plan's yellow level. AirNow values after March 2026 are preliminary and rounded to whole ppb. The desk recommends; the school's designated person decides. Everything that did not work is in DEVLOG.
+- One monitor, one threshold, one training year with 21 events.
+- An hourly mean of 75 ppb does not show that a 15-minute average reached the plan's yellow level.
+- The review loop's own gain is not established: desk minus no-review is −0.009 with a 90% interval of [−0.019, +0.001].
+- On the held-out season the desk warned on 87 of 102 nights; 50 of those were false alarms.
+- Nemotron Ultra's reply failed validation and the code's template took over on 23 of the 102 held-out nights.
+- A defect in the recent-rate stream was found after scoring; it did not touch the scored probability and is fixed for the live desk (PREREG change 3).
+- The rule that hands a model-and-memory disagreement to a person cannot fire as built (DEVLOG, 26 October); only a missing GFS run or the duty lead's choice hands a case over.
+- Live verification writes each night to memory but does not send the trust-ledger feedback that the backtest verifier sends.
+- The live record is a few nights; it says nothing yet about skill.
+- AirNow values after March 2026 are preliminary and rounded to whole ppb.
+- No school has used it, and it is not an official warning: the desk recommends, and the school's designated person decides under the state plan.
+
+Everything that did not work is in [docs/DEVLOG.md](docs/DEVLOG.md).
