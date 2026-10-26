@@ -1,0 +1,63 @@
+{
+ "issue_date_hst": "2026-10-25",
+ "issue_utc": "2026-10-26T04:00:00+00:00",
+ "replay": false,
+ "vent": {
+  "name": "Halemaʻumaʻu",
+  "lat": 19.4072,
+  "lon": -155.2834
+ },
+ "stations": [
+  {
+   "id": "pahala",
+   "name": "Pāhala",
+   "lat": 19.2039,
+   "lon": -155.4802,
+   "role": "the forecast's monitor"
+  },
+  {
+   "id": "hvnp",
+   "name": "Volcanoes NP",
+   "lat": 19.4308,
+   "lon": -155.2578,
+   "role": "near the summit"
+  },
+  {
+   "id": "ocean_view",
+   "name": "Ocean View",
+   "lat": 19.1176,
+   "lon": -155.7781,
+   "role": "farther downwind"
+  }
+ ],
+ "wind": [
+  {
+   "hst": "18:00",
+   "from_deg": 69,
+   "speed_ms": 1.3,
+   "toward_pahala_ms": 1.1,
+   "pahala_boundary_layer_m": 275
+  },
+  {
+   "hst": "00:00",
+   "from_deg": 177,
+   "speed_ms": 0.9,
+   "toward_pahala_ms": -0.6,
+   "pahala_boundary_layer_m": 182
+  },
+  {
+   "hst": "06:00",
+   "from_deg": 291,
+   "speed_ms": 0.9,
+   "toward_pahala_ms": -0.3,
+   "pahala_boundary_layer_m": 160
+  }
+ ],
+ "wind_source": "GFS 18Z run, 925 hPa at the summit point, as available at 18:00 HST",
+ "inversion": null,
+ "inversion_source": "Hilo radiosonde, latest launch before 18:00 HST",
+ "episode": "HVO: pause; episode 55 ended 2026-10-17 09:06 HST, 8.4 days ago",
+ "hours": null,
+ "hours_source": null,
+ "hours_start_hst": "18:00"
+}
