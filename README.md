@@ -1,5 +1,6 @@
 # vog-desk
 
+- Demo video, 3 min 54 s: https://youtu.be/EGJ8WhEMQvc
 - Live page, with every night the desk has issued: https://zeyusuntt.github.io/vog-desk/web/
 - Replay of 2 September 2025, the night Pāhala reached 317 ppb: https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02
 - Slide deck: [docs/vog-desk-deck.pdf](docs/vog-desk-deck.pdf)
