@@ -19,7 +19,7 @@ Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Eac
 
 A statistical model fit on 2025 learned that bad nights come with fountaining and light winds. In 2026 the eruption changed. Episodes got shorter and pauses longer, and the gas now reaches Pāhala between episodes on trade-wind nights, three times as often as in 2025. On the development period (January to June 2026) the frozen model scored below climatology.
 
-So the desk keeps a memory of every verified night and refits the same model on the recent ones each evening. It checks that against the frozen model, the recent event rate and the most similar past nights. When they disagree it re-queries the data, and it hands the night to a person when the conflict will not resolve. The test is whether this beats the frozen model and a plain adaptive baseline, the event rate of the last 30 verified nights. [docs/PREREG.md](docs/PREREG.md) has what was fixed before any model was fit and the six changes logged since.
+So the desk keeps a memory of every verified night and refits the same model on the recent ones each evening. It checks that against the frozen model, the recent event rate and the most similar past nights. When they disagree it re-queries the data; a disagreement that survives the re-query is recorded as real and stated in the discussion, and a night goes to a person when tonight's GFS forecast is still missing or the duty lead hands it over. The test is whether this beats the frozen model and a plain adaptive baseline, the event rate of the last 30 verified nights. [docs/PREREG.md](docs/PREREG.md) has what was fixed before any model was fit and the six changes logged since.
 
 ## What a forecast may see
 
@@ -37,6 +37,29 @@ The rules live in `src/vogdesk/asof.py`, in the Zetaris semantic layer as a publ
 
 ## How the desk works
 
+```mermaid
+flowchart TD
+  RUN["run.py or POST /run, 18:00 HST"] --> EV["EvidenceAgent: 7 as-of queries"]
+  EV -- "run_sql, cut at the issue time" --> Z[("Zetaris USL pahala_exposure: 8 tables over S3 Parquet and Postgres")]
+  EV --> LI["Nemotron Lightning via Nightshift: regime summary, every number checked"]
+  EV --> FC["ForecasterAgent: G1 frozen model, G2 memory model, G3 recent rate, G4 similar nights"]
+  HM[("Meterless H-MEM in the memory sidecar")] -- "verified nights only, as of the issue time" --> FC
+  FC --> RV{"Review, in code: any flags?"}
+  RV -- "flag: targeted re-query, at most 2 rounds" --> EV
+  RV --> DL["DutyLead: base from G2; Nemotron Ultra may move it by up to 0.15"]
+  DL -- "reply fails validation twice" --> TP["Template decision written in code"]
+  DL -- "GFS run still missing after 2 rounds, or the DutyLead hands it over" --> HO["Handover to a person, with the probability kept"]
+  DL --> OUT["Probability, plan level, cited discussion, JSONL trace"]
+  TP --> OUT
+  HO --> OUT
+  OUT --> WM[("Meterless World Model: case record")]
+  OUT --> VF["Verifier, next afternoon: scores the night"]
+  VF -- "writes the verified night" --> HM
+  VF --> PG[("Postgres forecasts and verifications, read back through Zetaris")]
+```
+
+The same steps in detail:
+
 ```
 run.py / POST /run
   EvidenceAgent   seven fixed as-of queries through Zetaris (run_sql cuts every time-stamped table at the issue time)
@@ -47,7 +70,7 @@ run.py / POST /run
                   data gaps, stale data, data quality; on a flag: targeted re-query, then guidance again (max 2 rounds)
   DutyLead        code sets the base from G2; Nemotron Ultra may move it by up to 0.15, only if the review raised a flag,
                   and writes a cited discussion; code applies the PREREG action mapping, or the case goes to a person
-  Verifier (D+1)  scores the night, writes it to H-MEM with its publication time, gives the analogs helpful/wrong feedback,
+  Verifier (D+1)  scores the night, writes it to H-MEM with its publication time, gives the analogs helpful/wrong feedback (in the backtest; live verification does not yet, see DEVLOG for 25 Oct),
                   records forecast and verification in Postgres (read back through Zetaris)
 ```
 
@@ -123,17 +146,65 @@ uvicorn api:app --port 8000                                                     
 
 The full dataset is rebuilt by `scripts/fetch_*.py` and the ingest modules (sources and SHA-256 in `data/MANIFEST.tsv`); per-night forecasts behind the results are in `results/`. Local data layer and Zetaris wiring: [infra/README.md](infra/README.md). Memory sidecar: [memory-service/README.md](memory-service/README.md).
 
+## Failure handling
+
+| What fails | What happens |
+|---|---|
+| A fetch before a live run (AirNow, GFS, Hilo sounding, HVO notices) | `scripts/live.py` records it in `refresh_status` and the desk runs on what was public; a missing GFS run, Hilo sounding or Pāhala hours becomes a `data_gap` flag |
+| Pāhala's feed runs late | a `stale_data` flag when the latest published hour starts more than 3 h before the usable hour |
+| The review raises a flag | targeted re-queries of the affected tables, at most two rounds; a disagreement that returns the same rows is recorded as real, and a data gap stays open until the missing source returns rows |
+| Tonight's GFS run is still missing after two rounds | the case goes to a person (`handover`); the DutyLead can also choose a handover |
+| A Nemotron reply fails validation (a number not in the evidence, missing citations, bad JSON) | the model is asked once more; if it fails again, a template written in code takes over (the summary is built from the evidence; the decision keeps the base) |
+| Nightshift times out, cannot be reached or returns 5xx | up to four attempts with backoff (15, 30 and 60 s when NVIDIA rate-limits); 4xx errors are not retried |
+| The desk cannot finish (Zetaris or Nightshift still down) | `scripts/live.py` still writes the frozen model's forecast and records the error in place of the desk's decision |
+| The memory sidecar cannot be reached | the run falls back to the in-process memory and says so on stderr |
+| The World Model record, the Postgres write or the map scene fails | the failure is logged and the forecast stands |
+| No keys and no services | `SAMPLE_MODE=true` runs the full desk on local Parquet slices, recorded Nemotron replies and an in-process memory |
+
 ## Sponsor technology
 
 - Zetaris is the data layer. Eight sources (Parquet on a local S3 store, Postgres over JDBC) behind one Unified Semantic Layer, `pahala_exposure`, eight governed tables, five of them time-stamped and cut at the issue time (four by `available_utc`, the eruption episodes by when each start and end was published) and three reference tables (stations, plan levels, the desk's own forecasts and verifications), eleven data quality rules (one of them flags exactly the two censored Ocean View hours of 3 Sep 2025 that DOH marks with an asterisk). Agents read only through `run_sql`. Scripts: `infra/zetaris/`; reflection for the judges: [docs/ZETARIS_REFLECTION.md](docs/ZETARIS_REFLECTION.md); evidence: `docs/evidence/zetaris-dq.txt`.
-- The Meterless H-MEM and World Model reference implementations run unchanged in `memory-service/` (conformance 13 of 13 and 8 of 8, `docs/evidence/conformance-*.txt`). The sidecar adds one rule: a night can be retrieved only after its verification time. The desk uses memory as the training set for its memory model, for similar-night retrieval with a trace, for the verifier's write-back with source and confidence, for trust-ledger feedback, and for night-level conflict detection with the engine's 0.70 gate.
+- The Meterless H-MEM and World Model reference implementations run unchanged in `memory-service/` (conformance 13 of 13 and 8 of 8, `docs/evidence/conformance-*.txt`). The sidecar adds one rule: a night can be retrieved only after its verification time. The desk uses memory as the training set for its memory model, for similar-night retrieval with a trace, for the verifier's write-back with source and confidence, for trust-ledger feedback in the backtest, and for night-level conflict detection with the engine's 0.70 gate.
 - Meterless Nightshift is the primary model provider (`src/vogdesk/llm.py`), with explicit model ids so every trace line names the model that answered: `nvidia/nemotron-3.5-lightning-30b-a3b` for evidence narration (thinking off) and `nvidia/nemotron-3-ultra-550b-a55b` for the DutyLead. Provider grade: [docs/evidence/provider-grade.md](docs/evidence/provider-grade.md).
 - NVIDIA Nemotron supplies the two models above, through NVIDIA's free endpoint registered in Nightshift. `meterless.provider_model` is logged on every call.
 - Cursor built the Nightshift provider block in `llm.py` (git tag `cursor-provider`, review in [docs/cursor/B-review.md](docs/cursor/B-review.md)). Everything else was built with Claude Code and Codex; all code was read and tested by the author.
 
+Model-call log: each model step is in the case trace, for example [live/2026-10-25/trace.jsonl](live/2026-10-25/trace.jsonl), and in that night's `forecast.json` under `desk.llm_calls`. Each entry gives the agent, the model requested, the model Nightshift reports as having answered (`meterless.provider_model`), latency, tokens where the provider returned them, and whether the reply passed validation; a rejected first reply is listed under `problems`, and HTTP retries inside the client are not logged. On all three live nights the answering model was the one requested. The trace does not store Nightshift's receipt id.
+
+What was unique about the sponsor use: the sponsors' tools enforce the experiment's rules. The information cutoff is in Zetaris, where the time-stamped tables are cut at the issue time, and in memory, where the sidecar returns a night only after it was verified, so a backtest night sees what was public at 18:00 that evening. H-MEM is the training set: the memory model is refit each evening on the verified nights it holds, and that stream is where most of the gain over the frozen 2025 model comes from. Nemotron Ultra works inside limits set in code: it may move the base by at most 0.15 when the review raised a flag, every number it writes is checked against the evidence, and the trace names the model that answered.
+
+## AI and Model Usage
+
+Models, all through Meterless Nightshift with explicit ids (no `meterless/*` routing):
+
+- `nvidia/nemotron-3.5-lightning-30b-a3b`: the EvidenceAgent's regime summary, thinking off.
+- `nvidia/nemotron-3-ultra-550b-a55b`: the DutyLead, which may move the base within 0.15 and writes the cited discussion.
+- No embedding model; similar nights come from H-MEM's own retrieval.
+
+Sponsor technology:
+
+- Zetaris: the data layer for every evidence query, through `run_sql` against the `pahala_exposure` semantic layer.
+- Meterless engines: H-MEM holds the verified nights that train the memory model and supply the similar nights; the World Model keeps each case's record. Test: conformance 13 of 13 for H-MEM and 8 of 8 for the World Model (`docs/evidence/conformance-hmem.txt`, `docs/evidence/conformance-world-model.txt`); `npm run conformance:hmem` and `npm run conformance:world-model` in `memory-service/` re-run them.
+- Meterless Nightshift: the primary and only model provider (`src/vogdesk/llm.py`, OpenAI-format requests with the `meterless-app` and `meterless-scope` headers).
+- NVIDIA: the two Nemotron models above, on NVIDIA's free endpoint registered in Nightshift.
+
+Agent framework: LangGraph `StateGraph` over a TypedDict state that holds Pydantic records. Development tools: Claude Code and Codex; Cursor built the Nightshift provider block. All generated code was reviewed and tested by the author.
+
+Data: all public (EPA AQS, AirNow, USGS HVO, Hawaiʻi DOH, Iowa Environmental Mesonet soundings, NOAA GFS); no synthetic data in the forecasts or results. Sample mode: `SAMPLE_MODE=true` uses slices of the same data for three recorded nights, with recorded Nemotron replies and makes no calls to Zetaris, Nightshift or the sidecar. Limits: below, and in [docs/DEVLOG.md](docs/DEVLOG.md).
+
 ## Pre-existing components
 
 Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memory-service/engines/UPSTREAM.txt`), and the Kaʻū elevation grid behind the map on `web/`, cut by `scripts/terrain.py` from the island heightmap in the author's earlier project Windward (a private repository; the heightmap is USGS 3DEP, public domain). The map's code is new. three.js (MIT) loads from jsDelivr. All data is public (EPA, AirNow, USGS, DOH, IEM, NOAA).
+
+## Third-Party Code and Licences
+
+- Meterless H-MEM and World Model reference engines: Apache-2.0, vendored unchanged (`memory-service/engines/`, upstream recorded in `UPSTREAM.txt`)
+- three.js: MIT, loaded from jsDelivr by the page
+- Public Sans font: SIL Open Font License 1.1 (`assets/fonts/OFL.txt`; the page loads it from Google Fonts)
+- Local services in `infra/compose.yml`: RustFS S3 store (Apache-2.0) and PostgreSQL (PostgreSQL License)
+- Python: LangGraph and langgraph-checkpoint-sqlite (MIT); pandas, NumPy, scikit-learn, joblib, httpx, python-dotenv and Uvicorn (BSD-3-Clause); pydantic, FastAPI, tabulate, pytest and Herbie (MIT); pyarrow, requests, boto3, xarray and cfgrib (Apache-2.0); Matplotlib (Matplotlib license, PSF-based); psycopg (LGPL-3.0)
+- Node: tsx (MIT), which runs the memory sidecar
+- Terrain: USGS 3DEP elevation (public domain), cut from the author's Windward heightmap
 
 ## Limits
 
