@@ -230,3 +230,10 @@ Following the G3 defect: the Node sidecar clamped `k` to 100 in `/hmem/query`. T
 - `duty_lead.resolve_flag`: a data gap closes only when the re-query of the missing source returns rows; otherwise the flag stays open as "still missing on re-query" and the review may use its second round. Disagreement flags are settled as before.
 - `duty_lead.decision_numbers`: numbers in the review's flag details and resolutions may be cited by the duty lead.
 - Tests: `tests/test_review_resolution.py` (four cases, including the sounding gap of 24 October). The recorded sample nights have no flags, so their replays are unchanged; 190 tests pass. Held-out results are not re-run, and the 23 and 24 October live forecasts stand as issued.
+
+## 2026-10-25 18:07 PDT: second live night verified (2026-10-24)
+
+- Outcome: all 18 Pāhala hours from 18:00 HST 24 Oct to 12:00 HST 25 Oct are in, and the highest was 21 ppb, so no hour reached 75 ppb. The desk had issued 0.25, prepare for yellow, so the call is a false alarm. Brier 0.060 for the desk against 0.001 for the frozen model alone (0.03), which was right on this night. Labels are AirNow preliminary; `t_star_used` is 0.18. The night is in the sidecar memory as mem-635 and in Postgres.
+- Live record after two nights: one hit (23 Oct) and one false alarm (24 Oct). Summed Brier over the two nights is 0.582 for the desk and 0.853 for the frozen model. Two nights say nothing about skill; they are recorded as they came.
+- Publication lag: at 15:07 HST on 25 Oct the latest Pāhala SO2 hour on AirNow was 13:00 HST (hour beginning, the 23Z file), the same one-hour gap as on 24 Oct.
+- Gap found while checking: `scripts/verify_live.py` writes each live night into memory, but it does not send the trust-ledger feedback that the backtest verifier sends (which analog nights agreed with the outcome), so `ledger_entries` is 0 on both live nights. The held-out results used the backtest verifier and are not affected. Adding the feedback to live verification would change what later live nights retrieve, so it is left as it is and noted here rather than changed mid-run.
