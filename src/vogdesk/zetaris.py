@@ -1,8 +1,9 @@
 """Zetaris REST client and the one SQL tool the agents are allowed to use.
 
 Zetaris is the data layer: every number an agent cites comes back from `run_sql`, which only accepts
-read-only statements against the `pahala_exposure` semantic-layer views and rewrites each view
-reference to filter `available_utc <= as_of` (the information cutoff frozen in PREREG). Agents never
+read-only statements against the `pahala_exposure` semantic-layer views and cuts each time-stamped
+view at the as-of time (the information cutoff frozen in PREREG): `available_utc <= as_of`, or for the
+eruption episodes the publication time of each start and end. Reference views are not cut. Agents never
 see base tables and never choose the as-of time; the desk does.
 
 Request shape (from zetaris/getting-started scripts/zetaris_sql.py): POST {REST_URL}/sql-editor/sqls/run

@@ -5,11 +5,11 @@
 - Replay of 2 September 2025, the night Pāhala reached 317 ppb: https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02
 - Slide deck: [docs/vog-desk-deck.pdf](docs/vog-desk-deck.pdf)
 
-Results in one paragraph: on the held-out season (1 July to 21 October 2026, 102 nights, pre-registered and scored once) the desk's Brier score was 0.215, against 0.332 for the model frozen on 2025, 0.246 for the recent-rate baseline and 0.236 for a constant at the season's own rate, which nobody knew in advance. It has run live every evening since 23 October 2026, each forecast committed before its outcome. `scripts/prove.py` re-checks every one of these numbers, and the commit times, from the committed files.
+On the held-out season (1 July to 21 October 2026, 102 nights, pre-registered and scored once) the desk's Brier score was 0.215, against 0.332 for the model frozen on 2025, 0.246 for the recent-rate baseline and 0.236 for a constant at the season's own rate, which nobody knew in advance. It has run live every evening since 23 October 2026, each forecast committed before its outcome. `scripts/prove.py` re-checks every one of these numbers, and the commit times, from the committed files.
 
-A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every evening at 18:00 HST it answers one question: **between now and noon tomorrow, will any hour at the Pāhala monitor reach 75 ppb of sulfur dioxide?** It gives a calibrated probability, a recommendation that follows the 2018 Hawaiʻi Schools SO2 Action Plan, and a discussion in which every number points at the evidence it came from. The next day it checks itself against the monitor and remembers the night.
+A forecast desk for volcanic smog (vog) at Pāhala, Hawaiʻi Island. Every evening at 18:00 HST it gives a calibrated probability that some hour at the Pāhala monitor reaches 75 ppb of sulfur dioxide before noon the next day, a recommendation that follows the 2018 Hawaiʻi Schools SO2 Action Plan, and a discussion in which every number points at the evidence it came from. The next day it checks itself against the monitor and remembers the night.
 
-Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3, Reasoning Architecture, by a team of one. Work in this repository started inside the build window (22 October 2026, 00:00 UTC). Every decision and every number along the way is in [docs/DEVLOG.md](docs/DEVLOG.md); the held-out results, scored once at the end, are in [docs/RESULTS.md](docs/RESULTS.md).
+Built for the Open Agent Hackathon 2026 (GenAI Works), Track 3, Reasoning Architecture, by a team of one. Work in this repository started inside the build window (22 October 2026, 00:00 UTC). The development log, with the numbers behind each decision, is [docs/DEVLOG.md](docs/DEVLOG.md); the held-out results, scored once at the end, are in [docs/RESULTS.md](docs/RESULTS.md).
 
 ![The page for 23 October 2026: prepare for yellow, a 28% chance shown as a number and as 28 of 100 dots, and the night over Kaʻū with each monitor's measured hour as a beam](docs/figures/page.jpg)
 
@@ -29,11 +29,11 @@ The page a school's designated person reads at 18:00 ([web/](web/README.md)). It
 | [docs/RESULTS.md](docs/RESULTS.md) | held-out scores with intervals, reliability, value | Innovation, Technical |
 | [Sponsor technology](#sponsor-technology) and [AI and Model Usage](#ai-and-model-usage) | the cutoff in Zetaris and memory, H-MEM as the training set, conformance tests, the two Nemotron models | Sponsor |
 
-## Why it is a desk
+## Problem and approach
 
-Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Each one sends gas down the southwest flank into Kaʻū. In 2025 the Pāhala monitor reached the 75 ppb one-hour standard in 63 hours on 25 days (the Department of Health's list has the same 25 days), 60 of those hours between 18:00 and noon, most between 02:00 and 09:00 HST, while families sleep with the windows shut and children get ready for school. The [schools plan](https://www.hawaiipublicschools.org/DOE%20Forms/Safety/SchoolActionPlan-SO2.pdf) acts when elevated levels last more than 30 minutes. The University of Hawaiʻi's VMAP model publishes statewide SO2 forecasts; vog-desk gives this one monitor a probability and a call in the plan's levels the evening before, with its evidence.
+Kīlauea has erupted in fountaining episodes since December 2024, 55 so far. Each one sends gas down the southwest flank into Kaʻū. In 2025 the Pāhala monitor reached the 75 ppb one-hour standard in 63 hours on 25 days (the Department of Health's list has the same 25 days), 60 of those hours between 18:00 and noon, most between 02:00 and 09:00 HST, while people sleep and children get ready for school. The [schools plan](https://www.hawaiipublicschools.org/DOE%20Forms/Safety/SchoolActionPlan-SO2.pdf) acts when elevated levels last more than 30 minutes. The University of Hawaiʻi's VMAP model publishes statewide SO2 forecasts; vog-desk gives this one monitor a probability and a call in the plan's levels the evening before, with its evidence.
 
-A statistical model fit on 2025 learned that bad nights come with fountaining and light winds. In 2026 the eruption changed. Episodes got shorter and pauses longer, and the gas now reaches Pāhala between episodes on trade-wind nights, three times as often as in 2025. On the development period (January to June 2026) the frozen model scored below climatology.
+A statistical model fit on 2025 learned that bad nights come with fountaining and light winds. In 2026 the eruption changed: episodes got shorter and pauses longer, and the gas now reaches Pāhala between episodes on trade-wind nights, three times as often as in 2025. On the development period (January to June 2026) the frozen model scored below climatology.
 
 So the desk keeps a memory of every verified night and refits the same model on the recent ones each evening. It checks that against the frozen model, the recent event rate and the most similar past nights. When they disagree it re-queries the data; a disagreement that survives the re-query is recorded as real and stated in the discussion, and a night goes to a person when tonight's GFS forecast is still missing or the duty lead hands it over. The test is whether this beats the frozen model and a plain adaptive baseline, the event rate of the last 30 verified nights. [docs/PREREG.md](docs/PREREG.md) has what was fixed before any model was fit and the six changes logged since.
 
@@ -119,7 +119,7 @@ Paired Brier differences with 7-day block bootstrap 90% intervals:
 - full desk minus recent-rate baseline: −0.031 [−0.048, −0.014]
 - full desk minus desk without review: −0.009 [−0.019, +0.001]
 
-The comparison that matters most is the second one. The skill score of +0.37 is measured against the 2025 climatology of 0.059, which is easy to beat in a season where 38% of nights had an event. A constant at that 38%, which nobody could have known in advance, would score 0.236; the desk scored 0.215.
+The skill score of +0.37 is measured against the 2025 climatology of 0.059, which is easy to beat in a season where 38% of nights had an event, so the harder test is the second interval, against the recent-rate baseline. A constant at that 38%, which nobody could have known in advance, would score 0.236; the desk scored 0.215.
 
 Most of the gain comes from the memory model, the pre-registered pipeline refit each night on the nights the desk remembers. The review loop's contribution is small and not established: its interval touches zero. The frozen 2025 model sits near climatology because the eruption's pattern changed.
 
@@ -228,7 +228,7 @@ Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memo
 - Node: tsx (MIT), which runs the memory sidecar
 - Terrain: USGS 3DEP elevation (public domain), cut from the author's Windward heightmap
 
-## Limits: what this submission does not claim
+## Limits
 
 - One monitor, one threshold, one training year with 21 events.
 - An hourly mean of 75 ppb does not show that a 15-minute average reached the plan's yellow level.
@@ -242,4 +242,4 @@ Declared: the Meterless reference engines (Apache-2.0, vendored unchanged, `memo
 - AirNow values after March 2026 are preliminary and rounded to whole ppb.
 - No school has used it, and it is not an official warning: the desk recommends, and the school's designated person decides under the state plan.
 
-Everything that did not work is in [docs/DEVLOG.md](docs/DEVLOG.md).
+Failed attempts are logged in [docs/DEVLOG.md](docs/DEVLOG.md).
