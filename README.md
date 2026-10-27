@@ -1,6 +1,6 @@
 # vog-desk
 
-- Demo video, 3 min 54 s: https://youtu.be/EGJ8WhEMQvc
+- Demo video, 3 min 54 s: https://youtu.be/EGJ8WhEMQvc. It walks through the live run of 24 October on the page: the seven queries through Zetaris, the review's re-queries of four tables, and each call through Nightshift with the Nemotron model that answered it.
 - Live page, with every night the desk has issued: https://zeyusuntt.github.io/vog-desk/web/
 - Replay of 2 September 2025, the night Pāhala reached 317 ppb: https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02
 - Slide deck: [docs/vog-desk-deck.pdf](docs/vog-desk-deck.pdf)
@@ -24,7 +24,7 @@ The page a school's designated person reads at 18:00 ([web/](web/README.md)). It
 | [Live page, first live night](https://zeyusuntt.github.io/vog-desk/web/?night=2026-10-23) | 28%, prepare for yellow; the next day Pāhala reached 170 ppb at 05:00 | Impact, Product and UX |
 | [Replay of 2 September 2025](https://zeyusuntt.github.io/vog-desk/web/?replay=2025-09-02) | the night Pāhala reached 317 ppb, hour by hour on the map | Demo |
 | `.venv/bin/python scripts/prove.py` | PASS for every headline number and the commit timeline | Technical |
-| `SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07` | the full desk on a recorded night, no keys or services | Technical |
+| `SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07` | the full desk on a recorded night, no keys or services; from a clean clone, the one-line install and run is under [Run it](#run-it) | Technical |
 | [live/2026-10-25/trace.jsonl](live/2026-10-25/trace.jsonl) | each step: Zetaris queries, the review's re-queries, the model that answered each call, validation | Technical, Sponsor |
 | [docs/RESULTS.md](docs/RESULTS.md) | held-out scores with intervals, reliability, value | Innovation, Technical |
 | [Sponsor technology](#sponsor-technology) and [AI and Model Usage](#ai-and-model-usage) | the cutoff in Zetaris and memory, H-MEM as the training set, conformance tests, the two Nemotron models | Sponsor |
@@ -129,7 +129,13 @@ The labels match the Department of Health's own exceedance list on all 39 held-o
 
 ## Run it
 
-Once installed (see below), one command re-checks the headline numbers. It reads only committed files and the git history, and prints PASS or FAIL for each check: every Brier score and paired interval above, the warning counts, the label audit, and the commit times of the pre-registration, the freeze, the scoring and each live forecast.
+From a clean clone, this one command installs the desk and runs it on a recorded night. It needs uv and Python 3.12, and no accounts, keys or services:
+
+```bash
+uv venv --python 3.12 && uv pip install -e ".[dev,model,agents]" && SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07
+```
+
+Once installed, one command re-checks the headline numbers. It reads only committed files and the git history, and prints PASS or FAIL for each check: every Brier score and paired interval above, the warning counts, the label audit, and the commit times of the pre-registration, the freeze, the scoring and each live forecast.
 
 ```bash
 .venv/bin/python scripts/prove.py
@@ -143,12 +149,10 @@ docker run --rm vog-desk                                   # 2026-05-07, full de
 docker run --rm vog-desk --issue 2026-06-16 --no-review    # forecast 5 on another recorded night
 ```
 
-Without Docker:
+Tests (the Zetaris, sidecar and full-data tests skip when those are absent):
 
 ```bash
-uv venv --python 3.12 && uv pip install -e ".[dev,model,agents]"
-SAMPLE_MODE=true .venv/bin/python run.py --issue 2026-05-07
-.venv/bin/python -m pytest -q tests        # Zetaris, sidecar and full-data tests skip when those are absent
+.venv/bin/python -m pytest -q tests
 ```
 
 The page needs nothing but a static server at the repository root:
