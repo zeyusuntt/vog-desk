@@ -249,3 +249,10 @@ Following the G3 defect: the Node sidecar clamped `k` to 100 in `/hmem/query`. T
 
 - Found by a second model while checking the README. `duty_lead.must_handover` sends a case to a person when model and memory are more than 0.3 apart and a disagreement flag is still open after two rounds. But `requery_node` settles every disagreement flag on the first re-query (same rows back means the disagreement is real), so no such flag is open at round 2. The backtests confirm it: no full-desk handovers in any variant; the eight handovers in the no-review runs were the duty lead's own choice.
 - What does send a case to a person: tonight's GFS run still missing after two rounds, or the duty lead choosing a handover. README, deck and submission notes now say this. The rule itself is left as frozen; the scored results and the live nights are unaffected, since the branch never ran.
+
+## 2026-10-26 20:56 PDT: third live night verified (2026-10-25)
+
+- Outcome: 17 of the 18 Pāhala hours from 18:00 HST 25 Oct to 12:00 HST 26 Oct are in (01:00 HST is missing on AirNow). The highest was 27 ppb at 08:00 HST, so no hour reached 75 ppb. The desk had issued 0.15, normal operations, so the call is a correct negative. Brier 0.023 for the desk against 0.001 for the frozen model alone (0.03). Labels are AirNow preliminary; `t_star_used` is 0.18. The night is in the sidecar memory as mem-636 and in Postgres.
+- Live record after three nights: one hit (23 Oct), one false alarm (24 Oct) and one correct negative (25 Oct). Summed Brier is 0.606 for the desk and 0.854 for the frozen model. Most of the model's total comes from the one event night it missed. Three nights are too few to say anything about skill.
+- Publication lag: at 17:57 HST on 26 Oct the latest Pāhala SO2 hour on AirNow was 16:00 HST (hour beginning, the 02Z file on 27 Oct). That is the same one-hour gap as at the 24 and 25 Oct issue times.
+- This verification ran at 17:56 HST, about three minutes before tonight's desk run, because the scheduled check started late. The 25 Oct night was in memory before the 26 Oct run began.
