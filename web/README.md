@@ -11,7 +11,7 @@ It reads `live/index.json`, `live/<date>/forecast.json`, `trace.jsonl` and `scen
 What is on it, top to bottom:
 
 - The call: tonight's probability as a sentence, the schools plan's recommendation, and once verified, what happened.
-- At a glance: how the desk decided (roles, queries, re-query rounds, Nemotron calls), the live record since 23 October, and the held-out score.
+- At a glance: how the desk decided (roles, queries, re-query rounds, Nemotron calls), the live record from 23 to 26 October, and the held-out score.
 - Where tonight sits on the plan's bands, with the four guidance streams on the same scale.
 - The night over Kaʻū: a three.js map with the Kīlauea summit vent, the Pāhala, Volcanoes NP and Ocean View monitors, the GFS 925 hPa wind at the summit and the inversion from the Hilo sounding, as available at 18:00. After verification each monitor's measured hour is a beam whose height grows with the square root of SO2 and whose colour follows the plan's bands, with a halo that pulses above 75 ppb. The 18-hour strip below is the timeline, and "Play the night" steps through it. The drift from the vent only carries the forecast wind forward and is labelled as an illustration, not a dispersion model.
 - Who did what tonight: the five roles (evidence agent, forecaster, review, duty lead, verifier), what each did, read from the trace.

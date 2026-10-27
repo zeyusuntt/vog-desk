@@ -1,9 +1,9 @@
 {
- "kind": "model_only",
- "note": "Model-only forecast: the frozen 2025 logistic regression with isotonic calibration. The desk (evidence, analog memory, duty-lead review) is not wired in yet. The 2025 model under-forecast the January to June 2026 development period (docs/DEVLOG.md); read the probability with that in mind.",
+ "kind": "full_desk",
+ "note": "Full desk forecast: evidence through Zetaris, model and memory guidance, DutyLead review on Nemotron Ultra. The model-only probability is kept alongside for comparison (forecast 4 versus 6).",
  "issue_date_hst": "2026-10-26",
  "issue_utc": "2026-10-27T04:00:00+00:00",
- "generated_utc": "2026-10-27T04:01:37+00:00",
+ "generated_utc": "2026-10-27T04:47:06+00:00",
  "generated_before_issue": false,
  "question": "Any hourly SO2 >= 75 ppb at Pahala (AQS 15-001-2016) between 18:00 HST tonight and 12:00 HST tomorrow",
  "probability": 0.0339,
@@ -42,13 +42,7 @@
   "last_known_episode_end_utc": "2026-10-17T19:06:00+00:00",
   "max_available_utc_used": "2026-10-27T04:00:00+00:00"
  },
- "refresh_status": {
-  "airnow": "ok",
-  "gfs": "ok",
-  "raob": "failed: Command '['~/dev/vog-desk/.venv/bin/python', 'scripts/fetch_raob.py', '2026-10-06', '2026-10-28']' returned non-zero exit status 1.",
-  "s3": "ok",
-  "episodes": "failed: Command '['~/dev/vog-desk/.venv/bin/python', 'scripts/fetch_hans.py', '2024-12-01']' returned non-zero exit status 1."
- },
+ "refresh_status": {},
  "model": {
   "file": "lr_2025.json",
   "sha256": "9f62812acd4348bd",
@@ -58,5 +52,196 @@
   "n_events": 21,
   "git_head_at_training": "8649b40c3aeac62936c144c9d0681642e6daded6"
  },
- "verification": null
+ "verification": null,
+ "desk": {
+  "case_id": "live-2026-10-26",
+  "decision": {
+   "kind": "issue",
+   "p": 0.2447,
+   "level": "prepare_orange",
+   "recommendation": "Prepare for orange: brief staff tonight on the plan's orange-level actions and check the monitor at 06:00 HST.",
+   "discussion": "The base probability is 0.14 from the memory model (G2), which is higher than the frozen model (G1) at 0.03 but lower than the recent rate (G3) at 0.30 and the analog probability (G4) at 0.17. The review found an unresolved data_gap flag: no Hilo sounding in the last 18 hours [E7, E9, E12], leaving the inversion base unknown while the boundary layer collapses to 83 m by 06:00 HST [E6]. Current concentrations are low at Pahala (1.0 ppb latest [E1]) and upwind (2.7 ppb [E3]), with transport away from Pahala (0 of 3 leads toward, mean component -0.6 m/s [E6]). However, the analog set includes a night with a maximum of 476 ppb [G4], well above the 210 ppb orange trigger, indicating that similar pause regimes have produced very high events. Because the missing sounding is a hole in the record and the analog maximum shows extreme potential, I adjust the probability upward by 0.10 to 0.24. The final probability exceeds the action threshold t* = 0.18, and the analog maximum triggers the orange clause, so the recommendation is to prepare for orange. If by midnight the Pahala hourly mean rises above 10 ppb or a sounding becomes available showing a strong inversion, I would increase confidence in the orange preparation; if winds shift toward Pahala with rising concentrations, I would also adjust upward.",
+   "cites": [
+    "E1",
+    "E3",
+    "E6",
+    "G4"
+   ],
+   "handover_reason": null,
+   "weights": {
+    "memory_model": 1.0
+   },
+   "base_p": 0.1447,
+   "adjustment": 0.1,
+   "adjustment_reason": "data_gap flag (unresolved) and analog maximum 476 ppb [G4]"
+  },
+  "guidance": [
+   {
+    "id": "G1",
+    "stream": "lr",
+    "p": 0.0339,
+    "interval": null,
+    "inputs": [
+     "E1",
+     "E2",
+     "E3",
+     "E4",
+     "E5",
+     "E6",
+     "E7",
+     "E8",
+     "E9",
+     "E10",
+     "E11",
+     "E12",
+     "E13"
+    ],
+    "analog_ids": [],
+    "note": "logistic regression fit on 2025 with isotonic calibration; raw 0.031"
+   },
+   {
+    "id": "G2",
+    "stream": "memory_model",
+    "p": 0.1447,
+    "interval": null,
+    "inputs": [],
+    "analog_ids": [
+     "mem-636",
+     "mem-635",
+     "mem-634",
+     "mem-633",
+     "mem-632",
+     "mem-631",
+     "mem-630",
+     "mem-629",
+     "mem-628",
+     "mem-627",
+     "mem-626",
+     "mem-625",
+     "mem-624",
+     "mem-623",
+     "mem-622",
+     "mem-621",
+     "mem-620",
+     "mem-619",
+     "mem-618",
+     "mem-617",
+     "mem-616",
+     "mem-615",
+     "mem-614",
+     "mem-613",
+     "mem-612",
+     "mem-611",
+     "mem-610",
+     "mem-609",
+     "mem-608",
+     "mem-607",
+     "mem-606",
+     "mem-605",
+     "mem-604",
+     "mem-603",
+     "mem-602",
+     "mem-601",
+     "mem-600",
+     "mem-599",
+     "mem-598",
+     "mem-597",
+     "mem-596",
+     "mem-595",
+     "mem-594",
+     "mem-593",
+     "mem-592",
+     "mem-591",
+     "mem-590",
+     "mem-589",
+     "mem-588",
+     "mem-587"
+    ],
+    "note": "logistic regression refit on 108 verified nights in memory (last 120 days, 41 events, nights 2026-06-28 to 2026-10-25)"
+   },
+   {
+    "id": "G3",
+    "stream": "recent_rate",
+    "p": 0.3,
+    "interval": null,
+    "inputs": [],
+    "analog_ids": [],
+    "note": "event rate over the last 30 verified nights"
+   },
+   {
+    "id": "G4",
+    "stream": "analog",
+    "p": 0.1667,
+    "interval": [
+     0.0337,
+     0.2617
+    ],
+    "inputs": [],
+    "analog_ids": [
+     "mem-423",
+     "mem-465",
+     "mem-344",
+     "mem-381",
+     "mem-415",
+     "mem-432",
+     "mem-382",
+     "mem-362",
+     "mem-611",
+     "mem-429",
+     "mem-430",
+     "mem-612",
+     "mem-339",
+     "mem-359",
+     "mem-407",
+     "mem-336",
+     "mem-610",
+     "mem-328",
+     "mem-363",
+     "mem-414"
+    ],
+    "note": "2 of 20 analog nights had an event (raw rate 0.10); tags episode:pause, regime:light, sector:none, station:pahala; shrunk toward the recent rate 0.30 with weight 10; fallback level 1; highest analog max 476 ppb"
+   }
+  ],
+  "flags": [
+   {
+    "code": "data_gap",
+    "detail": "no Hilo sounding in the last 18 hours",
+    "evidence_ids": [
+     "E7"
+    ],
+    "resolved": false,
+    "resolution": ""
+   }
+  ],
+  "review_round": 2,
+  "llm_calls": [
+   {
+    "agent": "EvidenceAgent",
+    "model_requested": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "provider_model": "nvidia/nemotron-3.5-lightning-30b-a3b",
+    "latency_ms": 26838,
+    "prompt_tokens": 4377,
+    "completion_tokens": 241,
+    "cached": false,
+    "validation": "ok",
+    "problems": [],
+    "reply_preview": "The current emission state is a pause; episode 55 ended 9.4 days ago on 2026-10-17 [E5]. At Pahala, the last 24 usable hours show a maximum of 27.0 ppb and a latest reading of 1.0 ppb at 16:00 HST [E1], while the upwind Volcanoes NP station reports a maximum of 9.8 ppb and latest 2.7 ppb at 16:00 HST [E3]. Forecast transport indicates that 0 of 3 leads have the 925 hPa wind blowing toward Pahala, with a mean 925 hPa component of -0.6 m/s away from the monitor [E6]; 850 hPa winds are similarly directed away. Stability is characterized by a boundary layer that falls from 222 m at 18:00 HST to 83"
+   },
+   {
+    "agent": "DutyLead",
+    "model_requested": "nvidia/nemotron-3-ultra-550b-a55b",
+    "provider_model": "nvidia/nemotron-3-ultra-550b-a55b",
+    "latency_ms": 48712,
+    "prompt_tokens": 6136,
+    "completion_tokens": 3543,
+    "cached": false,
+    "validation": "ok",
+    "problems": [],
+    "reply_preview": "{\n  \"kind\": \"issue\",\n  \"adjustment\": 0.10,\n  \"adjustment_reason\": \"data_gap flag (unresolved) and analog maximum 476 ppb [G4]\",\n  \"discussion\": \"The base probability is 0.14 from the memory model (G2), which is higher than the frozen model (G1) at 0.03 but lower than the recent rate (G3) at 0.30 and the analog probability (G4) at 0.17. The review found an unresolved data_gap flag: no Hilo sounding in the last 18 hours [E7, E9, E12], leaving the inversion base unknown while the boundary layer collapses to 83 m by 06:00 HST [E6]. Current concentrations are low at Pahala (1.0 ppb latest [E1]) and"
+   }
+  ],
+  "data_backend": "zetaris",
+  "regime_summary": "The current emission state is a pause; episode 55 ended 9.4 days ago on 2026-10-17 [E5]. At Pahala, the last 24 usable hours show a maximum of 27.0 ppb and a latest reading of 1.0 ppb at 16:00 HST [E1], while the upwind Volcanoes NP station reports a maximum of 9.8 ppb and latest 2.7 ppb at 16:00 HST [E3]. Forecast transport indicates that 0 of 3 leads have the 925 hPa wind blowing toward Pahala, with a mean 925 hPa component of -0.6 m/s away from the monitor [E6]; 850 hPa winds are similarly directed away. Stability is characterized by a boundary layer that falls from 222 m at 18:00 HST to 83 m by 06:00 HST [E6], under an inversion base that is not available in the data [E7].",
+  "trace": "trace.jsonl"
+ }
 }

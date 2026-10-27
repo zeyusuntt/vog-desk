@@ -333,7 +333,7 @@ body.present .scene-bar button { font-size: 17px; padding: 9px 16px; }
     </figure>
     <figure class="figure">
       <h2>Live log</h2>
-      <p class="sub">Forecasts issued since 23 October 2026, committed before the outcome was known and checked the next afternoon.</p>
+      <p class="sub">Forecasts issued from 23 to 26 October 2026, each committed before the outcome was known and checked the next afternoon.</p>
       <table class="log" id="log"></table>
     </figure>
   </section>
@@ -533,6 +533,10 @@ function renderCall(fc) {
   const p = dec ? dec.p : fc.probability;
   const lv = levelOf(dec) || (p >= 2 * T_STAR ? "prepare_orange" : p >= T_STAR ? "prepare_yellow" : "normal");
   const L = LEVEL[lv];
+  // The plan also calls orange when any of the top analog nights reached 210 ppb, whatever the probability.
+  const g4 = desk ? (desk.guidance || []).find((g) => g.stream === "analog") : null;
+  const amax = Number(((g4 && g4.note) || "").match(/highest analog max (\d+(?:\.\d+)?) ppb/)?.[1]);
+  const orangeByAnalog = lv === "prepare_orange" && p < 2 * T_STAR && amax >= 210;
   const issued = new Date(fc.issue_utc);
   const box = document.getElementById("call");
   const ver = fc.verification;
@@ -563,7 +567,8 @@ function renderCall(fc) {
     </div><div class="hero-map">${ver && ver.event != null ? sceneFigure("The night over Kaʻū", "that night's") : sceneFigure("Tonight over Kaʻū")}</div></div>
     <figure class="figure scale-fig"><h2>Where tonight sits on the schools plan</h2>
       <p class="sub">The plan's levels are set for 15-minute averages at the school; the desk maps its probability onto them with thresholds fixed before the held-out test.</p>
-      <svg class="chart" id="scale" role="img"></svg></figure>`;
+      <svg class="chart" id="scale" role="img"></svg>
+      ${orangeByAnalog ? `<p class="sub">Orange although ${pct(p)} is below ${pct(2 * T_STAR)}: one of tonight's similar past nights reached ${Math.round(amax)} ppb, and a rule fixed before the held-out test calls orange when any of them reached 210 ppb, the plan's orange level.</p>` : ""}</figure>`;
   const guid = desk ? desk.guidance : [{ stream: "lr", p: fc.probability }];
   drawScale(document.getElementById("scale"), p, guid);
   mountScene(fc.issue_date_hst, ver, `../live/${fc.issue_date_hst}/scene.json`);
