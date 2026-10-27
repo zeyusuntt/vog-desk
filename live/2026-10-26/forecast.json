@@ -1,0 +1,62 @@
+{
+ "kind": "model_only",
+ "note": "Model-only forecast: the frozen 2025 logistic regression with isotonic calibration. The desk (evidence, analog memory, duty-lead review) is not wired in yet. The 2025 model under-forecast the January to June 2026 development period (docs/DEVLOG.md); read the probability with that in mind.",
+ "issue_date_hst": "2026-10-26",
+ "issue_utc": "2026-10-27T04:00:00+00:00",
+ "generated_utc": "2026-10-27T04:01:37+00:00",
+ "generated_before_issue": false,
+ "question": "Any hourly SO2 >= 75 ppb at Pahala (AQS 15-001-2016) between 18:00 HST tonight and 12:00 HST tomorrow",
+ "probability": 0.0339,
+ "probability_raw_uncalibrated": 0.0309,
+ "reference": {
+  "climatology_2025": 0.059,
+  "persistence": 0.0,
+  "episode_rule": 0.0
+ },
+ "recommendation": "withheld: the action threshold t* is not frozen yet (docs/PREREG.md, Frozen values)",
+ "features": {
+  "episode_active": 0.0,
+  "log_hours_since_end": 5.4201,
+  "log_pahala_max_24h": 3.3322,
+  "log_pahala_mean_6h": 1.6094,
+  "log_hvnp_max_6h": 2.3795,
+  "gfs925_along_summit": -0.5818,
+  "gfs925_speed_summit": 1.6662,
+  "gfs850_along_summit": -1.334,
+  "gfs925_sector_frac": 0.0,
+  "gfs10m_speed_pahala": 0.8632,
+  "log_hpbl_pahala_night": 4.424,
+  "raob_inversion_base_m": null
+ },
+ "features_outside_training_range": [],
+ "data_basis": {
+  "issue_utc": "2026-10-27T04:00:00+00:00",
+  "pahala_last_hour_utc": "2026-10-27T02:00:00+00:00",
+  "pahala_last_hour_hst": "2026-10-26T16:00:00",
+  "pahala_last_value_ppb": 1.0,
+  "pahala_source_last": "airnow",
+  "gfs_run_init_utc": "2026-10-26T18:00:00+00:00",
+  "gfs_rows_seen": 105,
+  "raob_latest_launch_utc": "2026-10-17T12:00:00+00:00",
+  "last_known_episode": 55,
+  "last_known_episode_end_utc": "2026-10-17T19:06:00+00:00",
+  "max_available_utc_used": "2026-10-27T04:00:00+00:00"
+ },
+ "refresh_status": {
+  "airnow": "ok",
+  "gfs": "ok",
+  "raob": "failed: Command '['~/dev/vog-desk/.venv/bin/python', 'scripts/fetch_raob.py', '2026-10-06', '2026-10-28']' returned non-zero exit status 1.",
+  "s3": "ok",
+  "episodes": "failed: Command '['~/dev/vog-desk/.venv/bin/python', 'scripts/fetch_hans.py', '2024-12-01']' returned non-zero exit status 1."
+ },
+ "model": {
+  "file": "lr_2025.json",
+  "sha256": "9f62812acd4348bd",
+  "fitted_on": "2025-01-01..2025-12-31",
+  "C": 0.1,
+  "n_train": 356,
+  "n_events": 21,
+  "git_head_at_training": "8649b40c3aeac62936c144c9d0681642e6daded6"
+ },
+ "verification": null
+}
